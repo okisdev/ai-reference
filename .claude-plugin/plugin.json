@@ -5,5 +5,17 @@
   "author": {
     "name": "okisdev"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "skills": [
+    "./skills/branch",
+    "./skills/commit-changes",
+    "./skills/organize-commits",
+    "./skills/pr",
+    "./skills/surge",
+    "./skills/verify-issue",
+    "./skills/verify-pr-comments"
+  ],
+  "agents": [
+    "./agents/code-simplifier.md"
+  ]
 }
