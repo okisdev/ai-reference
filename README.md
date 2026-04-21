@@ -88,7 +88,7 @@ Verify the review comments on PR #123
 ## Structure
 
 ```
-okisdev/
+.
 ├── .claude-plugin/plugin.json
 ├── agents/
 │   └── code-simplifier.md
