@@ -1,0 +1,21 @@
+{
+  "name": "okisdev",
+  "description": "Personal skills and agents collection by okisdev",
+  "version": "0.0.2",
+  "author": {
+    "name": "okisdev"
+  },
+  "license": "MIT",
+  "skills": [
+    "./skills/branch",
+    "./skills/commit-changes",
+    "./skills/organize-commits",
+    "./skills/pr",
+    "./skills/surge",
+    "./skills/verify-issue",
+    "./skills/verify-pr-comments"
+  ],
+  "agents": [
+    "./agents/code-simplifier.md"
+  ]
+}
