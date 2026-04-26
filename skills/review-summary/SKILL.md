@@ -1,6 +1,6 @@
 ---
 name: review-summary
-description: Write a maintainer-style summary review of a GitHub PR with three sections: shortcomings in the original implementation, what was modified during review, and potential further fixes. The review's audience is the original author, not a recap of bot comments.
+description: Write a maintainer-style summary review of a GitHub PR with three sections (shortcomings, modifications, potential fixes), framed for the original author rather than a recap of bot comments.
 argument-hint: "[pr-number-or-url]"
 ---
 
