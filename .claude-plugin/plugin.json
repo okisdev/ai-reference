@@ -1,7 +1,7 @@
 {
   "name": "okisdev",
   "description": "Personal skills and agents collection by okisdev",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "author": {
     "name": "okisdev"
   },
@@ -11,7 +11,7 @@
     "./skills/commit-changes",
     "./skills/organize-commits",
     "./skills/pr",
-    "./skills/surge",
+    "./skills/review-summary",
     "./skills/verify-issue",
     "./skills/verify-pr-comments"
   ],

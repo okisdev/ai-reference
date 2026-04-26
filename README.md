@@ -58,11 +58,11 @@ Fetch review comments on a GitHub PR (bots + humans), classify by staleness, and
 
 **Triggers:** "Check the PR review comments", "Verify the bot comments on #456"
 
-#### surge
+#### review-summary
 
-Operate and troubleshoot [Surge](https://nssurge.com) via `surge-cli`: command discovery, runtime diagnostics, state inspection (dump/watch/test), and environment mutation via key-paths.
+Write a maintainer-style summary review of a GitHub PR with three sections: shortcomings in the original implementation, what was modified during review, and potential further fixes. Frames feedback for the original author rather than recapping bot output.
 
-**Triggers:** "Inspect Surge state", "Switch Surge proxy mode", "Dump Surge policy"
+**Triggers:** "Write the approval review for #789", "Summarize what we fixed on this PR"
 
 ## Installation
 
@@ -97,7 +97,7 @@ Verify the review comments on PR #123
     ├── commit-changes/
     ├── organize-commits/
     ├── pr/
-    ├── surge/
+    ├── review-summary/
     ├── verify-issue/
     └── verify-pr-comments/
 ```
