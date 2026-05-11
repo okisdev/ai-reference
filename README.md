@@ -42,7 +42,7 @@ Reorganize uncommitted changes and/or messy commits on the current branch into c
 
 #### pr
 
-Create a GitHub PR from the current branch with auto-generated title and summary derived from actual commits and diff.
+Create a GitHub PR from the current branch with a title and body that follow the repo's conventions and the user's writing style. Auto-detects the repo's PR template, places `closes #N` at the top of the body, derives a `type(scope):` title from recent merged PRs, splits the test plan into "already verified" vs "reviewer should verify", and runs pre-flight guards for empty PR / WIP commits / behind-base / merge commits.
 
 **Triggers:** "Open a PR", "Create a pull request for this branch"
 
