@@ -1,5 +1,5 @@
 ---
-name: pr
+name: make-pr
 description: create a GitHub PR from the current branch with a title and body that follow the repo's conventions and the user's writing style
 argument-hint: "[base-branch] [--draft]"
 ---
