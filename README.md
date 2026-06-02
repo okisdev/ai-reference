@@ -22,7 +22,7 @@ Expert code simplification agent. Preserves functionality while improving clarit
 
 ### Skills
 
-#### branch
+#### make-branch
 
 Create a new branch and move all uncommitted changes to it. Defaults to branching off the default base so unrelated commits don't leak in; supports `--base` and `--keep-base` overrides.
 
@@ -48,7 +48,7 @@ Create a GitHub PR from the current branch with a title and body that follow the
 
 #### verify-issue
 
-Fetch a GitHub issue and verify each of its claims against the current codebase with concrete `file:line` evidence.
+Fetch a GitHub issue and verify each of its claims against the current codebase with concrete `file:line` evidence. Escalates past surface code reading when the conclusion depends on it: running repros for behavioral claims, checking canonical upstream source for third-party and runtime claims, and adversarially testing the load-bearing claim and the issue's own reasoning.
 
 **Triggers:** "Verify issue #123", "Is this issue still valid?"
 
@@ -93,7 +93,7 @@ Verify the review comments on PR #123
 ├── agents/
 │   └── code-simplifier.md
 └── skills/
-    ├── branch/
+    ├── make-branch/
     ├── commit-changes/
     ├── organize-commits/
     ├── pr/

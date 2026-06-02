@@ -1,13 +1,13 @@
 {
   "name": "okisdev",
   "description": "Personal skills and agents collection by okisdev",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "author": {
     "name": "okisdev"
   },
   "license": "MIT",
   "skills": [
-    "./skills/branch",
+    "./skills/make-branch",
     "./skills/commit-changes",
     "./skills/organize-commits",
     "./skills/make-pr",
