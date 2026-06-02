@@ -1,5 +1,5 @@
 ---
-name: branch
+name: make-branch
 description: Create a new branch and move all uncommitted changes to it.
 argument-hint: "<branch-name> [--base <branch>] [--keep-base]"
 ---
@@ -41,7 +41,7 @@ When in doubt and the set is small, err on branching off the default base.
 1. If no branch name is provided via `$ARGUMENTS`, infer one from the uncommitted changes using conventional branch naming (`feat/`, `fix/`, `chore/`, `refactor/`).
 2. If there are no uncommitted changes AND no ignored candidates, abort with a message.
 3. If branching off the default base (not current HEAD):
-   - `git stash push -u -m "branch-skill-transfer"` to capture both tracked + untracked
+   - `git stash push -u -m "make-branch-skill-transfer"` to capture both tracked + untracked
    - `git checkout <base>` then `git checkout -b <branch-name>`
    - `git stash pop`
    - If pop conflicts on files the user did not author, that signals a bad base pick — abort and ask

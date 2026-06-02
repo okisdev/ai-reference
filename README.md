@@ -22,7 +22,7 @@ Expert code simplification agent. Preserves functionality while improving clarit
 
 ### Skills
 
-#### branch
+#### make-branch
 
 Create a new branch and move all uncommitted changes to it. Defaults to branching off the default base so unrelated commits don't leak in; supports `--base` and `--keep-base` overrides.
 
@@ -93,7 +93,7 @@ Verify the review comments on PR #123
 ├── agents/
 │   └── code-simplifier.md
 └── skills/
-    ├── branch/
+    ├── make-branch/
     ├── commit-changes/
     ├── organize-commits/
     ├── pr/
