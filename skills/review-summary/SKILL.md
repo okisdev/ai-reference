@@ -1,6 +1,6 @@
 ---
 name: review-summary
-description: Write a maintainer-style summary review of a GitHub PR with three sections (shortcomings, modifications, potential fixes), framed for the original author rather than a recap of bot comments.
+description: Write a maintainer-style summary review of a GitHub PR with three sections (shortcomings, modifications, potential fixes), framed for the original author rather than a recap of bot comments. Runs after review fixes have already been applied and is author-facing. Use when you need to summarize what the author got wrong, what got fixed, and what is left, not to judge whether a PR should merge (that is verify-pr) or to triage incoming review comments (that is verify-pr-comments).
 argument-hint: "[pr-number-or-url]"
 ---
 
@@ -10,9 +10,11 @@ Repository: !`gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null ||
 Default branch: !`git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@refs/remotes/origin/@@' || echo main`
 Current branch: !`git branch --show-current 2>/dev/null`
 
+Runtimes that do not auto-run the commands above marked with `!` (Claude Code executes them and injects their output) should run each one to gather this context; treat any `$ARGUMENTS` or `$1` as the input the user provided.
+
 ## Instructions
 
-Generate a maintainer summary review for a PR after fixes have been applied. The review's primary audience is the **original author**, not a recap of bot comments. Output the body for the user to confirm; do NOT post unless explicitly asked.
+Generate a maintainer summary review for a PR after fixes have been applied. The primary audience is the **original author**, not a recap of bot comments. Output the body for the user to confirm; do not post unless explicitly asked.
 
 ### Input
 
@@ -21,15 +23,13 @@ Generate a maintainer summary review for a PR after fixes have been applied. The
 ### Process
 
 1. **Establish baseline and head**:
-   - First commit on the PR (original author's work):
-     `gh api repos/<o>/<r>/pulls/<n>/commits --paginate --jq '.[0].sha'`
-   - Latest head SHA:
-     `gh api repos/<o>/<r>/pulls/<n> --jq .head.sha`
-   - The author of the first commit is the review's audience (`gh api repos/<o>/<r>/pulls/<n>/commits --paginate --jq '.[0].author.login'`).
+   - Baseline `<first-sha>` (last commit in the PR author's leading run, the commit just before the first commit by a different author): `gh api repos/<o>/<r>/pulls/<n>/commits --paginate --jq '(.[0].author.login // .[0].commit.author.name) as $a | reduce .[] as $c ({run: true, sha: null}; if .run and (($c.author.login // $c.commit.author.name) == $a) then {run: true, sha: $c.sha} else {run: false, sha: .sha} end) | .sha'`. `.author.login` is null for unlinked-email commits, so fall back to `.commit.author.name` when reducing.
+   - Latest head SHA: `gh api repos/<o>/<r>/pulls/<n> --jq .head.sha`
+   - First commit's author is the review's audience: `gh api repos/<o>/<r>/pulls/<n>/commits --paginate --jq '.[0].author.login'`
 
-2. **Read the original author's code** at the first PR commit: `git show <first-sha>:<path>` for each changed file. This is the implementation being reviewed.
+2. **Read the original author's code** at the first PR commit: `git show <first-sha>:<path>` for each changed file. This is the implementation under review.
 
-3. **Read the current code** at HEAD via the standard `Read` tool. The diff between original and current is the "what we modified" section.
+3. **Diff baseline against head** with `git diff <first-sha> <head-sha>`; this authoritative diff is the "what we modified" section. Read full files at HEAD via the `Read` tool only where you need surrounding context the diff alone does not show.
 
 4. **Identify shortcomings** in the original implementation:
    - Bugs (data corruption, edge cases, off-by-one, race conditions).
@@ -45,9 +45,7 @@ Generate a maintainer summary review for a PR after fixes have been applied. The
    - Pure additions (new tests, docs, helpers) also count.
    - Use present tense ("renames X to Y", "replaces array with Map", "adds Z binding").
 
-6. **Identify potential further fixes**:
-   - Real issues that remain or are deferred. Each bullet states why (out of scope for this PR, upstream library limitation, low ROI, ergonomic taste).
-   - Do not invent suggestions to pad the section. If nothing remains, omit the section entirely.
+6. **Identify potential further fixes**: real issues that remain or are deferred; each bullet states why (out of scope for this PR, upstream library limitation, low ROI, ergonomic taste). Do not invent suggestions to pad.
 
 7. **Assemble the review body** in this layout:
 
@@ -69,21 +67,18 @@ Generate a maintainer summary review for a PR after fixes have been applied. The
    - <bullet>
    ```
 
-8. **Output the review body**. Do not post unless the user says "post" / "send" / "approve". When asked to post, use one of:
+8. **Posting commands.** When asked to post, use one of:
    - `gh pr review <num> --approve --body "<text>"` for approval
    - `gh pr review <num> --comment --body "<text>"` for non-approving comment
    - `gh pr review <num> --request-changes --body "<text>"` for changes requested
-   - To replace an existing review's body: `gh api --method PUT repos/<o>/<r>/pulls/<n>/reviews/<review-id> -f body="<text>"`.
+   - To replace an existing review's body, first resolve the review id with `gh api repos/<o>/<r>/pulls/<n>/reviews --jq '.[] | select(.user.login=="<me>") | .id'` (take the latest match), then `gh api --method PUT repos/<o>/<r>/pulls/<n>/reviews/<review-id> -f body="<text>"`.
 
 ### Rules
 
-- **Audience is the original author.** Frame each shortcoming as direct critique of the code, not as a summary of automated review output.
-- **Specific over vague.** Cite `file:line` and concrete identifiers. Replace "the code is unclear" with what specifically is unclear and where.
-- **No bot recap.** Do not list which bot found which issue. The author cares about the issue, not the source.
+- **Specific over vague.** Name concrete identifiers; replace "the code is unclear" with what specifically is unclear and where.
 - **One sentence per bullet** is the target. Multi-clause only when the *why* is non-obvious.
 - **Lowercase bullet text** except for proper nouns, code identifiers as they appear in source, and acronyms (`API`, `CSI-u`, `React`, `CJK`).
-- **No em dashes or en dashes** in prose — use commas, parentheses, or sentence breaks. Hyphens inside compound words (`grapheme-aware`, `kebab-case`) are fine.
-- **Be honest about partial fixes.** If a modification is incomplete, also list the remaining work under "potential further fixes".
-- **Skip empty sections.** If everything in the original was sound (no shortcomings) or nothing was modified, omit that section. Don't pad.
-- **Don't post unprompted.** Always output the body for the user to confirm first.
-- **Match the user's language** for the conversational reply (the review body itself stays in English, per typical GitHub conventions, unless the user directs otherwise).
+- **No em dashes or en dashes** in prose; use commas, parentheses, or sentence breaks. Hyphens inside compound words (`grapheme-aware`, `kebab-case`) are fine.
+- **Be honest about partial fixes.** If a modification is incomplete, list the remaining work under "potential further fixes".
+- **Skip empty sections.** Omit any section (shortcomings, modified, or fixes) with nothing to say; don't pad.
+- **Match the user's language** for the conversational reply; the review body itself stays in English unless the user directs otherwise.

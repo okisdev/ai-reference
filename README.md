@@ -40,7 +40,7 @@ Reorganize uncommitted changes and/or messy commits on the current branch into c
 
 **Triggers:** "Clean up the commits on this branch", "Reorganize this branch's history"
 
-#### pr
+#### make-pr
 
 Create a GitHub PR from the current branch with a title and body that follow the repo's conventions and the user's writing style. Auto-detects the repo's PR template, places `closes #N` at the top of the body, derives a `type(scope):` title from recent merged PRs, splits the test plan into "already verified" vs "reviewer should verify", and runs pre-flight guards for empty PR / WIP commits / behind-base / merge commits.
 
@@ -52,9 +52,15 @@ Fetch a GitHub issue and verify each of its claims against the current codebase 
 
 **Triggers:** "Verify issue #123", "Is this issue still valid?"
 
+#### verify-pr
+
+Verify a GitHub PR against its stated goal and the surrounding codebase. Judges first whether the PR should exist at all (necessity, redundancy, honest scope), then correctness, tests, conventions, and side effects. Produces a maintainer-ready verdict that can recommend closing a redundant PR even when it is technically clean, and separates blocking issues from optional polish.
+
+**Triggers:** "Should we merge PR #456?", "Verify this PR before merge". This is the whole-PR verdict; for per-comment triage of the review threads use `verify-pr-comments`.
+
 #### verify-pr-comments
 
-Fetch review comments on a GitHub PR (bots + humans), classify by staleness, and verify each fresh claim against the current code — reporting which to accept, reject, or defer with fix drafts.
+Fetch review comments on a GitHub PR (bots + humans), classify by staleness, and verify each fresh claim against the current code, reporting which to accept, reject, or defer with fix drafts.
 
 **Triggers:** "Check the PR review comments", "Verify the bot comments on #456"
 
@@ -64,11 +70,31 @@ Write a maintainer-style summary review of a GitHub PR with three sections: shor
 
 **Triggers:** "Write the approval review for #789", "Summarize what we fixed on this PR"
 
+#### ship-pr
+
+Drive a change all the way to a merged PR: implement if needed, branch, open the PR, then monitor CI and review threads on a recurring loop, addressing feedback each cycle and merging once the gate passes. Auto-detects the entry point (uncommitted changes, an existing branch, or an already open PR) and resumes at the right step rather than forcing the full flow, auto-detects GitButler versus plain git, and treats only the repo's required checks as gating while advisory checks and review bots never block. Composes `make-branch`, `commit-changes`, and `make-pr` to create, `verify-pr` to judge the PR, and `verify-pr-comments` to triage the threads; it owns the loop, the merge gate, and the merge itself.
+
+**Triggers:** "Ship this change", "Take this PR to merge", "Open a PR and merge it when CI is green"
+
 ## Installation
+
+### Claude Code
 
 ```bash
 npx skills add okisdev/ai-reference
 ```
+
+### OpenAI Codex
+
+Codex scans `~/.agents/skills` (user) and `.agents/skills` (repo), not `~/.claude`, and it follows symlinks. Clone the repo and link the skills you want into a scanned path:
+
+```bash
+git clone https://github.com/okisdev/ai-reference.git
+mkdir -p ~/.agents/skills
+for d in ai-reference/skills/*/; do ln -s "$(cd "$d" && pwd)" ~/.agents/skills/"$(basename "$d")"; done
+```
+
+Enable or disable individual skills in `~/.codex/config.toml`. `ship-pr` ships `allow_implicit_invocation: false`, so Codex will not auto-trigger it; invoke it explicitly. Each skill's `## Context` probes are auto-run by Claude Code; in Codex the agent runs them itself (every skill carries a note to that effect).
 
 ## Usage
 
@@ -93,13 +119,7 @@ Verify the review comments on PR #123
 ├── agents/
 │   └── code-simplifier.md
 └── skills/
-    ├── make-branch/
-    ├── commit-changes/
-    ├── organize-commits/
-    ├── pr/
-    ├── review-summary/
-    ├── verify-issue/
-    └── verify-pr-comments/
+    └── (one directory per skill listed under "Available")
 ```
 
 ## License
