@@ -10,9 +10,13 @@ Repository: !`gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null ||
 Default branch: !`git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@refs/remotes/origin/@@' || echo main`
 Current branch: !`git branch --show-current 2>/dev/null`
 
+Runtimes that do not auto-run the commands above marked with `!` (Claude Code executes them and injects their output) should run each one to gather this context; treat any `$ARGUMENTS` or `$1` as the input the user provided.
+
 ## Instructions
 
 Verify every substantive review comment on a GitHub PR against the current codebase. Execute immediately without asking.
+
+**Distinct from siblings**: `/verify-pr` judges whether a PR should merge; `/verify-issue` validates an issue's claims; this skill validates the review comments left ON a PR. Use `/verify-pr` to decide whether to merge; use this one when responding to reviewers.
 
 ### Input
 
@@ -20,11 +24,11 @@ Verify every substantive review comment on a GitHub PR against the current codeb
 
 ### Process
 
-1. **Fetch comments from all three endpoints**, since PR reviews are fragmented:
-   - `gh api repos/<owner>/<repo>/pulls/<num>/reviews --paginate`, top-level reviews (the long summary bodies from `claude[bot]`, `cubic-dev-ai[bot]`, human reviewers). Each entry has `commit_id`.
-   - `gh api repos/<owner>/<repo>/pulls/<num>/comments --paginate`, inline comments on specific file/line. Each entry has `path`, `line`, `commit_id`, `body`.
-   - `gh api repos/<owner>/<repo>/issues/<num>/comments --paginate`, issue-level PR comments (where bots like `changeset-bot`, `vercel`, `greptile-apps` post status).
-   - `gh pr view <num> --comments` returns a human-readable mix but lacks `commit_id` for staleness detection. Use it only as a fallback.
+1. **Fetch comments from all three endpoints** (PR reviews are fragmented):
+   - `gh api repos/<owner>/<repo>/pulls/<num>/reviews --paginate`: top-level reviews (long summary bodies from `claude[bot]`, `cubic-dev-ai[bot]`, human reviewers). Each has `commit_id`.
+   - `gh api repos/<owner>/<repo>/pulls/<num>/comments --paginate`: inline comments on a file/line. Each has `path`, `line`, `commit_id`, `body`.
+   - `gh api repos/<owner>/<repo>/issues/<num>/comments --paginate`: issue-level PR comments (where `changeset-bot`, `vercel`, `greptile-apps` post status).
+   - `gh pr view <num> --comments`: human-readable mix but lacks `commit_id` for staleness detection; fallback only.
 
 2. **Fetch resolution state for inline-comment threads** via GraphQL (REST does not expose this):
    ```bash
@@ -35,6 +39,7 @@ Verify every substantive review comment on a GitHub PR against the current codeb
            reviewThreads(first: 100) {
              nodes {
                isResolved
+               isOutdated
                comments(first: 10) { nodes { databaseId } }
              }
            }
@@ -42,35 +47,37 @@ Verify every substantive review comment on a GitHub PR against the current codeb
        }
      }'
    ```
-   Build a map from inline comment ID to `isResolved`. Comments in resolved threads have already been addressed and should be filtered before verification.
+   Build a map from inline comment ID to its thread's `isResolved` and `isOutdated`. Resolved-thread comments had a real review claim that was already addressed; they carry the **Resolved** verdict and are excluded from re-verification (not collapsed into Stale), re-verifying only if the user explicitly asks.
 
-3. **Determine the latest commit on the PR**:
-   - `gh api repos/<owner>/<repo>/pulls/<num> --jq .head.sha`. This is the `commit_id` against which "fresh" comments are judged.
+3. **Determine the latest commit**: `gh api repos/<owner>/<repo>/pulls/<num> --jq .head.sha`. Fresh comments are judged against this `commit_id`.
 
-4. **Filter noise** by skipping entries whose body is metadata-only, not a review claim:
+4. **Filter noise** by skipping entries whose body is metadata, not a review claim:
    - `changeset-bot`: changeset detection summary.
    - `vercel` / `vercel[bot]`: deployment URLs.
    - `greptile-apps` when body is just the `<!-- greptile_other_comments_section -->` footer.
-   - Any comment whose body is entirely HTML attribution / CTA / badges with no prose claim. Strip `<!-- ... -->` markers and "Fix with …" buttons before reading.
-   - Any inline comment in a resolved thread (per step 2).
+   - Any body that is entirely HTML attribution / CTA / badges with no prose claim. Strip `<!-- ... -->` markers and "Fix with …" buttons before reading.
+
+   Resolved-thread comments are not noise; they carry a real, already-addressed claim. They appear in the matrix with the **Resolved** verdict (step 2) but are skipped for active verification.
 
 5. **Classify each remaining comment by staleness**:
-   - **Fresh**: `commit_id === latest head SHA`. Reviewer saw the current code; verify it.
-   - **Stale**: `commit_id !== latest head SHA`. May already be addressed. Don't reverify unless the user asks; mark as "Stale (last seen at `<sha[:7]>`)" and move on.
+   - **Inline comments**: judge by `isOutdated` from the reviewThreads map (step 2). `isOutdated: true` => **Stale**; `isOutdated: false` => **Fresh**, verify it. A push changes the head SHA, so exact `commit_id` equality over-marks inline comments whose target code is untouched; `isOutdated` reflects whether the commented lines actually moved.
+   - **Top-level review summary bodies**: these carry no thread, so reserve `commit_id` equality for them. `commit_id === latest head SHA` => **Fresh**, verify it; otherwise **Stale**.
+   - Mark stale entries "Stale (last seen at `<sha[:7]>`)" and move on; don't reverify unless the user asks.
 
 6. **Verify each fresh, substantive comment**:
-   - Use `Read` on the referenced file at its current state. Do NOT trust the reviewer's quoted diff; quoted snippets are often outdated after pushes.
-   - **Treat ```` ```suggestion ```` blocks as the primary artifact.** Most reviewer bots embed concrete code suggestions in suggestion blocks (GitHub renders them as one-click "Commit suggestion" buttons). Read the suggestion first, then the surrounding prose as justification. Verify the suggestion in isolation: would applying it produce code that compiles and matches existing patterns?
-   - Cross-check any factual claim ("type X already exists in module Y", "pattern Z is used in other-file.ts") with `Grep` before accepting it.
-   - **Mentally apply the suggested fix** and verify types/callers/tests still pass. Bots frequently suggest fixes that fail type-check or break other callers; validating the suggestion is part of verification.
+   - `Read` the referenced file at its current state. Do NOT trust the reviewer's quoted diff; snippets go outdated after pushes.
+   - Treat ```` ```suggestion ```` blocks as the primary, testable artifact (GitHub renders them as one-click "Commit suggestion" buttons). Read the suggestion first, surrounding prose as justification; verify it in isolation: would applying it compile and match existing patterns?
+   - Cross-check any factual claim ("type X exists in module Y", "pattern Z is used in other-file.ts") with `Grep` before accepting it.
+   - Mentally apply the suggested fix and verify types/callers/tests still pass; bots frequently suggest fixes that fail type-check or break callers.
    - Assign one verdict:
      - **Confirmed**: claim correct and the suggested fix works as-is.
-     - **Partial**: claim has merit but the suggested fix is wrong or incomplete; propose an adjusted fix.
-     - **Refuted**: claim is incorrect. Explain why with code evidence.
-     - **Out-of-scope**: claim may be valid but exceeds the PR's intent (architectural refactor, missing tests, etc.). Defer to follow-up.
-     - **Stale**: already addressed (see step 5) or in a resolved thread (per step 2).
+     - **Partial**: claim has merit but the fix is wrong or incomplete; propose an adjusted fix (e.g. `Pick<ThreadListItemRuntime, "foo">` rather than the bare type).
+     - **Refuted**: claim incorrect. Explain why with code evidence.
+     - **Out-of-scope**: valid but exceeds the PR's intent (architectural refactor, missing tests, etc.). Defer to follow-up.
+     - **Resolved**: a human marked the thread resolved (step 2).
+     - **Stale**: outdated against the current code (step 5).
 
-7. **Parallel verification**: run independent Read/Grep calls in parallel. Prefer direct tool calls to avoid burning context via agents.
+7. **Parallel verification**: run independent Read/Grep calls in parallel. Prefer direct tool calls over agents to save context.
 
 8. **Report** in structured output:
 
@@ -90,28 +97,12 @@ Verify every substantive review comment on a GitHub PR against the current codeb
 
 ### Bot signature reference
 
-Skim this when classifying authors:
-
-| Bot | Typical shape | What's signal |
-|-----|---------------|---------------|
-| `claude[bot]` | Long structured review with sections like "Issues found", "Suggestions". Often inline + summary. | Section headings under "Issues" / "Critical"; suggestion blocks. |
-| `cubic-dev-ai[bot]` | Either "**No issues found**" or specific findings, each with severity. Always carries a `<!-- cubic:attribution -->` marker (ignore the marker text). | Findings with `file:line`; ignore boilerplate and attribution. |
-| `coderabbit-ai[bot]` / `coderabbitai[bot]` | Verbose walkthrough + an "Actionable comments" section + inline nitpicks. | The "Actionable comments posted" count and inline comments. Ignore the walkthrough summary. |
-| `greptile-apps` | Short status comment plus separate inline comments. Summary often contains only `<!-- greptile_other_comments_section -->`. | Inline comments only; the summary is metadata. |
-| `changeset-bot` | "🦋 Changeset detected" or a warning if missing. | Whether a changeset exists; nothing else. |
-| `vercel[bot]` / `vercel` | Deployment URL or build status. | Always noise. |
-| Human reviewer | Free-form prose, sometimes inline. | Take seriously; outweighs bots on disagreement. |
+See `references/bot-signatures.md` for the bot-signature table; skim it when classifying authors.
 
 ### Rules
 
-- **Always read the current file state**, not the reviewer's quoted diff. Bots quote outdated code after a push.
-- **Suggestion blocks first**: when a comment contains a ```` ```suggestion ```` block, that's the testable artifact. Verify by mental application; the surrounding prose is justification, not the proposal.
-- **Verify suggested fixes by simulation**: if a bot says "replace X with `ThreadListItemRuntime`", check whether call-sites still type-check with that change. If the suggestion is structurally wrong, mark **Partial** and propose a correct variant (e.g. `Pick<ThreadListItemRuntime, "foo">`).
 - **Distinguish "Critical Issues" from "Suggestions"**: review bots often split their output. Critical issues deserve Confirmed/Refuted judgments; plain suggestions can be marked Out-of-scope with a one-line reason.
 - **Human > bot**: if a human reviewer contradicts a bot, weight the human's intent and note the bot's disagreement in the report.
-- **Resolved threads are addressed**: if a thread is `isResolved=true`, treat it as Stale-equivalent. Do not re-verify unless the user explicitly asks.
-- **Stale comments**: mark and move on. Don't spend tokens re-verifying a claim about code that no longer exists.
 - **Never modify files** during verification. This skill is read-only analysis; fix work happens in a follow-up step.
 - **Be concise**: evidence is `file:line` references, not code dumps. The matrix is the primary artifact.
 - **Use the same language as the user's input** when reporting.
-- **See also**: `/verify-pr` validates the PR itself (correctness, tests, conventions). This skill validates the comments left ON the PR. Use `/verify-pr` to decide whether to merge; use this one when responding to reviewers.

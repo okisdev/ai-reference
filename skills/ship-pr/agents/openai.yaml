@@ -1,0 +1,5 @@
+interface:
+  display_name: "Ship PR"
+  short_description: "Drive a change to a merged PR: build it, monitor CI and reviews, merge when the gate passes"
+policy:
+  allow_implicit_invocation: false
