@@ -7,33 +7,24 @@ description: Stage and commit only uncommitted file changes into clean, categori
 
 Current branch: !`git branch --show-current`
 
-### Uncommitted changes
+Uncommitted changes: !`git status --short`
 
-!`git status --short`
-
-### Uncommitted diff stat
-
-!`git diff --stat HEAD 2>/dev/null`
-
-Runtimes that do not auto-run the commands above marked with `!` (Claude Code executes them and injects their output) should run each one to gather this context; treat any `$ARGUMENTS` or `$1` as the input the user provided.
+Uncommitted diff stat: !`git diff --stat HEAD 2>/dev/null`
 
 ## Instructions
 
 Categorize **only the current uncommitted changes** into clean commits. Do NOT touch or reset any existing commits.
 
-### Process
-
-1. Read diffs (`git diff HEAD`) to understand what changed. Untracked/new files don't appear in `git diff HEAD` (only as `??` in `git status`); read those files directly so they're categorized, not missed. Group by **purpose** using conventional commits (`feat:`, `fix:`, `chore:`, `refactor:`, `docs:`, `style:`, `test:`, `perf:`, `ci:`, `build:`, `revert:`).
-2. For each group, stage by explicit paths only: `git add <files>` + `git commit`. Never `git add -A` or `git add .`, so `.env`, credentials, or unrelated churn aren't committed.
+1. Read diffs (`git diff HEAD`) to understand what changed. Untracked/new files don't appear in `git diff HEAD`; read those files directly so they're categorized, not missed. Group by **purpose** using conventional commits (`feat:`, `fix:`, `chore:`, `refactor:`, `docs:`, `style:`, `test:`, `perf:`, `ci:`, `build:`, `revert:`).
+2. For each group, stage by explicit paths only: `git add <files>` + `git commit`. Never `git add -A` or `git add .`.
 3. Verify `git status` is clean, show `git log --oneline` of new commits.
 
-### Rules
+Rules:
 
 - 3 to 7 commits max, each independently meaningful
 - If only 1 to 2 files changed, a single commit is fine
 - Assign each file to its primary category; don't split files across commits
 - Foundational changes first (config, types, rename), then features, then polish
-- Match the repo's existing commit-message style (subject case, scope notation, body); skim recent `git log` if unsure
+- Match the repo's existing commit-message style (subject case, scope notation, body)
 - If pre-commit hooks fail, fix the failure and re-commit; never bypass with `--no-verify`
-- NEVER reset, rebase, or modify existing commits
-- NEVER force push; just show the result and let the user decide
+- NEVER reset, rebase, modify existing commits, or force push
