@@ -1,6 +1,6 @@
 ---
 name: verify-pr
-description: Verify a GitHub PR against its stated goal and the surrounding codebase. Judges first whether the PR should exist at all (necessity, redundancy, honest scope), then correctness, tests, conventions, and side effects. Produces a maintainer-ready verdict that can recommend closing a technically-clean but redundant PR, and separates blocking issues from optional polish.
+description: Verify a GitHub PR against its stated goal and the surrounding codebase, judging whether it should exist at all before correctness, tests, conventions, and side effects.
 argument-hint: "<pr-number-or-url>"
 ---
 
@@ -10,31 +10,16 @@ Repository: !`gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null ||
 Default branch: !`git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@refs/remotes/origin/@@' || echo main`
 Current branch: !`git branch --show-current 2>/dev/null`
 
-Runtimes that do not auto-run the commands above marked with `!` (Claude Code executes them and injects their output) should run each one to gather this context; treat any `$ARGUMENTS` or `$1` as the input the user provided.
-
 ## Instructions
 
-Verify a GitHub PR multi-dimensionally. Execute immediately without asking.
+Verify a GitHub PR multi-dimensionally (claim-driven and necessity-driven, not opinion-driven like generic `/review`; for issue verification use `/verify-issue`, for comment triage use `/verify-pr-comments`). Execute immediately without asking. Judge two things, in order:
 
-This skill judges two things, in order:
-
-1. **Should this PR exist at all?** Necessity and authenticity: is the problem real, is the value already delivered elsewhere, does it duplicate existing code or another PR, and does its description honestly match what it ships? A flawless PR can still not warrant merging.
+1. **Should this PR exist at all?** Necessity and authenticity: is the problem real, is the value already delivered elsewhere, does it duplicate existing code or another PR, and does its description honestly match what it ships? A flawless PR can still not warrant merging; necessity gates the verdict.
 2. **Does it achieve what it claims?** Correctness, tests, conventions, side effects.
-
-Claim-driven and necessity-driven, not opinion-driven; that distinguishes it from a generic review skill. A clean technical report does NOT imply the PR should merge; necessity gates the verdict.
-
-Distinct from siblings:
-- **verify-issue**, validates an issue's claims against the codebase.
-- **verify-pr-comments**, validates review comments on a PR against the actual code.
-- Generic `/review`, opinion-driven feedback. This skill produces a focused verdict instead.
-
-### Input
-
-`$ARGUMENTS` is a PR number (e.g. `4020`) or a full GitHub PR URL.
 
 ### Process
 
-1. **Fetch PR state**: `gh pr view <num> --json number,title,body,headRefName,baseRefName,mergeable,mergeStateStatus,statusCheckRollup,reviews,comments,additions,deletions,files`, then `gh pr diff <num>` for the patch. Parse the body for linked issues (`Closes #X`, `Fixes #X`, bare `#XXXX` references).
+1. **Fetch PR state** (`$ARGUMENTS` is a PR number like `4020` or a full GitHub PR URL): `gh pr view <num> --json number,title,body,headRefName,baseRefName,mergeable,mergeStateStatus,statusCheckRollup,reviews,comments,additions,deletions,files`, then `gh pr diff <num>` for the patch. Parse the body for linked issues (`Closes #X`, `Fixes #X`, bare `#XXXX` references).
 
 2. **Fetch the linked issue** (if any) via `gh issue view <issue-num>`. Judge correctness against what the issue actually requested, not just what the PR claims; the gap is itself a finding. Overpromising, a `Closes #X` that only partially delivers, is itself a necessity finding; see Rules.
 
@@ -43,13 +28,11 @@ Distinct from siblings:
    - Grep the codebase for the feature or function the PR adds: does equivalent functionality already exist that the PR should reuse rather than re-implement?
    - Note any external or ecosystem artifact the PR may be reinventing (published package, sibling repo, existing CLI command, hosted service). If the same outcome is reachable by reusing one, the new code is redundant.
 
-   Skipping this step is the most common way a "merge as-is" verdict turns out wrong.
-
 4. **Pick verification dimensions**, evaluated in this order:
    - **Necessity and justification** (gating), should this PR exist? Check: (a) the problem is real and not already solved in the codebase; (b) it does not duplicate an existing, in-flight, or already-merged PR; (c) it does not re-implement functionality that already exists in the repo or an ecosystem artifact it should reuse (per step 3); (d) the linked issue's actual ask is met and not overpromised; (e) the value justifies the added code and its long-term maintenance surface. A PR can pass every other dimension and still fail here.
-   - **Correctness**, does the diff fix what the issue or description describes? Reading that the code looks right is the floor. When the fix targets runtime behavior (a crash, thrown error, wrong output, environment difference), prove it: `git worktree add ../verify-<num> && cd ../verify-<num> && gh pr checkout <num>`, run the repro or the PR's added tests against the real code to confirm the bug is gone, then remove the worktree. A diff that looks correct but does not resolve the bug is the failure this catches.
+   - **Correctness**, does the diff fix what the issue or description describes? When the fix targets runtime behavior (a crash, thrown error, wrong output, environment difference), prove it: `git worktree add ../verify-<num> && cd ../verify-<num> && gh pr checkout <num>`, run the repro or the PR's added tests against the real code to confirm the bug is gone, then remove the worktree. A diff that looks correct but does not resolve the bug is the failure this catches.
    - **Test quality**, are new tests adequate and matched to the repo's existing patterns (mock style, helper conventions, naming)?
-   - **Style and conventions**, changeset format, naming, file structure, lint rules, casual-register changeset wording.
+   - **Conventions and paradigm conformance**, does the change match how this codebase already does things? Judge each changed surface against its nearest in-repo precedent (the sibling hook, test, doc example, or type), not against generic best practice or your taste: changeset format, naming, export placement, file structure, lint rules, and the area's architectural patterns (state access, memoization, guards, module boundaries). A choice that mirrors an existing sibling conforms even when you would write it differently; a difference is a deviation only when you can cite the established pattern it breaks.
    - **Side effects**, does the change interact safely with adjacent code paths (other plugins, IME composition, related event handlers, neighbouring modules)?
 
    Skip dimensions that don't apply (no tests added: surface that as its own finding instead of running the dimension). Never skip Necessity.
@@ -57,9 +40,9 @@ Distinct from siblings:
 5. **Dispatch parallel investigation** for any dimension requiring 3+ files. Use `Explore` agents in parallel:
    - Necessity: search open and merged PRs and issues for overlap, and the codebase and ecosystem for functionality the PR duplicates or should reuse.
    - Test quality vs repo patterns: compare the new test file to other tests in the same area; identify mismatches and coverage gaps.
-   - Style and convention compliance: compare the changeset, code style, file structure to recent merged work.
+   - Conventions and paradigm conformance: map each changed surface to its nearest in-repo precedent (sibling hook, test, doc example, type) and compare against THAT, citing paired `file:line` for the change and the pattern it breaks. Add a completeness-critic pass that re-checks each flagged deviation against the shipped code, since diff-summary pattern-matching both misses idioms and invents deviations.
 
-   For correctness and side effects, direct `Read`/`Grep` is usually enough; do those yourself to keep the synthesis sharp.
+   For correctness and side effects, use direct `Read`/`Grep`.
 
 6. **Treat CI and review state as data, not verdict**. Green CI proves nothing about correctness, only that no automated check failed; always read the diff. A bot's "no issues found" is one data point, not absolution, and CI says nothing about necessity. Separate **gating** signals from **advisory** ones: some checks and reviewers (often an AI review bot) are configured non-blocking and must not be treated as merge blockers, while a human's `CHANGES_REQUESTED` and an unresolved review thread are real operational blockers even when every quality dimension is OK. Surface these; a clean quality read does not mean the PR is mergeable right now.
 
@@ -78,7 +61,7 @@ Distinct from siblings:
      | Necessity | OK / minor / fail | fail = redundant or unjustified |
      | Correctness | OK / minor / fail | |
      | Test quality | OK / minor / fail | |
-     | Style / conventions | OK / minor / fail | |
+     | Conventions / paradigm | OK / minor / fail | deviation must cite the in-repo pattern it breaks |
      | Side effects | OK / minor / fail | |
      | CI | green / failing | |
 
@@ -93,12 +76,7 @@ Distinct from siblings:
 
 ### Rules
 
-- Distinguish the problem being real from the implementation being correct: a correct, well-tested implementation of an unneeded change is still a close.
-- Redundancy is a Blocking-level necessity finding, not a polish note.
-- The "correctness" finding is the delta between the PR's claim (body + diff) and its actual effect (what the code does); an inaccurate `Closes #X` (overpromised scope, or files or behavior the diff does not ship) is a finding even when the shipped code works.
-- Read the diff yourself; most shipped bugs are not caught by lint or type checks.
-- Test quality means matching the codebase's established patterns, not enforcing your favourite framework or asserting style preferences as gaps.
-- Be specific about what a maintainer would push back on; soft "could be better" feedback belongs in optional follow-ups, not Blocking findings.
-- Be concise: evidence is `file:line` references and observed results, not full code dumps; the verdict table and final recommendation are the primary artifacts.
-- Use the same language as the user's input when reporting.
+- Distinguish the problem being real from the implementation being correct: a correct, well-tested implementation of an unneeded change is still a close. Redundancy is a Blocking-level necessity finding, not a polish note.
+- An inaccurate `Closes #X` (overpromised scope, or files or behavior the diff does not ship) is a finding even when the shipped code works.
 - This skill is read-only analysis; do not modify files (fixes happen in a follow-up step or a separate skill invocation). The one exception is step 4's throwaway repro worktree: check out the PR, run it against the real code, then remove the worktree. Never commit, never push to the PR.
+- Use the same language as the user's input when reporting.
