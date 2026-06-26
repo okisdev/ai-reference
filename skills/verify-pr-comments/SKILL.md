@@ -49,7 +49,7 @@ Verify every substantive review comment on a GitHub PR against the current codeb
    - `greptile-apps` when body is just the `<!-- greptile_other_comments_section -->` footer.
    - Any body that is entirely HTML attribution / CTA / badges with no prose claim. Strip `<!-- ... -->` markers and "Fix with …" buttons before reading.
 
-   Resolved-thread comments are not noise; they appear in the matrix with the **Resolved** verdict (step 2) but are skipped for active verification.
+   Resolved-thread comments are not noise; they get the **Resolved** verdict (step 2) and are skipped for active verification.
 
 5. **Classify each remaining comment by staleness**:
    - **Inline comments**: judge by `isOutdated` from the reviewThreads map (step 2). `isOutdated: true` => **Stale**; `isOutdated: false` => **Fresh**, verify it.
@@ -92,4 +92,4 @@ See `references/bot-signatures.md` for the bot-signature table; skim it when cla
 ### Rules
 
 - **Human > bot**: if a human reviewer contradicts a bot, weight the human's intent and note the bot's disagreement in the report.
-- **Never modify files** during verification. This skill is read-only analysis; fix work happens in a follow-up step.
+- **Never modify files** during verification; fix work happens in a follow-up step.

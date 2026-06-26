@@ -18,12 +18,12 @@ Potentially relevant ignored files: !`git ls-files --others --ignored --exclude-
 
 ## Instructions
 
-### Base selection (critical)
+### Base selection
 
 Default: branch off the **default base** (e.g. `main`), NOT the current HEAD.
 
 - If `--base <branch>` is provided, use it.
-- If `--keep-base` is provided, branch off current HEAD (legacy behavior).
+- If `--keep-base` is provided, branch off current HEAD.
 - Otherwise, if there are commits ahead of the default base AND those commits look unrelated to the uncommitted diff (different scope/files), branch off the default base.
 - If commits ahead look related to the same work (e.g. same files, same feat scope), branch off current HEAD.
 
@@ -40,7 +40,7 @@ When in doubt and the set is small, err on branching off the default base.
 3. Otherwise (branching off current HEAD): `git checkout -b <branch-name>`.
 4. **Stage ALL uncommitted changes with `git add -A`. NEVER revert, discard, filter, or skip any file.**
 5. Check for **gitignored files** that look like they belong to the work (e.g. drizzle migration SQL/snapshot when `drizzle/` is in `.gitignore`): if found, force-add with `git add -f <file>` AND flag to the user that the `.gitignore` rule may need fixing.
-6. Show `git status --short` and confirm the branch was created. If files might be unrelated noise, **flag them to the user** so they can decide; do NOT revert.
+6. Show `git status --short` and confirm the branch was created. If files might be unrelated noise, **flag them to the user**; do NOT revert.
 7. Show `git log <base>..HEAD --oneline`: on the default-base path it should be empty (no stray commits); on the `--keep-base` / branch-off-HEAD path, confirm only the intended related commits are ahead.
 
 ### Rules

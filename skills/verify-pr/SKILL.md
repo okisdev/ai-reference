@@ -24,12 +24,12 @@ Verify a GitHub PR multi-dimensionally (claim-driven and necessity-driven, not o
 2. **Fetch the linked issue** (if any) via `gh issue view <issue-num>`. Judge correctness against what the issue actually requested, not just what the PR claims; the gap is itself a finding. Overpromising, a `Closes #X` that only partially delivers, is itself a necessity finding; see Rules.
 
 3. **Search for duplication and prior art** (early, in parallel with reading the diff) to find out whether the PR is needed at all:
-   - `gh pr list --search "<keywords>" --state all` and `gh issue list --search "<keywords>" --state all` for competing open PRs, an already-merged fix that supersedes this one, or a duplicate issue. A **closed** PR is as informative as an open one: read its closing comment, since an approach abandoned because it broke another consumer is often why this PR should not take the same path.
+   - `gh pr list --search "<keywords>" --state all` and `gh issue list --search "<keywords>" --state all` for competing open PRs, an already-merged fix that supersedes this one, or a duplicate issue. A closed PR is as informative as an open one: read its closing comment, since why an approach was abandoned is often why this PR should not take the same path.
    - Grep the codebase for the feature or function the PR adds: does equivalent functionality already exist that the PR should reuse rather than re-implement?
-   - Note any external or ecosystem artifact the PR may be reinventing (published package, sibling repo, existing CLI command, hosted service). If the same outcome is reachable by reusing one, the new code is redundant.
+   - Note any external or ecosystem artifact the PR may be reinventing (published package, sibling repo, existing CLI command, hosted service).
 
 4. **Pick verification dimensions**, evaluated in this order:
-   - **Necessity and justification** (gating), should this PR exist? Check: (a) the problem is real and not already solved in the codebase; (b) it does not duplicate an existing, in-flight, or already-merged PR; (c) it does not re-implement functionality that already exists in the repo or an ecosystem artifact it should reuse (per step 3); (d) the linked issue's actual ask is met and not overpromised; (e) the value justifies the added code and its long-term maintenance surface. A PR can pass every other dimension and still fail here.
+   - **Necessity and justification** (gating), should this PR exist? Check: (a) the problem is real and not already solved in the codebase; (b) it does not duplicate an existing, in-flight, or already-merged PR; (c) it does not re-implement functionality that already exists in the repo or an ecosystem artifact it should reuse (per step 3); (d) the linked issue's actual ask is met and not overpromised; (e) the value justifies the added code and its long-term maintenance surface.
    - **Correctness**, does the diff fix what the issue or description describes? When the fix targets runtime behavior (a crash, thrown error, wrong output, environment difference), prove it: `git worktree add ../verify-<num> && cd ../verify-<num> && gh pr checkout <num>`, run the repro or the PR's added tests against the real code to confirm the bug is gone, then remove the worktree. A diff that looks correct but does not resolve the bug is the failure this catches.
    - **Test quality**, are new tests adequate and matched to the repo's existing patterns (mock style, helper conventions, naming)?
    - **Conventions and paradigm conformance**, does the change match how this codebase already does things? Judge each changed surface against its nearest in-repo precedent (the sibling hook, test, doc example, or type), not against generic best practice or your taste: changeset format, naming, export placement, file structure, lint rules, and the area's architectural patterns (state access, memoization, guards, module boundaries). A choice that mirrors an existing sibling conforms even when you would write it differently; a difference is a deviation only when you can cite the established pattern it breaks.
@@ -76,7 +76,7 @@ Verify a GitHub PR multi-dimensionally (claim-driven and necessity-driven, not o
 
 ### Rules
 
-- Distinguish the problem being real from the implementation being correct: a correct, well-tested implementation of an unneeded change is still a close. Redundancy is a Blocking-level necessity finding, not a polish note.
-- An inaccurate `Closes #X` (overpromised scope, or files or behavior the diff does not ship) is a finding even when the shipped code works.
+- Redundancy is a Blocking-level necessity finding, not a polish note.
+- An inaccurate `Closes #X` (scope, files, or behavior the diff does not ship) is a finding even when the shipped code works.
 - This skill is read-only analysis; do not modify files (fixes happen in a follow-up step or a separate skill invocation). The one exception is step 4's throwaway repro worktree: check out the PR, run it against the real code, then remove the worktree. Never commit, never push to the PR.
 - Use the same language as the user's input when reporting.

@@ -1,7 +1,5 @@
 # Bot signature reference
 
-Skim this when classifying authors:
-
 | Bot | Typical shape | What's signal |
 |-----|---------------|---------------|
 | `claude[bot]` | Long structured review with sections like "Issues found", "Suggestions". Often inline + summary. | Section headings under "Issues" / "Critical"; suggestion blocks. |

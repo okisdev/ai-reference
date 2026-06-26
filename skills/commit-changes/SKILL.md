@@ -13,9 +13,9 @@ Uncommitted diff stat: !`git diff --stat HEAD 2>/dev/null`
 
 ## Instructions
 
-Categorize **only the current uncommitted changes** into clean commits. Do NOT touch or reset any existing commits.
+Categorize **only the current uncommitted changes** into clean commits. Leave existing commits untouched.
 
-1. Read diffs (`git diff HEAD`) to understand what changed. Untracked/new files don't appear in `git diff HEAD`; read those files directly so they're categorized, not missed. Group by **purpose** using conventional commits (`feat:`, `fix:`, `chore:`, `refactor:`, `docs:`, `style:`, `test:`, `perf:`, `ci:`, `build:`, `revert:`).
+1. Read diffs (`git diff HEAD`). Untracked/new files don't appear in `git diff HEAD`; read those files directly so they're categorized, not missed. Group by **purpose** using conventional commits (`feat:`, `fix:`, `chore:`, `refactor:`, `docs:`, `style:`, `test:`, `perf:`, `ci:`, `build:`, `revert:`).
 2. For each group, stage by explicit paths only: `git add <files>` + `git commit`. Never `git add -A` or `git add .`.
 3. Verify `git status` is clean, show `git log --oneline` of new commits.
 

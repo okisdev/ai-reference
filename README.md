@@ -70,9 +70,15 @@ Write a maintainer-style summary review of a GitHub PR with three sections: shor
 
 **Triggers:** "Write the approval review for #789", "Summarize what we fixed on this PR"
 
+#### approve-pr
+
+Review a GitHub PR as a maintainer and, when it earns it, post the GitHub APPROVED review; otherwise report and decline. The maintainer-side counterpart to `ship-pr`: it owns the self-approval guard, the verify-pr-verdict to review-action mapping, and the `gh pr review` write (including the anti-stacking PUT-replace of a prior review), and it delegates the approve-or-decline verdict to `verify-pr`, thread triage to `verify-pr-comments`, the review body to `summarize-review`, and the optional post-approval merge to `ship-pr`. Auto-posts only an approval; `--request-changes`, `--comment`, and a close recommendation never write without an explicit opt-in.
+
+**Triggers:** "Approve PR #4621", "Review and approve this PR", "Approve and merge #4621"
+
 #### ship-pr
 
-Drive a change all the way to a merged PR: implement if needed, branch, open the PR, then monitor CI and review threads on a recurring loop, addressing feedback each cycle and merging once the gate passes. Auto-detects the entry point (uncommitted changes, an existing branch, or an already open PR) and resumes at the right step rather than forcing the full flow, auto-detects GitButler versus plain git, and treats only the repo's required checks as gating while advisory checks and review bots never block. Composes `create-branch`, `commit-changes`, and `create-pr` to create, `verify-pr` to judge the PR, and `verify-pr-comments` to triage the threads; it owns the loop, the merge gate, and the merge itself.
+Drive a change all the way to a merged PR: implement if needed, branch, open the PR, then monitor CI and review threads on a recurring loop, addressing feedback each cycle and merging once the gate passes. Auto-detects the entry point (uncommitted changes, an existing branch, or an already open PR) and resumes at the right step rather than forcing the full flow, auto-detects GitButler versus plain git, and treats only the repo's required checks as gating while advisory checks and review bots never block. Composes `create-branch`, `commit-changes`, and `create-pr` to create, `verify-pr` to judge the PR, and `verify-pr-comments` to triage the threads; it owns the loop, the merge gate, and the merge itself. With the opt-in `--approve` it also delegates to `approve-pr` to post the maintainer approval when shepherding another author's PR (a no-op on your own PRs, since GitHub blocks self-approval).
 
 **Triggers:** "Ship this change", "Take this PR to merge", "Open a PR and merge it when CI is green"
 
