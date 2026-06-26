@@ -1,6 +1,6 @@
 ---
 name: create-pr
-description: create or open a GitHub pull request (PR) from the current branch with a title and body that follow the repo's conventions and the user's writing style; auto-detects the base branch and fills the repo's PR template when one is present
+description: create or open a GitHub pull request (PR) from the current branch with a title and body that follow the repo's conventions and the user's writing style
 argument-hint: "[base-branch] [--draft]"
 ---
 
@@ -21,7 +21,7 @@ Repo PR template (if present): !`for p in .github/pull_request_template.md .gith
 
 Execute immediately without asking. Skip steps that don't apply.
 
-1. **Pre-flight guards** (treat any `$ARGUMENTS` / `$1` as the user input; `$1` is the optional base branch). Run in order; abort or warn as specified.
+1. **Pre-flight guards** (treat any `$ARGUMENTS` / `$1` as the user input; `$1` is the optional base branch). Run in order.
    - Abort if the current branch is the base/default branch; run `/create-branch` first to move the work onto a feature branch.
    - Abort if no commits exist between branch and base ("nothing to PR").
    - Abort if any commit subject matches `/^(WIP|wip:?|fixup!|squash!)/i`, unless `--draft` was passed (then proceed and mark draft); to clean them up, run `/organize-commits`, then re-run.
@@ -91,4 +91,4 @@ Apply to title and body; override the repo template's prose style (its section s
 
 - **casing**: casual register. Lowercase except proper nouns (`React`, `TypeScript`, `GitHub`), conventionally-uppercase acronyms (`API`, `HTTP`, `URL`), and case-sensitive code identifiers.
 - **dash rule**: never use em-dashes (`—`), en-dashes (`–`), or hyphens used as sentence punctuation. Break thoughts with a period, semicolon, comma, or parentheses. Identifier hyphens (`react-ai-sdk`, `tool-call`) stay.
-- **no hard wrap**: each paragraph and each bullet stays on one line however long it gets. The GitHub renderer handles soft wrapping.
+- **no hard wrap**: each paragraph and each bullet stays on one line however long it gets.

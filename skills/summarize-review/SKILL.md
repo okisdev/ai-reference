@@ -17,11 +17,11 @@ Output the body for the user to confirm; do not post unless explicitly asked.
 ### Process
 
 1. **Establish baseline and head** (`$ARGUMENTS` is a PR number, a full PR URL, or empty; if empty, infer the PR from the current branch via `gh pr view --json number,title,headRefName`):
-   - Baseline `<first-sha>` (last commit in the PR author's leading run, the commit just before the first commit by a different author): `gh api repos/<o>/<r>/pulls/<n>/commits --paginate --jq '(.[0].author.login // .[0].commit.author.name) as $a | reduce .[] as $c ({run: true, sha: null}; if .run and (($c.author.login // $c.commit.author.name) == $a) then {run: true, sha: $c.sha} else {run: false, sha: .sha} end) | .sha'`. `.author.login` is null for unlinked-email commits, so fall back to `.commit.author.name` when reducing.
+   - Baseline `<first-sha>` (last commit in the PR author's leading run): `gh api repos/<o>/<r>/pulls/<n>/commits --paginate --jq '(.[0].author.login // .[0].commit.author.name) as $a | reduce .[] as $c ({run: true, sha: null}; if .run and (($c.author.login // $c.commit.author.name) == $a) then {run: true, sha: $c.sha} else {run: false, sha: .sha} end) | .sha'`. `.author.login` is null for unlinked-email commits, so fall back to `.commit.author.name` when reducing.
    - Latest head SHA: `gh api repos/<o>/<r>/pulls/<n> --jq .head.sha`
    - First commit's author is the review's audience: `gh api repos/<o>/<r>/pulls/<n>/commits --paginate --jq '.[0].author.login'`
 
-2. **Read the original author's code** at the first PR commit: `git show <first-sha>:<path>` for each changed file. This is the implementation under review.
+2. **Read the original author's code** at the first PR commit: `git show <first-sha>:<path>` for each changed file.
 
 3. **Diff baseline against head** with `git diff <first-sha> <head-sha>`; this authoritative diff is the "what we modified" section. Read full files at HEAD via the `Read` tool only where you need surrounding context the diff alone does not show.
 
@@ -61,8 +61,7 @@ Output the body for the user to confirm; do not post unless explicitly asked.
    - <bullet>
    ```
 
-8. **Posting commands.** When asked to post, use one of:
-   - `gh pr review <num> --approve --body "<text>"` for approval
-   - `gh pr review <num> --comment --body "<text>"` for non-approving comment
-   - `gh pr review <num> --request-changes --body "<text>"` for changes requested
-   - To replace an existing review's body, first resolve the review id with `gh api repos/<o>/<r>/pulls/<n>/reviews --jq '.[] | select(.user.login=="<me>") | .id'` (take the latest match), then `gh api --method PUT repos/<o>/<r>/pulls/<n>/reviews/<review-id> -f body="<text>"`.
+8. **Posting commands.** This skill drafts the body; for the full maintainer approve flow (the should-approve gate, the self-approval guard, and anti-stacking) use `/approve-pr`. When asked to post this body directly, pass it via `--body-file -` with a quoted heredoc so backticks and code survive (`-b/--body "..."` mangles them), with one of:
+   - `gh pr review <num> --approve --body-file - <<'EOF'` ... `EOF` for approval
+   - `--comment` for a non-approving comment, `--request-changes` for changes requested (same `--body-file -` form)
+   - To replace your existing review's body, resolve its id with `gh api repos/<o>/<r>/pulls/<n>/reviews --jq '[.[] | select(.user.login=="<me>")] | last | .id'`, then `gh api --method PUT repos/<o>/<r>/pulls/<n>/reviews/<review-id> -f body="<text>"`; PUT edits the body text only, never the review state.

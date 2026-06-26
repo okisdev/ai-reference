@@ -32,9 +32,9 @@ Analyze all changes (committed + uncommitted), group by **purpose**, and create 
 
 1. **Uncommitted only**: stage and commit into categorized groups; existing commits stay as-is.
 2. **Existing commits to reorganize, all local**: `git reset --soft $(git merge-base HEAD <base>)` to collapse into the index, then re-commit by category.
-3. **Existing commits to reorganize, some already pushed**: same flow as #2, but the branch has a tracked upstream and at least one commit in the reset range is already on the remote (Pushed commits in range above greater than 0), so the rewrite can only be published with force-push. Surface this in the plan and require explicit confirmation. A never-pushed local branch (no upstream, or zero pushed commits in range) is scenario 2, not this case; do not false-warn about force-push there.
+3. **Existing commits to reorganize, some already pushed**: same flow as #2, but the branch has a tracked upstream and at least one commit in the reset range is already on the remote (Pushed commits in range above greater than 0), so the rewrite can only be published with force-push. A never-pushed local branch (no upstream, or zero pushed commits in range) is scenario 2, not this case; do not false-warn about force-push there.
 4. **Both uncommitted and existing commits**: same flow as #2 or #3.
-5. **Edge cases**: empty repo (no HEAD) → stage and commit directly, the first commit becomes the initial commit, do not reset. Detached HEAD → stop, ask the user to check out a branch first (`git switch -c <name>`).
+5. **Edge cases**: empty repo (no HEAD) → stage and commit directly, do not reset. Detached HEAD → stop, ask the user to check out a branch first (`git switch -c <name>`).
 
 ### Process
 
