@@ -1,7 +1,7 @@
 {
   "name": "okisdev",
   "description": "Personal skills and agents collection by okisdev",
-  "version": "0.0.17",
+  "version": "0.0.18",
   "author": {
     "name": "okisdev"
   },
@@ -16,7 +16,8 @@
     "./skills/verify-pr",
     "./skills/verify-pr-comments",
     "./skills/approve-pr",
-    "./skills/ship-pr"
+    "./skills/ship-pr",
+    "./skills/upgrade-deps"
   ],
   "agents": [
     "./agents/code-simplifier.md"
