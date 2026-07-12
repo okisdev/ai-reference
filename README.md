@@ -82,6 +82,12 @@ Drive a change all the way to a merged PR: implement if needed, branch, open the
 
 **Triggers:** "Ship this change", "Take this PR to merge", "Open a PR and merge it when CI is green"
 
+#### upgrade-deps
+
+Upgrade every dependency the repository actually has: npm workspaces via taze, Python projects via uv, and GitHub Actions via ratchet. Prefers root `package.json` dependency scripts over the generic recipe; repins SDK-matrix-governed packages after blanket bumps (Expo via `expo install --fix`); leaves Actions alone when Dependabot or Renovate owns them; validates with the repository's build, lint, and test scripts, pins back an individual major that breaks, writes a patch changeset only when `.changeset/` exists, and ends with a validated uncommitted tree, where committing composes `commit-changes` and shipping composes `ship-pr`.
+
+**Triggers:** "Upgrade all dependencies", "Bump deps and fix what breaks", "Refresh the lockfile"
+
 ## Installation
 
 ### Claude Code
