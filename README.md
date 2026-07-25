@@ -88,6 +88,12 @@ Upgrade every dependency the repository actually has: npm workspaces via taze, P
 
 **Triggers:** "Upgrade all dependencies", "Bump deps and fix what breaks", "Refresh the lockfile"
 
+#### find-icon
+
+Locate a verified icon for a brand, product, AI model, or UI concept and deliver it the way the repository already consumes icons: routes each target down a source ladder (lucide for UI concepts, lobe-icons for AI model, provider, and agent brands, svgl then simple-icons for other brands, the vendor's own repository or official site as the last resort); proves every pick exists at its source before writing any code, extracting SVG path data by script rather than retyping it; delivers a UI glyph as a lucide-react import and a brand mark as a vendored SVG component, preserving official brand colors while UI glyphs stay on `currentColor`.
+
+**Triggers:** "Find an icon for Zed", "Add icons for the remaining providers", "Replace this text with an icon"
+
 ## Installation
 
 ### Claude Code
