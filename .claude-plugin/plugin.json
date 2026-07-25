@@ -1,7 +1,7 @@
 {
   "name": "okisdev",
-  "description": "Personal skills and agents collection by okisdev",
-  "version": "0.0.19",
+  "description": "Personal skills collection by okisdev",
+  "version": "0.0.22",
   "author": {
     "name": "okisdev"
   },
@@ -18,9 +18,14 @@
     "./skills/approve-pr",
     "./skills/ship-pr",
     "./skills/upgrade-deps",
-    "./skills/find-icon"
-  ],
-  "agents": [
-    "./agents/code-simplifier.md"
+    "./skills/find-icon",
+    "./skills/verify-ui",
+    "./skills/audit-repo",
+    "./skills/optimize-repo",
+    "./skills/read-source",
+    "./skills/inspect-db",
+    "./skills/onboard-repo",
+    "./skills/diagnose-root",
+    "./skills/mirror-reference"
   ]
 }
