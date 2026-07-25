@@ -27,6 +27,15 @@ After taze writes manifests, use the lockfile's package manager.
 
 For a thorough regeneration after a blanket workspace bump or when the existing lockfile has stale resolution state, remove every `node_modules` directory with `find . -name node_modules -type d -prune -exec rm -rf {} +`, remove the detected lockfile with `rm pnpm-lock.yaml`, `rm yarn.lock`, `rm package-lock.json`, `rm bun.lock`, or `rm bun.lockb`, then install and run the applicable dedupe command from the table.
 
+## Install guards
+
+Two pnpm guards routinely interrupt upgrades.
+
+| Symptom | Meaning | Fix |
+| --- | --- | --- |
+| A just-published version is not picked up | `minimumReleaseAge: 1440` in `pnpm-workspace.yaml` blocks any npm package published in the last 24 hours | Wait out the window, or lower the setting for that run when the fresh release is the point of the upgrade |
+| `ERR_PNPM_IGNORED_BUILDS` | pnpm refused to run postinstall build scripts for packages missing from the allowlist | Add the package (commonly `sharp`, `esbuild`, `workerd`) to `onlyBuiltDependencies` in `pnpm-workspace.yaml`, then reinstall |
+
 ## SDK repins
 
 | Detection condition | Fix command | Why |
