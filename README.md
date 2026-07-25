@@ -1,24 +1,10 @@
 # AI Reference
 
-A collection of skills and agents for AI coding assistants. Packaged instructions that extend agent capabilities.
+A collection of skills for AI coding assistants. Packaged instructions that extend agent capabilities.
 
 Follows the [Agent Skills](https://skills.sh) format.
 
 ## Available
-
-### Agents
-
-#### code-simplifier
-
-Expert code simplification agent. Preserves functionality while improving clarity and maintainability.
-
-**Capabilities:**
-- Applies project-specific coding standards from CLAUDE.md/AGENTS.md
-- Flattens nested conditionals with early returns
-- Improves variable and function naming
-- Removes dead/unused code
-- Avoids over-simplification that hurts readability
-- Knows when NOT to simplify
 
 ### Skills
 
@@ -94,6 +80,54 @@ Locate a verified icon for a brand, product, AI model, or UI concept and deliver
 
 **Triggers:** "Find an icon for Zed", "Add icons for the remaining providers", "Replace this text with an icon"
 
+#### verify-ui
+
+Render and verify a web UI change in a real browser: manages the dev server lifecycle (stale lock cleanup, nohup start with a recorded PID, readiness polling, port drift detection), waits for hydration, asserts the specific claim with a DOM query, and backs every visual claim with a screenshot that is actually read. Parses pasted DOM fragments to their source file and line, respects per-repo visual QA ownership, and never kills processes by name.
+
+**Triggers:** "Verify the UI change in the browser", "The spacing still looks wrong, check it", "Render this page and confirm the fix"
+
+#### audit-repo
+
+Run a multi-round parallel verification sweep over recent work or a whole repository: each round dispatches verification agents across distinct angles (correctness, conformance, rendered UI, tests and types, docs and dead surface), findings land in a fix.md ledger with evidence, fixes are re-verified before they count, and rounds loop until one comes back clean. Non-trivial findings need two independent verifiers, and the ledger never ships.
+
+**Triggers:** "Audit everything we did today", "Run verification rounds until clean", "Sweep the repo for problems"
+
+#### optimize-repo
+
+Run the standing optimization pass: read the scope's idiom first, decide the release posture from evidence (an unpublished package gets deletions instead of backward compatibility), strip comments and dead surface, replace hand-rolled fragments with the repo's own primitives, audit conformance against the nearest precedent, sweep changed patterns for completeness, sync docs, verify with the repo's own ladder, and stop at an uncommitted validated tree.
+
+**Triggers:** "Optimize the codebase", "Clean this up and simplify", "Run an optimization pass, don't commit"
+
+#### read-source
+
+Answer an API or behavior question about a dependency from authoritative source, choosing the ladder rung by question type: installed code for import and typecheck questions, the published npm artifact for what actually shipped (npm pack at the exact version, outside the repo, scripts ignored), the upstream repository pinned to the release tag for behavior and history, and docs last, never as proof. Every answer names the rung and version that proved it.
+
+**Triggers:** "Does this API exist in our version?", "Check the source of this package", "When did this behavior change?"
+
+#### inspect-db
+
+Inspect a live database with real SQL before reasoning from ORM schema files: resolves the connection from the project's own configuration (Neon MCP, `DATABASE_URL`, or wrangler d1), reads live DDL and targeted rows first, treats schema drift against the ORM files as the finding, and never conflates D1 `--local` with `--remote`. Read-only by default; `--write` gates every mutation behind a counted `SELECT` of the same rows, and credentials never appear in output.
+
+**Triggers:** "What's actually in the users table?", "Check the live schema against our drizzle schema", "Why does prod data look wrong?"
+
+#### onboard-repo
+
+Build a structured understanding of a repository before any edit: reads the repo's own orientation docs first, maps workspaces and entry points, extracts the idiom from 2 to 3 nearest siblings of whatever the task will touch, collects reusable prior art, reconciles with project memory, and delivers a compact map where every claim cites a file. Research and comparison asks end at the map with zero edits.
+
+**Triggers:** "Read and understand the whole codebase", "Get familiar with this repo before we start", "Map this project"
+
+#### diagnose-root
+
+Diagnose a failure to its origin with a reproduction first: runs the failing thing before explaining it, traces the wrong value back to the first place it is wrong, names the mechanism in one sentence, and fixes at the origin after explicitly rejecting the symptom-site patch, then sweeps for the same root cause elsewhere and proves the fix by rerunning the reproduction. A why question stops at the diagnosis and never turns into an edit.
+
+**Triggers:** "Why does this keep happening?", "Is this a root fix?", "Fix this properly, not a patch"
+
+#### mirror-reference
+
+Extract the load-bearing pattern from a reference URL, repository, or sibling path and re-express it in this codebase's own idiom: studies references through `gh` rather than scraping, separates the pattern from its styling and tokens, implements with the repo's own primitives, and ships a deviation report stating where and why the result diverges from the reference. Never clones class strings, tokens, or naming verbatim.
+
+**Triggers:** "Build something like this reference", "Look at kumo-ui and adapt the pattern", "Reference this but don't copy it"
+
 ## Installation
 
 ### Claude Code
@@ -116,11 +150,11 @@ Enable or disable individual skills in `~/.codex/config.toml`. `ship-pr` ships `
 
 ## Usage
 
-Skills and agents are automatically available once installed. The agent will use them when relevant tasks are detected.
+Skills are automatically available once installed. The agent will use them when relevant tasks are detected.
 
 **Examples:**
 ```
-Simplify my recent changes
+Optimize the codebase
 ```
 ```
 Move these uncommitted changes to a new feat branch
@@ -135,8 +169,6 @@ Verify the review comments on PR #123
 .
 ├── .claude-plugin/plugin.json
 ├── AUTHORING.md
-├── agents/
-│   └── code-simplifier.md
 └── skills/
     └── (one directory per skill listed under "Available")
 ```
