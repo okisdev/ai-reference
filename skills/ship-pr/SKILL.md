@@ -1,7 +1,7 @@
 ---
 name: ship-pr
 description: Drive a change to a merged PR end to end, building or resuming the PR, looping over CI and review threads to address feedback, and merging once the repo's required-check gate passes.
-argument-hint: "[task-or-pr] [--squash|--merge|--rebase] [--admin] [--delete-branch] [--approve] [--base <branch>] [--draft] [--advisory <check>]"
+argument-hint: "[task-or-pr] [--squash|--merge|--rebase] [--admin] [--delete-branch] [--base <branch>] [--draft] [--advisory <check>]"
 ---
 
 ## Context
@@ -10,6 +10,7 @@ Repository: !`gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null ||
 Default branch: !`git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@refs/remotes/origin/@@' || echo main`
 Current branch: !`git branch --show-current`
 Existing PR: !`gh pr view --json number,url -q '"#" + (.number|tostring) + " " + .url' 2>/dev/null || echo "(none)"`
+My login: !`gh api user --jq .login 2>/dev/null || echo "unknown"`
 Changesets: !`test -d .changeset && echo "yes (.changeset/)" || echo "(none)"`
 
 ### Uncommitted changes
@@ -30,11 +31,11 @@ Auxiliary skills, used only when relevant:
 - **verify-issue**: optional upstream precursor when the change originates from an issue.
 - **organize-commits**: optional pre-PR tidy, kept out of the unattended loop because it pauses for confirmation.
 - **summarize-review**: when shepherding a contributor's PR rather than ship-pr's own change.
-- **approve-pr**: when `--approve` is set, to post the maintainer approval near the merge gate; it owns the self-approval guard and the `gh pr review` write.
+- **approve-pr**: on another author's PR, to post the maintainer approval near the merge gate (condition (3)); it owns the self-approval guard and the `gh pr review` write.
 
 ### Process
 
-1. **Detect state and resume at the right step (adaptive entry).** Read the Context probes and resume at the first matching row. The leading positional of `$ARGUMENTS` is a change description, a PR number/URL to resume, or empty (operate on the current branch). Flag semantics that are not obvious from their names: `--advisory <check>` adds a check to the non-blocking set (repeatable) but cannot mark a human reviewer non-blocking; `--draft` is a hold short of merge, not a skip; the merge method (`--squash` default, `--merge`, `--rebase`) is validated early against `allowed_merge_methods` (step 3); `--approve` (off by default) delegates to `approve-pr` near the merge gate (condition (3)); a no-op on ship-pr's own PRs since GitHub blocks self-approval, so it applies only when shepherding another author's PR.
+1. **Detect state and resume at the right step (adaptive entry).** Read the Context probes and resume at the first matching row. The leading positional of `$ARGUMENTS` is a change description, a PR number/URL to resume, or empty (operate on the current branch). Flag semantics that are not obvious from their names: `--advisory <check>` adds a check to the non-blocking set (repeatable) but cannot mark a human reviewer non-blocking; `--draft` is a hold short of merge, not a skip; the merge method (`--squash` default, `--merge`, `--rebase`) is validated early against `allowed_merge_methods` (step 3); `--admin` is ownership-scoped to ship-pr's own PRs (see the Merge gate); on another author's PR the approval path in condition (3) runs by default, with no flag.
 
    | Priority | Condition | Action |
    |---|---|---|
@@ -54,7 +55,7 @@ Auxiliary skills, used only when relevant:
 
 5. **Merge, then return to the default branch.** When the Merge gate holds, merge per the gate's command, then on this normal exit always return to the default branch and sync it so the local default carries the squashed merge and the next ship-pr starts clean: `git checkout <default> && git pull --ff-only` on the plain-git path; on the GitButler path stay on `gitbutler/workspace` and `but pull` instead of checking out. Then stop (the only normal exit). A `--draft` PR is a hold: keep watching but never `gh pr ready` or merge it until the user marks it ready. If the gate cannot clear, stop watching and report the blocker, leaving the PR branch checked out. Blockers:
    - a persistently red gating check
-   - an unmet required approval
+   - an unmet required approval the condition (3) approval path could not clear
    - a DIRTY or conflict-blocked BEHIND branch
    - a fork head ship-pr cannot push to
    - an unreachable gating reviewer
@@ -82,9 +83,9 @@ Three conditions, all required, plus the mergeability preconditions.
 
 - **(1) Gating checks green.** Every GATING check is green; gating means the repo's required checks discovered in `references/monitor.md`, while advisory checks and review bots (deploy previews, AI reviewers, optional analyzers) never block whatever their state, purely because they are absent from the required set; never hardcode required checks or a bot name. When no required set is machine-discoverable (rulesets empty, legacy 404 or 403, `gh pr checks <n> --required` returns nothing), gate on every rollup check being green except the contexts named via `--advisory`, and merge only once all pass; this is the conservative reading, since it waits on checks a discovered required set would have excluded.
 - **(2) Threads resolved.** Every review thread is resolved (ship-pr's reviewThreads read returns no `isResolved == false`).
-- **(3) Reviewers satisfied.** The count of distinct current APPROVED reviewers meets the repo's `required_approving_review_count`, and no GATING reviewer is in CHANGES_REQUESTED (the latest-per-author reduction is empty for humans and required reviewers). Address the feedback and wait for re-approval; never dismiss the review. When `--approve` is set and the only shortfall is the approval count (no GATING reviewer in CHANGES_REQUESTED) with conditions (1) and (2) already holding, delegate to `/approve-pr <n>` (without `--merge`) to post the approval, then re-evaluate the gate; approve-pr gates its own write on a fresh verify-pr and no-ops on ship-pr's own PRs (self-approval is blocked), so `--approve` clears this condition only when shepherding another author's PR.
+- **(3) Reviewers satisfied.** The count of distinct current APPROVED reviewers meets the repo's `required_approving_review_count`, and no GATING reviewer is in CHANGES_REQUESTED (the latest-per-author reduction is empty for humans and required reviewers). Address the feedback and wait for re-approval; never dismiss the review. On another author's PR (the PR author does not match the My login probe), when the only shortfall is a required approval (no GATING reviewer in CHANGES_REQUESTED) with conditions (1) and (2) already holding, delegate to `/approve-pr <n>` (without `--merge`) to post the approval by default, then re-evaluate the gate; approve-pr gates its own write on a fresh verify-pr, so a PR that does not earn the approval comes back as a decline and this gate reports the blocker instead of forcing the merge. Self-approval is platform-blocked, so on ship-pr's own PR this path never runs; an unmet required approval there waits for a human reviewer or falls to the `--admin` rule in Merge.
 - **Preconditions.** `mergeable != CONFLICTING`; `mergeStateStatus` is CLEAN, accepting UNSTABLE or BLOCKED only when the sole outstanding cause is an excluded advisory check and conditions (1) to (3) independently hold, and never DIRTY or DRAFT. When `mergeStateStatus` is UNSTABLE, enumerate every non-passing check in `statusCheckRollup` and confirm each is advisory (absent from the discovered required set and not named by a human reviewer) before treating UNSTABLE as acceptable; if any non-passing check is not advisory, UNSTABLE blocks the merge. A `--draft` PR is a deliberate hold (see step 5). verify-pr supplies only the merge-worthiness recommendation (necessity and correctness, and a verdict of merge rather than close, redirect, or push back); the gating-versus-advisory classification in conditions (1) to (3) is ship-pr's own per-tick poll.
-- **Merge.** When all hold, merge with the configured method, appending `--admin` only if the user opted in and `--delete-branch` if requested. Immediately before merging, independently re-verify all three conditions and all preconditions, and re-read `headRefOid`; abort and re-run one monitor pass if the head SHA no longer matches the one the gate evaluated. Even with `--admin`, this re-verification still runs: `--admin` may force past a BLOCKED or UNSTABLE state whose sole cause is an excluded advisory check; it never overrides an unmet condition (1), (2), or (3), and never merges a CONFLICTING, DIRTY, or DRAFT PR.
+- **Merge.** When all hold, merge with the configured method, appending `--delete-branch` if requested. `--admin` is ownership-scoped: append it only when the user opted in and the PR is ship-pr's own (the author matches the My login probe), to bypass a review requirement that self-approval cannot satisfy; never `--admin` another author's PR, whose review requirement condition (3) satisfies by approving. Immediately before merging, independently re-verify all three conditions and all preconditions, and re-read `headRefOid`; abort and re-run one monitor pass if the head SHA no longer matches the one the gate evaluated. Even with `--admin`, this re-verification still runs: `--admin` may force past a BLOCKED or UNSTABLE state whose sole cause is an excluded advisory check or an own-PR review requirement as above; it never overrides a red gating check, an unresolved thread, a CHANGES_REQUESTED review, or a CONFLICTING, DIRTY, or DRAFT PR.
 
 ### Rules
 
