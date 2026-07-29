@@ -64,7 +64,7 @@ Review a GitHub PR as a maintainer and, when it earns it, post the GitHub APPROV
 
 #### ship-pr
 
-Drive a change all the way to a merged PR: implement if needed, branch, open the PR, then monitor CI and review threads on a recurring loop, addressing feedback each cycle and merging once the gate passes. Auto-detects the entry point (uncommitted changes, an existing branch, or an already open PR) and resumes at the right step rather than forcing the full flow, auto-detects GitButler versus plain git, and treats only the repo's required checks as gating while advisory checks and review bots never block. Composes `create-branch`, `commit-changes`, and `create-pr` to create, `verify-pr` to judge the PR, and `verify-pr-comments` to triage the threads; it owns the loop, the merge gate, and the merge itself. When shepherding another author's PR it delegates to `approve-pr` by default to post the maintainer approval the merge gate needs, rather than forcing the merge; `--admin` is reserved for your own PRs, where GitHub blocks self-approval.
+Drive a change all the way to a merged PR: implement if needed, branch, open the PR, then monitor CI and review threads on a recurring loop, addressing feedback each cycle and merging once the gate passes. Auto-detects the entry point (uncommitted changes, an existing branch, or an already open PR) and resumes at the right step rather than forcing the full flow, auto-detects GitButler versus plain git, and treats only the repo's required checks as gating while advisory checks and review bots never block. Composes `create-branch`, `commit-changes`, and `create-pr` to create, `verify-pr` to judge the PR, and `verify-pr-comments` to triage the threads; it owns the loop, the merge gate, and the merge itself. When shepherding another author's PR it delegates to `approve-pr` by default to post the maintainer approval the merge gate needs, rather than forcing the merge; `--admin` is reserved for your own PRs, where GitHub blocks self-approval. Every wait in the loop is heartbeat-bounded: a wall-clock budget picked up front, a visible per-tick status line, and stalled items sidestepped instead of polled forever.
 
 **Triggers:** "Ship this change", "Take this PR to merge", "Open a PR and merge it when CI is green"
 
@@ -82,7 +82,7 @@ Locate a verified icon for a brand, product, AI model, or UI concept and deliver
 
 #### verify-ui
 
-Render and verify a web UI change in a real browser: manages the dev server lifecycle (stale lock cleanup, nohup start with a recorded PID, readiness polling, port drift detection), waits for hydration, asserts the specific claim with a DOM query, and backs every visual claim with a screenshot that is actually read. Parses pasted DOM fragments to their source file and line, respects per-repo visual QA ownership, and never kills processes by name.
+Render and verify a web UI change in a real browser: manages the dev server lifecycle (stale lock cleanup, nohup start with a recorded PID, readiness polling, port drift detection), waits for hydration, asserts the specific claim with a DOM query, and backs every visual claim with a screenshot that is actually read. Parses pasted DOM fragments to their source file and line, respects per-repo visual QA ownership, and never kills processes by name. Waits are budgeted: the readiness poll is bounded, and expiry kills the recorded PID and reports the failure with log evidence.
 
 **Triggers:** "Verify the UI change in the browser", "The spacing still looks wrong, check it", "Render this page and confirm the fix"
 
