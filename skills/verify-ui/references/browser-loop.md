@@ -25,6 +25,8 @@ Readiness poll against the expected port:
 curl -sf --retry 15 --retry-connrefused --retry-delay 1 http://localhost:<port> >/dev/null
 ```
 
+The retry budget above is the whole wait (about 15 seconds; raise it only for known-slow apps, never past 90 seconds). If it expires, the server did not come up: capture `tail -40 "$SCRATCH/dev.log"`, kill the recorded PID, and report the failure with the log tail rather than polling on.
+
 Port drift detection: grep the log for the printed local URL and use that port instead of the expected one. Next.js prints a line shaped like `Port 3000 is in use, using 3001 instead` when the default port is taken.
 
 ## Feedback ingestion
