@@ -52,7 +52,7 @@ Fetch review comments on a GitHub PR (bots + humans), classify by staleness, and
 
 #### summarize-review
 
-Write a maintainer-style summary review of a GitHub PR with three sections: shortcomings in the original implementation, what was modified during review, and potential further fixes. Frames feedback for the original author rather than recapping bot output.
+Write a maintainer-style summary review of a GitHub PR as a message to the original author: the verdict and the reason it holds, then only what the diff cannot say for itself, with the evidence behind each load-bearing claim. Prose rather than sections, and no recapping of bot output.
 
 **Triggers:** "Write the approval review for #789", "Summarize what we fixed on this PR"
 
