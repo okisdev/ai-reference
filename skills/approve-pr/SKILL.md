@@ -15,7 +15,7 @@ My login: !`gh api user --jq .login 2>/dev/null || echo "unknown"`
 
 Review a GitHub PR as a maintainer and, when it earns it, post the single GitHub approval; otherwise report and decline. Auto-post only the approval; non-approving writes need an explicit opt-in. Execute immediately without asking.
 
-Delegate the approve-or-decline verdict to `verify-pr` (consume its recommendation), the unresolved-thread triage to `verify-pr-comments`, the review body to `summarize-review`, and the optional post-approval merge to `ship-pr` (it owns the merge gate and the merge, and validates the merge method). Own only the self-approval guard, the verdict-to-action mapping, and the `gh pr review` write. Invoke the others by name and act on their output; never inline or reimplement their logic.
+Delegate the approve-or-decline verdict to `verify-pr` (consume its recommendation), the unresolved-thread triage to `verify-pr-comments`, the review body to `summarize-review` when your own commits are on the PR, and the optional post-approval merge to `ship-pr` (it owns the merge gate and the merge, and validates the merge method). Own only the self-approval guard, the verdict-to-action mapping, and the `gh pr review` write. Invoke the others by name and act on their output; never inline or reimplement their logic.
 
 ### Process
 
@@ -23,7 +23,7 @@ Delegate the approve-or-decline verdict to `verify-pr` (consume its recommendati
 
 2. **Fetch PR state and run the self-approval guard.** Read `gh pr view <n> --repo <o>/<r> --json number,author,headRefOid,state,reviewDecision`. If `state` is not `OPEN`, report and stop. Self-approval guard (owned): if `author.login` equals the My login probe, stop before any write. GitHub rejects approving your own PR (`Can not approve your own pull request`), so report that it needs a different maintainer, or `/ship-pr <n>` to drive your own change to merge while it waits for someone else's approval. Record `headRefOid` for the stale-head recheck in step 5.
 
-3. **Run verify-pr as the gate.** Invoke `/verify-pr <n>` and consume its final recommendation verbatim, one of close or redirect, merge as-is, merge after small fixes, or push back. Do not re-derive correctness or necessity.
+3. **Run verify-pr as the gate.** Invoke `/verify-pr <n>` and consume its final recommendation verbatim, one of close or redirect, merge as-is, merge after small fixes, or push back. Do not re-derive correctness or necessity. An approval binds to the SHA verify-pr reported as its Verified head, so on a re-approval after the author pushed, pass `--since <the previously approved head>` and judge that delta rather than approving a head nobody read.
 
 4. **Triage unresolved threads.** Count unresolved review threads (`reviewThreads` is GraphQL-only, not a `gh pr view --json` field):
    ```bash
@@ -31,7 +31,11 @@ Delegate the approve-or-decline verdict to `verify-pr` (consume its recommendati
    ```
    If any are unresolved, invoke `/verify-pr-comments <n>`. A thread that is Fresh and valid (Confirmed or Partial) and unaddressed blocks approval; Resolved, Stale, Refuted, and Out-of-scope threads do not. Branch protection may not enforce thread resolution, so treat this as a policy gate rather than relying on the merge to block.
 
-5. **Map the verdict to an action and post.** Apply the decision table below. Reach the approval only on merge as-is with no fresh blocking thread: draft the body via `/summarize-review <n>`, re-read `headRefOid`, and if it moved since step 2 abort and re-run from step 3 (a stale approval keeps gating code nobody judged). Then resolve your latest prior review:
+5. **Map the verdict to an action and post.** Apply the decision table below. Reach the approval only on merge as-is with no fresh blocking thread.
+
+   Draft the body to fit what actually happened. When commits of yours sit on the PR (compare the commit authors against the My login probe), this is a takeover and the report belongs to `/summarize-review <n>`. When you changed nothing, write it here: a short conversational note to the author, prose, no headings, saying the verdict and the one reason it holds, the evidence behind whatever the approval rests on (what you executed against what you only read), and anything still standing with why it does not block. A paragraph or two is the whole of it. Say nothing the diff already says, since re-narrating the patch back to the person who wrote it is what makes an approval read like a form.
+
+   Then re-read `headRefOid`, and if it moved since step 2 abort and re-run from step 3 (a stale approval keeps gating code nobody judged). Then resolve your latest prior review:
    ```bash
    gh api repos/<o>/<r>/pulls/<n>/reviews --jq '[.[] | select(.user.login=="<me>")] | last | {id, state}'
    ```

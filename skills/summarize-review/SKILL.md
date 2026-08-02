@@ -1,6 +1,6 @@
 ---
 name: summarize-review
-description: Write a maintainer-style summary review of a GitHub PR (shortcomings, modifications, potential fixes) for the original author, run after review fixes are applied.
+description: Write a maintainer-style summary review of a GitHub PR for the original author, run after review fixes are applied.
 argument-hint: "[pr-number-or-url]"
 ---
 
@@ -23,7 +23,7 @@ Output the body for the user to confirm; do not post unless explicitly asked.
 
 2. **Read the original author's code** at the first PR commit: `git show <first-sha>:<path>` for each changed file.
 
-3. **Diff baseline against head** with `git diff <first-sha> <head-sha>`; this authoritative diff is the "what we modified" section. Read full files at HEAD via the `Read` tool only where you need surrounding context the diff alone does not show.
+3. **Diff baseline against head** with `git diff <first-sha> <head-sha>`; this authoritative diff is what you changed. Read full files at HEAD via the `Read` tool only where you need surrounding context the diff alone does not show.
 
 4. **Identify shortcomings** in the original implementation:
    - Bugs (data corruption, edge cases, off-by-one, race conditions).
@@ -41,25 +41,13 @@ Output the body for the user to confirm; do not post unless explicitly asked.
 
 6. **Identify potential further fixes**: real issues that remain or are deferred; each bullet states why (out of scope for this PR, upstream library limitation, low ROI, ergonomic taste). Be honest about partial fixes: if a modification is incomplete, list the remaining work here. Do not invent suggestions to pad.
 
-7. **Assemble the review body** in this layout:
+7. **Write it as a message to the author**, not a report for the record. Open with the verdict and the one reason it holds, then say the things the diff cannot say for itself: why this approach beat the one it displaced, what you ran and what it printed, the trap the next reader falls into. Stop there.
 
-   ```markdown
-   ## review
+   Cut anything the diff already shows. A line narrating a change the author made and the reader can see is the padding this format exists to avoid, and steps 4 to 6 are an order to think in, never sections to emit. A review earns its length only through judgment that is not visible in the patch.
 
-   <one-line verdict, e.g. "LGTM as `patch`." or "looks good with the items below.">
+   Prose, no headings, and no `## review` line: GitHub labels the state, so a heading spends the opening saying nothing. Reach for structure only when the author has several separable things to act on, and then number them so each can be replied to on its own. Length tracks what the author has to do, so a clean approval is a paragraph or two while blocking feedback earns whatever its items need.
 
-   ### shortcomings of the original implementation
-   - <bullet>
-   - <bullet>
-
-   ### what we modified
-   - <bullet>
-   - <bullet>
-
-   ### potential further fixes
-   - <bullet>
-   - <bullet>
-   ```
+   Name the evidence for a load-bearing claim inline as you make it, separating what you executed from what you read: quote the command and its real output for the first, say plainly that the second is a reading. A claim about runtime behavior that was only read is a suspicion, not a finding. Where an obvious cheaper check would report the opposite, say so, since the next person reaches for it otherwise.
 
 8. **Posting commands.** This skill drafts the body; for the full maintainer approve flow (the should-approve gate, the self-approval guard, and anti-stacking) use `/approve-pr`. When asked to post this body directly, pass it via `--body-file -` with a quoted heredoc so backticks and code survive (`-b/--body "..."` mangles them), with one of:
    - `gh pr review <num> --approve --body-file - <<'EOF'` ... `EOF` for approval
