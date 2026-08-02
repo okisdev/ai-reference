@@ -40,7 +40,7 @@ Fetch a GitHub issue and verify each of its claims against the current codebase 
 
 #### verify-pr
 
-Verify a GitHub PR against its stated goal and the surrounding codebase. Judges first whether the PR should exist at all (necessity, redundancy, honest scope), then correctness, tests, paradigm and convention conformance, and side effects. Conformance is judged against the repo's own precedents (the nearest sibling hook, test, doc example, or type), not against generic best practice, and each deviation cites the in-repo pattern it breaks. Produces a maintainer-ready verdict that can recommend closing a redundant PR even when it is technically clean, and separates blocking issues from optional polish.
+Verify a GitHub PR against its stated goal and the surrounding codebase. Judges first whether the PR should exist at all (necessity, redundancy, honest scope), then correctness, tests, paradigm and convention conformance, and side effects. Conformance is judged against the repo's own precedents (the nearest sibling hook, test, doc example, or type), not against generic best practice, and each deviation cites the in-repo pattern it breaks. Produces a maintainer-ready verdict that can recommend closing a redundant PR even when it is technically clean, and separates blocking issues from optional polish. The verdict binds to the head SHA it was computed on, and `--since <sha>` re-reads only what landed after a previous pass so re-verifying a PR that keeps moving costs the delta rather than the whole patch.
 
 **Triggers:** "Should we merge PR #456?", "Verify this PR before merge". This is the whole-PR verdict; for per-comment triage of the review threads use `verify-pr-comments`.
 
