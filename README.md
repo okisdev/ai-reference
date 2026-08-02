@@ -40,7 +40,7 @@ Fetch a GitHub issue and verify each of its claims against the current codebase 
 
 #### verify-pr
 
-Verify a GitHub PR against its stated goal and the surrounding codebase. Judges first whether the PR should exist at all (necessity, redundancy, honest scope), then correctness, tests, paradigm and convention conformance, and side effects. Conformance is judged against the repo's own precedents (the nearest sibling hook, test, doc example, or type), not against generic best practice, and each deviation cites the in-repo pattern it breaks. Produces a maintainer-ready verdict that can recommend closing a redundant PR even when it is technically clean, and separates blocking issues from optional polish.
+Verify a GitHub PR against its stated goal and the surrounding codebase. Judges first whether the PR should exist at all (necessity, redundancy, honest scope), then correctness, tests, paradigm and convention conformance, and side effects. Conformance is judged against the repo's own precedents (the nearest sibling hook, test, doc example, or type), not against generic best practice, and each deviation cites the in-repo pattern it breaks. Produces a maintainer-ready verdict that can recommend closing a redundant PR even when it is technically clean, and separates blocking issues from optional polish. The verdict binds to the head SHA it was computed on, and `--since <sha>` re-reads only what landed after a previous pass so re-verifying a PR that keeps moving costs the delta rather than the whole patch.
 
 **Triggers:** "Should we merge PR #456?", "Verify this PR before merge". This is the whole-PR verdict; for per-comment triage of the review threads use `verify-pr-comments`.
 
@@ -52,7 +52,7 @@ Fetch review comments on a GitHub PR (bots + humans), classify by staleness, and
 
 #### summarize-review
 
-Write a maintainer-style summary review of a GitHub PR with three sections: shortcomings in the original implementation, what was modified during review, and potential further fixes. Frames feedback for the original author rather than recapping bot output.
+Write a maintainer-style summary review of a GitHub PR as a message to the original author: the verdict and the reason it holds, then only what the diff cannot say for itself, with the evidence behind each load-bearing claim. Prose rather than sections, and no recapping of bot output.
 
 **Triggers:** "Write the approval review for #789", "Summarize what we fixed on this PR"
 

@@ -1,7 +1,7 @@
 ---
 name: verify-pr
 description: Verify a GitHub PR against its stated goal and the surrounding codebase, judging whether it should exist at all before correctness, tests, conventions, and side effects.
-argument-hint: "<pr-number-or-url>"
+argument-hint: "<pr-number-or-url> [--since <sha>]"
 ---
 
 ## Context
@@ -19,7 +19,9 @@ Verify a GitHub PR multi-dimensionally (claim-driven and necessity-driven, not o
 
 ### Process
 
-1. **Fetch PR state** (`$ARGUMENTS` is a PR number like `4020` or a full GitHub PR URL): `gh pr view <num> --json number,title,body,headRefName,baseRefName,mergeable,mergeStateStatus,statusCheckRollup,reviews,comments,additions,deletions,files`, then `gh pr diff <num>` for the patch. Parse the body for linked issues (`Closes #X`, `Fixes #X`, bare `#XXXX` references).
+1. **Fetch PR state** (the leading positional of `$ARGUMENTS` is a PR number like `4020` or a full GitHub PR URL): `gh pr view <num> --json number,title,body,headRefName,baseRefName,headRefOid,mergeable,mergeStateStatus,statusCheckRollup,reviews,comments,additions,deletions,files`, then `gh pr diff <num>` for the patch. Parse the body for linked issues (`Closes #X`, `Fixes #X`, bare `#XXXX` references). Keep `headRefOid`: the report ends with it, so a later pass can scope itself to whatever lands after this one.
+
+   **Incremental re-verification** (`--since <sha>`): a PR under review is re-read every time its author pushes, and re-analyzing the whole patch each round costs enough that the re-read quietly gets skipped, which is the failure this exists to prevent. Given `--since <sha>`, the step 4 dimensions judge `git diff <sha>..<head>` (with `git log --oneline <sha>..<head>` for what landed) instead of the full patch, while the full-PR state from this step still loads as context. Necessity stays judged against the whole PR and is never re-derived from the delta, since a clean delta can still belong to a PR that should not exist. Confirm `<sha>` is an ancestor of the head (`git merge-base --is-ancestor <sha> <head>`); if it is not, a force-push rewrote the range, so say so and fall back to the full patch rather than reporting on a diff that does not mean what it claims.
 
 2. **Fetch the linked issue** (if any) via `gh issue view <issue-num>`. Judge correctness against what the issue actually requested, not just what the PR claims; the gap is itself a finding. Overpromising, a `Closes #X` that only partially delivers, is itself a necessity finding; see Rules.
 
@@ -53,7 +55,7 @@ Verify a GitHub PR multi-dimensionally (claim-driven and necessity-driven, not o
 
 8. **Report** in this structure:
 
-   - **PR summary**, number, title, head SHA, mergeable state, link to the linked issue if any.
+   - **PR summary**, number, title, head SHA, mergeable state, link to the linked issue if any. Name the scope judged: the whole patch, or `<sha>..<head>` when `--since` narrowed it.
    - **Per-dimension verdict table**:
 
      | Dimension | Verdict | One-line note |
@@ -73,10 +75,12 @@ Verify a GitHub PR multi-dimensionally (claim-driven and necessity-driven, not o
      - **Push back**, necessity holds but the implementation needs significant rework; explain why.
    - **Merge readiness**, separate from the quality verdict: note any operational blocker that still gates the actual merge even when the recommendation is Merge as-is, namely a gating reviewer's `CHANGES_REQUESTED` or unresolved review threads (gating vs advisory per step 6). Point to `/verify-pr-comments` for working through the threads.
    - **Optional follow-ups**, bulleted Pre-existing gaps and Polish items the author can take or leave, plus any adjacent issues worth opening.
+   - **Verified head**, the `headRefOid` this pass judged, given as the `--since` value the next pass should use. The recommendation above is good for that SHA and no other.
 
 ### Rules
 
 - Redundancy is a Blocking-level necessity finding, not a polish note.
+- A recommendation binds to the head SHA it was computed on. Commits pushed after it are unverified however small they look, and green CI on them substitutes for nothing, since CI proves the tree builds and says nothing about the dimensions in step 4; re-run with `--since <that sha>`.
 - An inaccurate `Closes #X` (scope, files, or behavior the diff does not ship) is a finding even when the shipped code works.
 - This skill is read-only analysis; do not modify files (fixes happen in a follow-up step or a separate skill invocation). The one exception is step 4's throwaway repro worktree: check out the PR, run it against the real code, then remove the worktree. Never commit, never push to the PR.
 - Use the same language as the user's input when reporting.
