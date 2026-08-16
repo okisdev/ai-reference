@@ -25,6 +25,7 @@
     "./skills/read-source",
     "./skills/inspect-db",
     "./skills/onboard-repo",
+    "./skills/use-project-memory",
     "./skills/diagnose-root",
     "./skills/mirror-reference"
   ]
