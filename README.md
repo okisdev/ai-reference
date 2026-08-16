@@ -116,6 +116,12 @@ Build a structured understanding of a repository before any edit: reads the repo
 
 **Triggers:** "Read and understand the whole codebase", "Get familiar with this repo before we start", "Map this project"
 
+#### use-project-memory
+
+Read and write Claude project auto-memory (`~/.claude/projects/<encoded>/memory/`) so Claude, Grok, and Codex share one store. Resolves worktrees to the primary repo directory, treats `MEMORY.md` as a short index, and writes durable facts as topic files plus one index line.
+
+**Triggers:** "Remember this about the repo", "What do we already know about this project?", "Write that into project memory"
+
 #### diagnose-root
 
 Diagnose a failure to its origin with a reproduction first: runs the failing thing before explaining it, traces the wrong value back to the first place it is wrong, names the mechanism in one sentence, and fixes at the origin after explicitly rejecting the symptom-site patch, then sweeps for the same root cause elsewhere and proves the fix by rerunning the reproduction. A why question stops at the diagnosis and never turns into an edit.
@@ -146,7 +152,7 @@ mkdir -p ~/.agents/skills
 for d in ai-reference/skills/*/; do ln -s "$(cd "$d" && pwd)" ~/.agents/skills/"$(basename "$d")"; done
 ```
 
-Enable or disable individual skills in `~/.codex/config.toml`. `ship-pr` ships `allow_implicit_invocation: false`, so Codex will not auto-trigger it; invoke it explicitly. Each skill's `## Context` probes are auto-run by Claude Code; in Codex the agent must run them itself before following the skill.
+Grok scans `~/.grok/skills`, which should symlink to the same `~/.agents/skills` store. Enable or disable individual skills in `~/.codex/config.toml`. `ship-pr` ships `allow_implicit_invocation: false`, so Codex will not auto-trigger it; invoke it explicitly. Each skill's `## Context` probes are auto-run by Claude Code; in Codex and Grok the agent must run them itself before following the skill.
 
 ## Usage
 

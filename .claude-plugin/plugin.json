@@ -1,7 +1,7 @@
 {
   "name": "okisdev",
   "description": "Personal skills collection by okisdev",
-  "version": "0.0.25",
+  "version": "0.0.26",
   "author": {
     "name": "okisdev"
   },
@@ -25,6 +25,7 @@
     "./skills/read-source",
     "./skills/inspect-db",
     "./skills/onboard-repo",
+    "./skills/use-project-memory",
     "./skills/diagnose-root",
     "./skills/mirror-reference"
   ]
