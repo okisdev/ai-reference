@@ -46,7 +46,7 @@ Verify a GitHub PR multi-dimensionally (claim-driven and necessity-driven, not o
 
    For correctness and side effects, use direct `Read`/`Grep`.
 
-6. **Treat CI and review state as data, not verdict**. Green CI proves nothing about correctness, only that no automated check failed; always read the diff. A bot's "no issues found" is one data point, not absolution, and CI says nothing about necessity. Separate **gating** signals from **advisory** ones: some checks and reviewers (often an AI review bot) are configured non-blocking and must not be treated as merge blockers, while a human's `CHANGES_REQUESTED` and an unresolved review thread are real operational blockers even when every quality dimension is OK. Surface these; a clean quality read does not mean the PR is mergeable right now.
+6. **Treat CI and review state as data, not verdict**. Green CI proves nothing about correctness, only that no automated check failed; always read the diff. A bot's "no issues found" is one data point, not absolution, and CI says nothing about necessity. Pending checks and unposted reviews are operational blockers until they settle; a completed bot review is data for `/verify-pr-comments`, not a skip. A human's `CHANGES_REQUESTED` and an unresolved review thread remain blockers even when every quality dimension is OK. Surface these; a clean quality read does not mean the PR is mergeable right now.
 
 7. **Classify each finding**:
    - **Blocking**, must fix before merge; for necessity, a reason not to merge at all (redundant with existing code, duplicates another PR, premise does not hold, overpromised closure).
@@ -73,7 +73,7 @@ Verify a GitHub PR multi-dimensionally (claim-driven and necessity-driven, not o
      - **Merge as-is**, necessity holds and every other dimension is OK with no Blocking items.
      - **Merge after small fixes**, necessity holds; list each Blocking item with `file:line` and the concrete change.
      - **Push back**, necessity holds but the implementation needs significant rework; explain why.
-   - **Merge readiness**, separate from the quality verdict: note any operational blocker that still gates the actual merge even when the recommendation is Merge as-is, namely a gating reviewer's `CHANGES_REQUESTED` or unresolved review threads (gating vs advisory per step 6). Point to `/verify-pr-comments` for working through the threads.
+   - **Merge readiness**, separate from the quality verdict: note any operational blocker that still gates the actual merge even when the recommendation is Merge as-is, namely a pending check or unposted review, a human's `CHANGES_REQUESTED`, or unresolved review threads (step 6). Point to `/verify-pr-comments` for working through the threads.
    - **Optional follow-ups**, bulleted Pre-existing gaps and Polish items the author can take or leave, plus any adjacent issues worth opening.
    - **Verified head**, the `headRefOid` this pass judged, given as the `--since` value the next pass should use. The recommendation above is good for that SHA and no other.
 
