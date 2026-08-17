@@ -48,7 +48,7 @@ Short is not the goal; lean is. Do not cut into the do-not-cut floor: verificati
 - Register: in-repo formal. Sentence case, no em-dashes or en-dashes as punctuation, no hard wrapping of prose.
 - Frontmatter YAML is strict: a `description` plain scalar cannot contain an unquoted `: ` (a colon then a space), or `npx skills` silently skips the whole skill. Quote the value, or rephrase the colon to a period or semicolon.
 - Context probes must be portable to macOS bash 3.2: a `case` pattern inside `$()` needs a leading `(`.
-- Waits and monitors: a step that waits on an external process states a heartbeat (a visible per-tick status line plus a liveness re-check, not just still-pending) and a wall-clock budget with the expiry action spelled out (drop advisory items, surface gating ones as blockers, kill and report owned processes). No skill ships an unbounded wait.
+- Waits and monitors: a step that waits on an external process states a heartbeat (a visible per-tick status line plus a liveness re-check, not just still-pending) and a wall-clock budget with the expiry action spelled out (keep waiting through the expected window, drop only a still-pending item that has gone quiet well past it, surface failed items as blockers, kill and report owned processes). No skill ships an unbounded wait.
 
 ## Before you ship
 
