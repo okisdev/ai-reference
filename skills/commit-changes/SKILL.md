@@ -24,7 +24,7 @@ Rules:
 - 3 to 7 commits max, each independently meaningful
 - If only 1 to 2 files changed, a single commit is fine
 - Assign each file to its primary category; don't split files across commits
-- Foundational changes first (config, types, rename), then features, then polish
+- Dependency order: foundational first (config, types, rename, schema and generated definitions), then core logic, then wiring, then UI, then polish
 - Match the repo's existing commit-message style (subject case, scope notation, body)
 - If pre-commit hooks fail, fix the failure and re-commit; never bypass with `--no-verify`
 - NEVER reset, rebase, modify existing commits, or force push

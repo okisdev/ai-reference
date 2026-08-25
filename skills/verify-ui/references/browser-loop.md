@@ -37,6 +37,8 @@ Class strings inside the fragment are Tailwind output, not stable selectors. Pre
 
 ## Assertion shape
 
+Element handles and coordinates go stale on navigation and reflow: re-query after every navigation, and click by coordinates only when a screenshot taken immediately before supplied them.
+
 Wait for hydration inside the same `evaluate_script` call that queries the node:
 ```js
 () => new Promise(r => setTimeout(r, 1500)).then(() => {
@@ -56,7 +58,7 @@ Match the medium the feedback arrived in; a phone screenshot pasted as the refer
 
 ## Evidence
 
-Call `take_screenshot`, then Read the resulting file; a screenshot that is never read is not evidence. Compare it against the pasted reference image when one exists.
+Call `take_screenshot`, then Read the resulting file; a screenshot that is never read is not evidence. Compare it against the pasted reference image when one exists. For structure, labels, and focus order, an accessibility snapshot (`take_snapshot`) is first-class evidence beside the screenshot and often the cheaper assertion.
 
 ## Teardown
 

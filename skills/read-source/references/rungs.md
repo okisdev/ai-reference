@@ -16,6 +16,10 @@ Grep the symbol across those declarations:
 ```
 find node_modules/<pkg> -maxdepth 3 -name '*.d.ts' -print0 | xargs -0 grep -n '<symbol>'
 ```
+Check for a local patch of the pin; a hit makes the patched output the behavior authority for this project:
+```
+jq -r '.pnpm.patchedDependencies // empty' package.json; ls patches/ 2>/dev/null
+```
 This rung is the compatibility authority for what the project can actually import or typecheck; no later rung overrides it for that question.
 
 ## L1 published artifact
