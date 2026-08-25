@@ -49,10 +49,10 @@ Short is not the goal; lean is. Do not cut into the do-not-cut floor: verificati
 - Frontmatter YAML is strict: a `description` plain scalar cannot contain an unquoted `: ` (a colon then a space), or `npx skills` silently skips the whole skill. Quote the value, or rephrase the colon to a period or semicolon.
 - Context probes must be portable to macOS bash 3.2: a `case` pattern inside `$()` needs a leading `(`.
 - Waits and monitors: a step that waits on an external process states a heartbeat (a visible per-tick status line plus a liveness re-check, not just still-pending) and a wall-clock budget with the expiry action spelled out (keep waiting through the expected window, drop only a still-pending item that has gone quiet well past it, surface failed items as blockers, kill and report owned processes). No skill ships an unbounded wait.
+- Process steps are written to be copied into the executing agent's plan verbatim, one self-contained action each; a consciously skipped step stays visible as `skip: <reason>` rather than silently dropped. An agent that paraphrases a checklist drops its gates.
 
 ## Before you ship
 
-- `name:` equals the directory name.
-- The skill is listed in `.claude-plugin/plugin.json` and `README.md`.
-- `npx skills add <repo> -l` lists the skill (proves the frontmatter parses).
+- `node scripts/validate-skills.mjs` passes. It enforces the mechanical checks (frontmatter parses, `name:` equals the directory name, the skill is listed in `.claude-plugin/plugin.json` and `README.md`), and CI runs the same script on every PR touching skills.
+- `npx skills add <repo> -l` lists the skill (proves the consumer-side CLI parses the frontmatter too).
 - Bump the `.claude-plugin/plugin.json` version.

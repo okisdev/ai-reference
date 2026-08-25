@@ -40,8 +40,8 @@ Analyze all changes (committed + uncommitted), group by **purpose**, and create 
 
 1. **Plan** ($1 is the optional base branch): read the actual diffs before grouping, not just the stats above (uncommitted via `git diff HEAD`, the committed range via `git diff $(git merge-base HEAD <base>)..HEAD`), then categorize. Print one line per planned commit in the form `<conventional-prefix>(<scope>): <subject> (<file count> file(s))`, then list which files go in each. State the scenario number above.
 2. **Confirm (only when destructive)**: for scenarios 2, 3, 4, ask before running `git reset`. For scenario 3 specifically, call out "rewriting N pushed commit(s); publishing requires force-push".
-3. **Execute**: before any `git reset`, record a recovery ref: `git branch _backup/<branch>` (or note the current tip with `git rev-parse HEAD`). Then run `git reset --soft $(git merge-base HEAD <base>)` if needed, then `git add <files>` + `git commit` per group. If the regroup goes wrong, restore the original history with `git reset --hard _backup/<branch>` (or `git reset --hard <recorded-sha>`).
-4. **Verify**: `git status` is clean, then `git log --oneline -<n>` to show the rewritten tip.
+3. **Execute**: before any `git reset`, record a recovery ref: `git branch _backup/<branch>` (or note the current tip with `git rev-parse HEAD`), and for a committed-only regroup (scenarios 2 and 3, no uncommitted changes joining) also record the content identity: `ORIGINAL_TREE=$(git rev-parse HEAD^{tree})`. Then run `git reset --soft $(git merge-base HEAD <base>)` if needed, then `git add <files>` + `git commit` per group. If the regroup goes wrong, restore the original history with `git reset --hard _backup/<branch>` (or `git reset --hard <recorded-sha>`).
+4. **Verify**: `git status` is clean, then `git log --oneline -<n>` to show the rewritten tip. On a committed-only regroup, compare `git rev-parse HEAD^{tree}` against `ORIGINAL_TREE`; a mismatch means the rewrite changed content, not just history, so stop and reconcile before any publication.
 5. **Recommended sanity check**: run the project's `build` / `test` if it's quick.
 
 ### Rules
@@ -50,7 +50,7 @@ Analyze all changes (committed + uncommitted), group by **purpose**, and create 
 - Use conventional commit prefixes: `feat:`, `fix:`, `docs:`, `style:`, `refactor:`, `perf:`, `test:`, `ci:`, `build:`, `chore:`, `revert:`.
 - Stage by explicit paths; avoid `git add -A` and `git add .` so sensitive files (`.env`, credentials) don't sneak in.
 - Group files by their primary concern. A single file may be split across commits with `git add -p` only when its diff genuinely spans two unrelated concerns; cohesive diffs stay together.
-- Order: foundational (config, rename, types) → features → polish (docs, tests, chore).
+- Order: foundational (config, rename, types, schema and generated definitions) → core logic → wiring and integration → UI or surface behavior → polish (docs, tests, chore).
 - If pre-commit hooks fail, fix the issue and re-commit. Never use `--no-verify`.
 - Match the repository's existing commit-message style (subject case, scope notation, body wrap, sign-off).
 - NEVER force push without explicit user permission, even when the rewrite would otherwise leave the branch unpublishable. State the situation and let the user run the force-push themselves.

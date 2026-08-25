@@ -1,7 +1,7 @@
 {
   "name": "okisdev",
   "description": "Personal skills collection by okisdev",
-  "version": "0.0.30",
+  "version": "0.0.31",
   "author": {
     "name": "okisdev"
   },
@@ -27,6 +27,9 @@
     "./skills/onboard-repo",
     "./skills/use-project-memory",
     "./skills/diagnose-root",
-    "./skills/mirror-reference"
+    "./skills/mirror-reference",
+    "./skills/distill-session",
+    "./skills/verify-cli",
+    "./skills/create-verify-skill"
   ]
 }

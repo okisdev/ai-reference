@@ -82,7 +82,7 @@ Verify every substantive review comment on a GitHub PR against the current codeb
 
    - **Per-comment detail** for each Confirmed / Partial entry: 2 to 3 line evidence plus a concrete fix draft (code snippet or `file:line` diff).
    - **Rejected / deferred comments**: one line each with the reason.
-   - **Recommended actions**, a concise list the user can act on:
+   - **Recommended actions**, a concise list the user can act on, ordered by severity (Confirmed blocking issues first, then Partial, then replies and re-triggers):
      - changes to make (with `file:line`).
      - comments to reply-to-reject (with draft reply text if helpful).
      - bots to re-trigger (e.g. "tag `@cubic-dev-ai`, its last review is stale on `<sha>`").

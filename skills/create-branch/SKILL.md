@@ -33,8 +33,9 @@ When in doubt and the set is small, err on branching off the default base.
 
 1. If there are no uncommitted changes AND no ignored candidates, abort with a message. (If no branch name is provided via `$ARGUMENTS`, infer one from the uncommitted changes using conventional branch naming: `feat/`, `fix/`, `chore/`, `refactor/`.)
 2. If branching off the default base (not current HEAD):
+   - `git fetch origin` so the base is current, not a stale local ref
    - `git stash push -u -m "create-branch-skill-transfer"` to capture both tracked + untracked
-   - `git checkout <base>` then `git checkout -b <branch-name>`
+   - `git checkout -b <branch-name> origin/<base>` (leaves the local base ref untouched)
    - `git stash pop`
    - If pop conflicts on files the user did not author, that signals a bad base pick; abort and ask
 3. Otherwise (branching off current HEAD): `git checkout -b <branch-name>`.

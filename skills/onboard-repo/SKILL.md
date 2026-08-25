@@ -22,8 +22,8 @@ Read the repository's own orientation first, extract the idiom from real neighbo
 2. Read the repository's own orientation docs first: README, AGENTS.md or CLAUDE.md, CONTRIBUTING. They outrank inference, and a conflict between them and the code is worth reporting.
 3. Map the structure: workspaces and packages, entry points, where each kind of thing lives (apps versus packages, components versus utilities, tests, docs). Cite the manifest or directory that proves each claim.
 4. Extract the idiom from exemplars: in the focus area, read 2 to 3 nearest siblings of whatever the follow-up task will touch (the neighboring component, hook, test, or doc) and record naming, file placement, import style, and export shape. The paradigm is what the neighbors actually do, not generic best practice.
-5. Collect prior art: search for existing implementations, primitives, and helpers the follow-up task should reuse instead of rebuilding; list them with paths.
-6. Reconcile with project memory via `use-project-memory`: read the index, pull forward constraints the map must respect, and update a stale topic instead of duplicating it.
+5. Collect prior art: search for existing implementations, primitives, and helpers the follow-up task should reuse instead of rebuilding; list them with paths. A search that found nothing is recorded with its query and scope; nothing-found is a finding, not an omission.
+6. Reconcile with project memory via `use-project-memory`: read the index, pull forward constraints the map must respect, and update a stale topic instead of duplicating it. Confirm each pulled-forward constraint still holds on the live tree before it enters the map; a stale claim is flagged or dropped, not repeated.
 7. Deliver the map: entry points, conventions observed (each cited by file), prior art found, constraints, and open questions. Then stop; a research or comparison ask ends here with zero edits.
 
 ### Rules

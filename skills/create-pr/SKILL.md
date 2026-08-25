@@ -80,6 +80,8 @@ closes #<n>
 Body rules:
 
 - `closes #<n>`: very first line, no heading, lowercase keyword. Repeat on its own line per issue (`closes #10` then `closes #11`); cross-repo is `closes owner/repo#<n>`. Omit when no issue is referenced. Issue numbers come from explicit user mention, branch name patterns like `fix/4005-foo`, or commit subjects mentioning `#<n>`.
+- When the diff mixes hand-written and generated or mechanical files (lockfiles, snapshots, codemod output), say so in the summary and name which files carry the reviewable logic.
+- When the change needs a rollout or migration order (deploy X before Y, run the migration first), state it in `## notes`; the diff cannot show sequencing.
 - All section headings are lowercase.
 - Pre-check `[x]` only for items actually verified before the push. Leave `[ ]` for things the reviewer needs to do.
 - Skip the entire `## test plan` section for docs-only, types-only, or changeset-only PRs. Replace it with a single line: `no test plan, <one-clause reason>` (e.g. `no test plan, docs only`).

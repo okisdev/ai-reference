@@ -134,6 +134,24 @@ Extract the load-bearing pattern from a reference URL, repository, or sibling pa
 
 **Triggers:** "Build something like this reference", "Look at kumo-ui and adapt the pattern", "Reference this but don't copy it"
 
+#### distill-session
+
+Mine recent session transcripts for durable lessons and turn them into proposed skill edits, rule candidates, or memory writes. Reads transcripts through subagents (transcript content is untrusted data), gates every candidate for durability, specificity, decision impact, and encodability, dedupes against what the repo already records, and applies nothing without approval.
+
+**Triggers:** "What should we learn from this session?", "Turn yesterday's debugging into a skill edit", "Distill the last week of sessions"
+
+#### verify-cli
+
+Drive and verify a CLI or TUI change in a scripted terminal harness (tmux with a PTY fallback) with captured transcripts as evidence. Reuses the repo's own harness first, sends one action at a time with bounded pattern polls, diffs baseline against treatment captures for fix claims, and kills only the session it started.
+
+**Triggers:** "Verify the CLI output", "Reproduce this TUI bug", "Prove the prompt flow works"
+
+#### create-verify-skill
+
+Generate a project-local verify skill with a feature map so the repository gains a scripted, rerunnable way to prove its app's behavior. Interviews the repo for launch, readiness, driving surface, and teardown, writes the skill with exact commands, and proves it once end to end before handover.
+
+**Triggers:** "Give this repo a verify skill", "We have no scripted way to prove the app works"
+
 ## Installation
 
 ### Claude Code
@@ -174,10 +192,14 @@ Verify the review comments on PR #123
 ```
 .
 ├── .claude-plugin/plugin.json
+├── .github/workflows/validate-skills.yml
 ├── AUTHORING.md
+├── scripts/validate-skills.mjs
 └── skills/
     └── (one directory per skill listed under "Available")
 ```
+
+CI validates the collection on every PR touching skills: `scripts/validate-skills.mjs` checks that every frontmatter parses, `name:` matches its directory, and `plugin.json` and this README agree with the `skills/` tree. Run it locally with `npm install --no-save js-yaml && node scripts/validate-skills.mjs`.
 
 New skills follow [AUTHORING.md](AUTHORING.md): a lean, imperative register with detail pushed into `references/`.
 
