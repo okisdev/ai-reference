@@ -158,6 +158,12 @@ Rewrite a repository's AGENTS.md and CLAUDE.md files into short normative instru
 
 **Triggers:** "Clean up AGENTS.md", "Our CLAUDE.md has become a changelog", "Normalize the instruction files across the monorepo"
 
+#### clean-memory
+
+Verify a repository's project memory against reality and forget safely. `scripts/audit.py` checks every anchor a topic carries (paths and symbols against `git ls-files`, SHAs against the object store, issue and PR numbers against GitHub with `--gh`), marks anchors that changed after the memory was written, finds orphans, budget overruns, and project facts leaking into other harnesses' memory stores, and declares mass drift when a third of the anchors are dead. The skill snapshots the store, verifies flagged topics in fresh-context subagents with `file:line` evidence, then confirms, corrects, archives, disproves, supersedes, deletes, demotes, or escalates each one through `use-project-memory`'s conventions, rebuilds the store when the architecture moved under it, and records the run in a sidecar that `use-project-memory` reads to suggest the next pass after thirty days.
+
+**Triggers:** "Clean up the project memory", "Half of these memories are outdated", "Check what memory still holds after the refactor"
+
 ## Installation
 
 ### Claude Code
