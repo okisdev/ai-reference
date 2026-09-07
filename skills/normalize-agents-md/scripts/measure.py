@@ -1,4 +1,4 @@
-"""Usage: measure.py [SCOPE] [--json] [--strict]."""
+"""Usage: measure.py [SCOPE] [--json] [--strict]. Reports instruction files, chains, Next.js generators, and READMEs that carry agent-facing lines."""
 
 import json
 import os
@@ -10,10 +10,16 @@ from pathlib import Path
 SKIPPED_DIRECTORIES = {"node_modules", ".git", "dist", "build", ".next", ".turbo", "vendor"}
 EXACT_NAMES = {"AGENTS.md", "AGENTS.override.md", "AGENT.md", "CLAUDE.md", "CLAUDE.local.md", "GEMINI.md", ".cursorrules", "Agents.md", "Claude.md"}
 MANAGED_BLOCKS = (("nextjs-agent-rules", "<!-- BEGIN:nextjs-agent-rules -->", "<!-- END:nextjs-agent-rules -->"), ("next-legacy", "<!-- NEXT-AGENTS-MD-START -->", "<!-- NEXT-AGENTS-MD-END -->"), ("ruler", "# START Ruler Generated Files", "# END Ruler Generated Files"))
+NEXT_CONFIG_NAMES = {"next.config.js", "next.config.mjs", "next.config.cjs", "next.config.ts", "next.config.mts"}
+README_NAMES = {"README.md", "Readme.md", "readme.md"}
+MANIFEST_NAMES = {"package.json", "pyproject.toml", "Cargo.toml", "go.mod", "Package.swift"}
+AGENT_SIGNAL = re.compile(r"AGENTS\.md|CLAUDE\.md|\bClaude\b|\bCodex\b|\bCursor\b|\bCopilot\b|coding agents?|AI agents?|^#{1,6} .*\b(?:agents?|conventions?|rules|gotchas?|guidelines?)\b", re.IGNORECASE)
 FENCE = re.compile(r"^\s*(`{3,}|~{3,})")
 LIST_ITEM = re.compile(r"^\s*(?:[-*]\s+|\d+\.\s+)")
 TABLE_ROW = re.compile(r"^\s*\|")
 DATED_REFERENCE = re.compile(r"20\d\d-\d\d-\d\d|#\d{2,}|\b\d+(?:\.\d+)?\s*(?:seconds?|milliseconds?|ms|KB|MB|GB|%)", re.IGNORECASE)
+NEXT_AGENT_RULES_OFF = re.compile(r"agentRules\s*:\s*false")
+PLACEHOLDER = re.compile(r"^#\s+(?:AGENTS|AGENT|CLAUDE|GEMINI)\.md\b|This file provides guidance to|guidance for (?:Claude Code|coding agents|AI coding agents)|^\s*(?:[-*]\s*)?(?:(?-i:TODO)\b|fill (?:me )?in\b)", re.IGNORECASE | re.MULTILINE)
 HISTORY_PHRASES = ("used to", "once hid", "previously", "no longer", "formerly", "the failure this rule names")
 CODEX_CAP = 32768
 GROK_CAP = 10000
@@ -145,12 +151,31 @@ def unit_metrics(text):
     return len(found), max(lengths, default=0), sum(length > 600 for length in lengths)
 
 
+def managed_blocks(text):
+    return [name for name, start, end in MANAGED_BLOCKS if text.find(start) != -1 and text.find(start) < text.find(end)]
+
+
+def without_managed_blocks(text):
+    for _, start, end in MANAGED_BLOCKS:
+        position = text.find(start)
+        while position != -1:
+            closing = text.find(end, position + len(start))
+            if closing == -1:
+                break
+            text = text[:position] + text[closing + len(end):]
+            position = text.find(start)
+    return text
+
+
 def record_for(path, root):
     data = path.read_bytes()
     text = data.decode("utf-8", errors="replace")
     count, longest, over_600 = unit_metrics(text)
-    managed = [name for name, start, end in MANAGED_BLOCKS if text.find(start) != -1 and text.find(start) < text.find(end)]
-    return {"path": relative_path(path, root), "bytes": len(data), "chars": len(text), "lines": len(text.splitlines()), "symlink_target": os.readlink(path) if path.is_symlink() else None, "managed_blocks": managed, "imports": import_count(text), "stub": text.strip() == "@AGENTS.md", "units": count, "longest_unit": longest, "units_over_600": over_600, "dated_references": len(DATED_REFERENCE.findall(text)), "history_phrases": sum(text.lower().count(phrase) for phrase in HISTORY_PHRASES), "flags": []}
+    managed = managed_blocks(text)
+    flags = ["generated-only"] if not without_managed_blocks(text).strip() else []
+    if "generated-only" not in flags and PLACEHOLDER.search(without_managed_blocks(text)):
+        flags.append("placeholder")
+    return {"path": relative_path(path, root), "bytes": len(data), "chars": len(text), "lines": len(text.splitlines()), "symlink_target": os.readlink(path) if path.is_symlink() else None, "managed_blocks": managed, "imports": import_count(text), "stub": text.strip() == "@AGENTS.md", "units": count, "longest_unit": longest, "units_over_600": over_600, "dated_references": len(DATED_REFERENCE.findall(text)), "history_phrases": sum(text.lower().count(phrase) for phrase in HISTORY_PHRASES), "flags": flags}
 
 
 def chain_for(directory, root):
@@ -172,12 +197,16 @@ def chain_for(directory, root):
 
 
 def discover(scope, root, in_repository):
-    candidates, directories = [], []
+    candidates, generators, readmes, directories = [], [], [], []
     for base, names, files in os.walk(scope, topdown=True, followlinks=False):
         names[:] = [name for name in names if name not in SKIPPED_DIRECTORIES]
         directory = Path(base)
         directories.extend(directory / name for name in names)
-        candidates.extend(directory / name for name in files if is_instruction_file(directory / name, root))
+        instruction_files = [directory / name for name in files if is_instruction_file(directory / name, root)]
+        candidates.extend(instruction_files)
+        generators.extend(directory / name for name in files if name in NEXT_CONFIG_NAMES)
+        if directory == root or instruction_files or any(name in MANIFEST_NAMES for name in files):
+            readmes.extend(directory / name for name in files if name in README_NAMES)
     ignored = ignored_directories(root, directories) if in_repository else set()
     records, actual_paths = [], {}
     for path in candidates:
@@ -189,7 +218,26 @@ def discover(scope, root, in_repository):
             continue
         records.append(record)
         actual_paths[record["path"]] = path
-    return records, actual_paths
+    return records, actual_paths, [path for path in generators if not inside_ignored_directory(path, root, ignored)], [path for path in readmes if not inside_ignored_directory(path, root, ignored)]
+
+
+def discover_readmes(paths, root):
+    readmes = []
+    for path in paths:
+        try:
+            text = path.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        agent_lines = sum(1 for line in text.splitlines() if AGENT_SIGNAL.search(line))
+        if agent_lines:
+            readmes.append({"path": relative_path(path, root), "bytes": len(text.encode("utf-8")), "agent_lines": agent_lines})
+    return sorted(readmes, key=lambda readme: (-readme["agent_lines"], readme["path"]))
+
+
+def readme_lines(readmes):
+    lines = ["", "| readme | bytes | agent-facing lines |", "| --- | ---: | ---: |"]
+    lines.extend("| {path} | {bytes} | {agent_lines} |".format(**readme) for readme in readmes)
+    return lines
 
 
 def apply_flags(records, actual_paths, chains, root):
@@ -211,7 +259,35 @@ def apply_flags(records, actual_paths, chains, root):
             flags.append("imports:" + str(record["imports"]))
 
 
-def markdown(records, chains, summary):
+def has_next_marker(path):
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return False
+    return any(marker in text for name, start, end in MANAGED_BLOCKS if name.startswith("next") for marker in (start, end))
+
+
+def discover_generators(paths, root, records):
+    records_by_path = {record["path"]: record for record in records}
+    generators = []
+    for path in paths:
+        try:
+            text = path.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        directory = path.parent
+        agent = records_by_path.get(relative_path(directory / "AGENTS.md", root))
+        if agent is not None and "generated-only" in agent["flags"]:
+            block = "generated-only"
+        elif has_next_marker(directory / "AGENTS.md") or has_next_marker(directory / "CLAUDE.md"):
+            block = "yes"
+        else:
+            block = "none"
+        generators.append({"directory": relative_path(directory, root), "state": "off" if NEXT_AGENT_RULES_OFF.search(text) else "on", "block": block, "template": any(part in {"template", "templates"} for part in directory.relative_to(root).parts)})
+    return sorted(generators, key=lambda generator: generator["directory"])
+
+
+def markdown(records, chains, generators, readmes, summary):
     lines = ["| file | bytes | lines | chars | longest unit | units over 600 | dated | history | flags |", "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |"]
     for record in records:
         values = {"path": record["path"].replace("|", "\\|"), "bytes": record["bytes"], "lines": record["lines"], "chars": record["chars"], "longest": record["longest_unit"], "over": record["units_over_600"], "dated": record["dated_references"], "history": record["history_phrases"], "flags": ", ".join(record["flags"]) or "none"}
@@ -222,7 +298,17 @@ def markdown(records, chains, summary):
         for chain in visible:
             truncated = "none" if chain["truncated"] is None else "{file} ({bytes_lost} bytes lost)".format(**chain["truncated"])
             lines.append("| {directory} | {bytes} | {count} | {truncated} |".format(directory=chain["directory"], bytes=chain["bytes"], count=len(chain["files"]), truncated=truncated))
+    if generators:
+        lines.extend(["", "| generator | state | block | template |", "| --- | --- | --- | --- |"])
+        for generator in generators:
+            lines.append("| {directory} | {state} | {block} | {template} |".format(directory=generator["directory"], state=generator["state"], block=generator["block"], template=str(generator["template"]).lower()))
+    if readmes:
+        lines.extend(readme_lines(readmes))
     lines.extend(["", "{instruction_files} instruction files, {over_hard_cap} over a hard cap, {over_target} over target.".format(**summary)])
+    if generators:
+        lines[-1] += " {count} generators, {on} on, {blocks} with a block.".format(count=len(generators), on=sum(generator["state"] == "on" for generator in generators), blocks=sum(generator["block"] != "none" for generator in generators))
+    if readmes:
+        lines[-1] += " {count} READMEs carry agent-facing lines.".format(count=len(readmes))
     return "\n".join(lines)
 
 
@@ -236,18 +322,28 @@ def main():
         print("Measure.py: Scope is not a directory: " + str(scope), file=sys.stderr)
         return 2
     root, in_repository = repository_root(scope)
-    records, paths = discover(scope, root, in_repository)
+    records, paths, generator_paths, readme_paths = discover(scope, root, in_repository)
     directories = {path.parent for path in paths.values() if path.name in {"AGENTS.md", "AGENTS.override.md"}}
     chains = sorted((chain_for(directory, root) for directory in directories), key=lambda chain: chain["directory"])
     apply_flags(records, paths, chains, root)
+    generators = discover_generators(generator_paths, root, records)
+    readmes = discover_readmes(readme_paths, root)
     records.sort(key=lambda record: (-record["bytes"], record["path"]))
     summary = {"instruction_files": len(records), "over_hard_cap": sum("grok-cap" in record["flags"] or "codex-chain" in record["flags"] for record in records), "over_target": sum("over-target" in record["flags"] for record in records)}
     if json_output:
-        print(json.dumps({"root": str(root), "scope": str(scope), "files": records, "chains": chains, "summary": summary}, ensure_ascii=False))
+        print(json.dumps({"root": str(root), "scope": str(scope), "files": records, "chains": chains, "generators": generators, "readmes": readmes, "summary": summary}, ensure_ascii=False))
     elif not records:
         print("No instruction files found under " + str(scope) + ".")
+        if generators:
+            print("\n| generator | state | block | template |\n| --- | --- | --- | --- |")
+            for generator in generators:
+                print("| {directory} | {state} | {block} | {template} |".format(directory=generator["directory"], state=generator["state"], block=generator["block"], template=str(generator["template"]).lower()))
+            print("\n{count} generators, {on} on, {blocks} with a block.".format(count=len(generators), on=sum(generator["state"] == "on" for generator in generators), blocks=sum(generator["block"] != "none" for generator in generators)))
+        if readmes:
+            print("\n".join(readme_lines(readmes)))
+            print("\n{count} READMEs carry agent-facing lines.".format(count=len(readmes)))
     else:
-        print(markdown(records, chains, summary))
+        print(markdown(records, chains, generators, readmes, summary))
     return 1 if strict and summary["over_hard_cap"] else 0
 
 

@@ -9,7 +9,7 @@ An instruction file holds the facts an agent cannot infer from the tree in a min
 | `AGENTS.md` | The canonical file, at the repository root and in any package that needs rules of its own. Every harness reads it. |
 | `CLAUDE.md` | Exactly `@AGENTS.md` and a newline. A `## Claude Code` section below the import holds only content no other harness can use (plan mode, hooks, Claude-only tools). |
 | `CLAUDE.local.md` | Personal and gitignored; never touched. |
-| Nested `AGENTS.md` | The path-scoped layer that all three harnesses share: Codex and Grok concatenate root to cwd, Claude loads it when it reads files in that directory. `.claude/rules/` is Claude-only and never holds a rule another harness needs. |
+| Nested `AGENTS.md` | The path-scoped layer that all three harnesses share: Codex and Grok concatenate root to cwd, Claude loads it when it reads files in that directory. `.claude/rules/` is Claude-only and never holds a rule another harness needs. A directory earns one by the coverage test below, never by existing. |
 | `GEMINI.md`, `.cursor/rules/*.mdc`, `.github/copilot-instructions.md` | Harness mirrors; left as found, with any duplication of AGENTS.md reported rather than resolved. |
 
 ## Caps and targets
@@ -46,11 +46,22 @@ Apply to one clause. A clause that fails the first question leaves the file; one
 | Mechanically enforced | A named test, lint, script, or CI job asserts it, confirmed by reading the assertion | One-line pointer: "`architecture.test.ts` asserts import layering; when this file and the test disagree, the test wins" |
 | Command or verification recipe | Non-obvious build, test, lint, typecheck, and their scope | Stays; scripts obvious from the manifest are dropped |
 | Pointer | Names the owning file and the decision that requires reading it; a line that only says what a directory holds is an inventory | Stays |
-| Product description | What the app is | One title line; the rest is README |
+| Product description | What the app is, features, user setup, written for a reader | One title line stays; the rest goes to README when README lacks it, else is dropped |
+| Agent-facing README section | A README section addressed to agents or stating obligations for code changes | AGENTS.md through this table; README keeps at most one pointer line |
 | Contributor process | PR etiquette addressed to contributors | CONTRIBUTING.md in a public repository, with one pointer left |
 | Generic best practice | Names nothing repo-specific | Delete; global instructions carry habits |
 | Package-scoped rule in the root | Applies only under one package | That package's AGENTS.md |
-| Generated or managed block | Between markers | Byte-identical; never paraphrased, never moved |
+| Placeholder | Would read the same in any repository: a generator's block, a scaffold preamble, a template heading with nothing repo-specific under it, a title that names the file, a TODO | Delete; a file that was only placeholder goes with its stub; a generator with a switch is turned off in the same pass (see Placeholders and generators) |
+
+## Coverage
+
+A directory without an AGENTS.md gets one only when at least one of these holds, and only when at least one rule or command then survives the altitude test:
+
+1. The ledger moves a rule down to it from the root or an ancestor.
+2. Its verification command or toolchain differs from the root: another package manager, a different language runtime, a deploy tool of its own, a test or typecheck entry the root does not run.
+3. Its own README, manifest, or scripts name a trap an agent working there would hit.
+
+Examples and templates never get one; the root's rules cover them. A file with nothing to say is not created, because an empty nested file costs a read in every harness and invites the next accretion. A repository with no root file gets the minimal root from the template: title line, commands, the editing contract, and the CLAUDE.md stub.
 
 ## Template
 
@@ -105,15 +116,28 @@ Nested (a package or app):
 
 Empty headings are dropped. Rules are grouped under sub-headings only past about twelve bullets. The Editing this file section is copied verbatim into every root file; it is the anti-accretion contract, and a repository never gets a softened copy.
 
-## Managed blocks and imports
+## Placeholders and generators
 
-| Owner | Markers | Behavior |
-|---|---|---|
-| Next.js `next dev` (16.3 and later) | `<!-- BEGIN:nextjs-agent-rules -->` to `<!-- END:nextjs-agent-rules -->` | Rewritten on every dev start; content outside the markers survives byte for byte; with no AGENTS.md present it scaffolds one plus a `CLAUDE.md` holding `@AGENTS.md` |
-| Next.js legacy | `<!-- NEXT-AGENTS-MD-START -->` to `<!-- NEXT-AGENTS-MD-END -->` | Stripped and replaced by the current block |
-| Ruler | `# START Ruler Generated Files` to `# END Ruler Generated Files` | Regenerated from `.ruler/`; the source is edited, never the output |
+A placeholder is text that would read the same in any repository: the fixed block a framework writes, a scaffold preamble ("This file provides guidance to Claude Code"), a template heading with nothing repo-specific under it, a title that names the file instead of the project, a TODO or fill-in marker, a section that restates the README. Placeholders are deleted whatever wrote them; a file that was only placeholder is deleted together with its CLAUDE.md stub. Content is not a placeholder because a tool wrote it: a compiled output that carries this repository's own rules (Ruler's rendered block) is edited at its source and never deleted.
 
-`@path` imports load at launch in Claude (four hops deep, no context saved) and are plain text to Codex and Grok; an import line is never edited or moved, and a symlinked `CLAUDE.md` stays a symlink.
+A generator that would write the placeholder back is switched off in the same pass when it has a switch. When it has none, or the marker is unknown, the placeholder is still deleted and the report names the marker, so a re-creation shows up in the next pass and the generator is then hunted down.
+
+| Generator | Markers or signature | Behavior | Switch |
+|---|---|---|---|
+| Next.js `next dev` (16.3 and later) | `<!-- BEGIN:nextjs-agent-rules -->` to `<!-- END:nextjs-agent-rules -->`, legacy `<!-- NEXT-AGENTS-MD-START -->` to `<!-- NEXT-AGENTS-MD-END -->` | Written when an AI agent runs `next dev` and the current block is missing: appended to an existing AGENTS.md, else to CLAUDE.md, else scaffolded as AGENTS.md plus a `CLAUDE.md` holding `@AGENTS.md`; content outside the markers survives byte for byte | `agentRules: false` in that app's next.config. Keep one root line saying Next docs live in `node_modules/next/dist/docs` and are read before writing Next code. A directory under `templates/` ships to users, so it is reported and left as found |
+| `create-next-app`, `create-expo-app`, Claude `/init`, Codex and Cursor scaffolds | The scaffold preamble, a file-name title, template headings | Written once at creation, never again | None needed; delete |
+| Ruler | `# START Ruler Generated Files` to `# END Ruler Generated Files` | Compiled from `.ruler/` sources, repo-specific | Not a placeholder; edit `.ruler/`, report it |
+| Unknown markers | Any other `BEGIN` and `END` pair with generic wording | Owner not identified | Delete and report the marker |
+
+`@path` imports load at launch in Claude (four hops deep, no context saved) and are plain text to Codex and Grok; an import line is never edited or moved, and a symlinked `CLAUDE.md` stays a symlink. A CLAUDE.md stub whose AGENTS.md is deleted goes with it.
+
+## README and AGENTS.md
+
+The two files have different readers and the skill sorts content by reader, in both directions. README answers a person deciding whether and how to use the project: what it is, why, install, run, features, configuration, license, where to contribute. AGENTS.md answers an agent about to change the code: obligations, the commands that gate a change, traps, where things live. The test for one clause is who acts on it: a person reading about the project keeps it in README, an agent editing the code gets it in AGENTS.md, and a clause both need lives in one file with a one-line pointer from the other.
+
+README sections that were written for agents (headings naming agents, Claude, Codex, Cursor, or Copilot; convention, rule, gotcha, or guideline sections that only matter when changing code; do-not lists) are ledgered like any instruction file, moved into AGENTS.md through the routing table, and replaced in the README by at most one line saying where agent instructions live. Human-facing content found in AGENTS.md (product description, feature lists, user setup, architecture overviews written for readers) moves to the README when the README lacks it and is dropped when the README already carries it. The README is edited only in the sections the ledger names; its other content, structure, and badges are left as found. The loss check covers the old README as well as the old instruction files.
+
+A README-only directory that is not a workspace package or app gets no AGENTS.md, because no harness loads anything there; its agent-facing sections move to the nearest ancestor AGENTS.md instead.
 
 ## Ledger
 
