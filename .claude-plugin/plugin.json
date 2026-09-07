@@ -1,7 +1,7 @@
 {
   "name": "okisdev",
   "description": "Personal skills collection by okisdev",
-  "version": "0.0.31",
+  "version": "0.0.32",
   "author": {
     "name": "okisdev"
   },
@@ -30,6 +30,7 @@
     "./skills/mirror-reference",
     "./skills/distill-session",
     "./skills/verify-cli",
-    "./skills/create-verify-skill"
+    "./skills/create-verify-skill",
+    "./skills/normalize-agents-md"
   ]
 }

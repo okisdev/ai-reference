@@ -152,6 +152,12 @@ Generate a project-local verify skill with a feature map so the repository gains
 
 **Triggers:** "Give this repo a verify skill", "We have no scripted way to prove the app works"
 
+#### normalize-agents-md
+
+Rewrite a repository's AGENTS.md and CLAUDE.md files into short normative instruction files. Measures every file against the caps each harness actually reads (Codex's shared 32 KiB root-to-cwd chain, Grok's 10,000 characters per file, Claude's 200 line target), classifies every clause and routes it: rules stay as one bullet each with at most one because-clause, incidents and decisions go to project memory, inventories and module internals go to the code or docs, package rules move down into the package's own file, and a rule an existing test asserts becomes a pointer. Preserves managed blocks and `@import` lines byte for byte, keeps CLAUDE.md as an `@AGENTS.md` stub, proves nothing load-bearing was lost with a fresh-context loss check, and leaves the tree uncommitted with a before and after report. Ships `scripts/measure.py`, which a repository can run with `--strict` in CI to fail on the next accretion.
+
+**Triggers:** "Clean up AGENTS.md", "Our CLAUDE.md has become a changelog", "Normalize the instruction files across the monorepo"
+
 ## Installation
 
 ### Claude Code
