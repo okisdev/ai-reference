@@ -202,6 +202,20 @@ for (const [skillPath, frontmatter] of frontmatterByPath) {
   }
 }
 
+const scriptReference = /\$HOME\/\.agents\/skills\/([a-z0-9-]+)\/scripts\/([A-Za-z0-9_.-]+)/g;
+
+for (const skillPath of skillPaths) {
+  const contents = fs.readFileSync(skillPath, "utf8");
+
+  for (const match of contents.matchAll(scriptReference)) {
+    const scriptPath = path.join(skillsDirectory, match[1], "scripts", match[2]);
+
+    if (!fs.existsSync(scriptPath)) {
+      fail(`${relativePath(skillPath)} references ${relativePath(scriptPath)}, which does not exist.`);
+    }
+  }
+}
+
 const readmePath = path.join(repoRoot, "README.md");
 let readme;
 
