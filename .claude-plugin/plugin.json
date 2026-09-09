@@ -1,7 +1,7 @@
 {
   "name": "okisdev",
   "description": "Personal skills collection by okisdev",
-  "version": "0.0.34",
+  "version": "0.0.35",
   "author": {
     "name": "okisdev"
   },
@@ -32,6 +32,8 @@
     "./skills/verify-cli",
     "./skills/create-verify-skill",
     "./skills/normalize-agents-md",
-    "./skills/clean-memory"
+    "./skills/clean-memory",
+    "./skills/design-dashboard",
+    "./skills/plan-charts"
   ]
 }
