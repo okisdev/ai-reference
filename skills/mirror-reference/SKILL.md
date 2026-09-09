@@ -27,4 +27,5 @@ Study the reference until the pattern separates from its styling, implement the 
 
 - Never copy class strings, design tokens, colors, or naming verbatim from a reference; every borrowed pattern is re-expressed in this repository's own primitives.
 - More than one reference means attribution per adopted pattern, not a blend nobody can trace.
+- With several references, each contributes one named pattern class (language, density, page skeleton, interaction grammar), stated as take and not-take per reference; a reference's recent direction is read from its dated git history, not its current file state.
 - A reference the task says to study without implementing produces the pattern analysis and deviation notes only, with zero edits.
