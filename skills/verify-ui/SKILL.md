@@ -25,7 +25,7 @@ Verify the claimed visual state in a real rendered browser with a screenshot or 
 5. Navigate with the browser tooling (Chrome DevTools MCP: `navigate_page`, `resize_page`, `emulate`, `evaluate_script`, `take_screenshot`) and size the viewport to the context the feedback came from; `--mobile` or a phone screenshot as the reference means a phone viewport.
 6. Wait for hydration before asserting. Navigation resolves before the app hydrates, so sleep 1 to 2 seconds or poll for an app marker inside `evaluate_script` before querying.
 7. Assert the specific claim. Query the exact node (the pasted fragment's file and line locate the component; edit that file rather than guessing from class names), take a screenshot, read it, and judge the result against the ask.
-8. Iterate. Apply the edit, let hot reload pick it up, re-assert and re-screenshot the same URL at the same viewport, and report with the evidence. A "this fixes X" claim needs both sides: capture the broken state from the pre-change code first (same URL, viewport, and steps), then the fixed state, since an after-only screenshot cannot show that anything changed.
+8. Iterate. Apply the edit, let hot reload pick it up, re-assert and re-screenshot the same URL at the same viewport, and report with the evidence. A "this fixes X" claim needs both sides: capture the broken state from the pre-change code first (same URL, viewport, and steps), then the fixed state, since an after-only screenshot cannot show that anything changed. A fix to a shared component is re-asserted on every page that renders it, not only the page the feedback named.
 9. Tear down. Kill only the recorded PID of the server this skill started, and leave any pre-existing server running.
 
 ### Rules
