@@ -51,7 +51,7 @@ Verify a GitHub PR multi-dimensionally (claim-driven and necessity-driven, not o
 7. **Classify each finding**:
    - **Blocking**, must fix before merge; for necessity, a reason not to merge at all (redundant with existing code, duplicates another PR, premise does not hold, overpromised closure).
    - **Polish**, would improve the PR but a maintainer would not push back (style preference, wording cleanup).
-   - **Pre-existing**, gap that predates the PR. Surface it but do NOT block; suggest a follow-up issue.
+   - **Pre-existing**, gap that predates the PR. Surface it but do NOT block. Mark it **fold in** when the fix stays inside files the PR already touches, needs no product or API decision, and is covered by the PR's own tests or checks; suggest a follow-up issue only for a gap that fails that test.
 
 8. **Report** in this structure:
 
@@ -74,7 +74,7 @@ Verify a GitHub PR multi-dimensionally (claim-driven and necessity-driven, not o
      - **Merge after small fixes**, necessity holds; list each Blocking item with `file:line` and the concrete change.
      - **Push back**, necessity holds but the implementation needs significant rework; explain why.
    - **Merge readiness**, separate from the quality verdict: note any operational blocker that still gates the actual merge even when the recommendation is Merge as-is, namely a pending check or unposted review, a human's `CHANGES_REQUESTED`, or unresolved review threads (step 6). Point to `/verify-pr-comments` for working through the threads.
-   - **Optional follow-ups**, bulleted Pre-existing gaps and Polish items the author can take or leave, plus any adjacent issues worth opening.
+   - **Optional follow-ups**, bulleted Polish items the author can take or leave and Pre-existing gaps, each gap marked fold in (with `file:line` and the concrete change) or follow-up issue (with the part of the fold-in test it fails). Propose opening an issue only for the latter.
    - **Verified head**, the `headRefOid` this pass judged, given as the `--since` value the next pass should use. The recommendation above is good for that SHA and no other.
 
 ### Rules

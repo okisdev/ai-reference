@@ -61,11 +61,11 @@ Verify every substantive review comment on a GitHub PR against the current codeb
    - Treat ```` ```suggestion ```` blocks as the primary, testable artifact (GitHub renders them as one-click "Commit suggestion" buttons). Read the suggestion first, surrounding prose as justification; verify it in isolation: would applying it compile and match existing patterns?
    - Cross-check any factual claim ("type X exists in module Y", "pattern Z is used in other-file.ts") with `Grep` before accepting it.
    - Mentally apply the suggested fix and verify types/callers/tests still pass; bots frequently suggest fixes that fail type-check or break callers.
-   - Assign one verdict (review bots split "Critical Issues" from "Suggestions"; critical issues deserve Confirmed/Refuted, plain suggestions can be Out-of-scope with a one-line reason):
+   - Assign one verdict (review bots split "Critical Issues" from "Suggestions"; critical issues deserve Confirmed/Refuted, plain suggestions can take their verdict with a one-line reason):
      - **Confirmed**: claim correct and the suggested fix works as-is.
      - **Partial**: claim has merit but the fix is wrong or incomplete; propose an adjusted fix (e.g. `Pick<ThreadListItemRuntime, "foo">` rather than the bare type).
      - **Refuted**: claim incorrect. Explain why with code evidence.
-     - **Out-of-scope**: valid but exceeds the PR's intent (architectural refactor, missing tests, etc.). Defer to follow-up.
+     - **Out-of-scope**: valid, but the fix leaves the files the PR touches, needs a product or API decision, or deserves its own review (architectural refactor, a missing test suite). Defer to follow-up. A valid claim whose fix stays in touched files under the PR's own checks is Confirmed or Partial, even when it predates the PR or sits beside its intent.
      - **Resolved**: a human marked the thread resolved (step 2).
      - **Stale**: outdated against the current code (step 5).
 
