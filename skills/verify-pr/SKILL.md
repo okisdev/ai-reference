@@ -51,7 +51,7 @@ Verify a GitHub PR multi-dimensionally (claim-driven and necessity-driven, not o
 7. **Classify each finding**:
    - **Blocking**, must fix before merge; for necessity, a reason not to merge at all (redundant with existing code, duplicates another PR, premise does not hold, overpromised closure).
    - **Polish**, would improve the PR but a maintainer would not push back (style preference, wording cleanup).
-   - **Pre-existing**, gap that predates the PR. Surface it but do NOT block. Mark it **fold in** when the fix stays inside files the PR already touches, needs no product or API decision, and is covered by the PR's own tests or checks; suggest a follow-up issue only for a gap that fails that test.
+   - **Pre-existing**, gap that predates the PR. Surface it but do NOT block. Mark it **fold in** when the fix stays inside files the PR already touches, is small enough to review with the PR, needs no product or API decision, and is covered by the PR's own tests or checks; suggest a follow-up issue only for a gap that fails that test.
 
 8. **Report** in this structure:
 
