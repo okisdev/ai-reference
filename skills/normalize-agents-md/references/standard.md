@@ -39,8 +39,9 @@ Apply to one clause. A clause that fails the first question leaves the file; one
 | Content | Test | Destination |
 |---|---|---|
 | Directive | States an obligation or prohibition with a trigger | Stays; one bullet, at most one because-clause |
-| Rationale beyond one clause | Removing it would not let a forbidden alternative pass the rule | Drop; a decision record goes to project memory |
-| Incident narrative | Dates, PR or issue numbers, measurements, "used to", "once", "the failure this rule names" | Project memory topic with the citation, or nowhere, since git already has it |
+| Rationale beyond one clause | Removing it would not let a forbidden alternative pass the rule | Drop; the commit message and the PR carry the reasoning |
+| Incident narrative | Dates, PR or issue numbers, measurements, "used to", "once", "the failure this rule names" | Nowhere; git, the PR, and the issue already carry it |
+| Rule held in project memory | A memory topic states a trap, prohibition, or command every agent in this directory needs and the repository can publish | A rule here; the claim leaves the topic, and the topic goes once nothing else in it holds, because Codex and Grok never load memory |
 | Inventory | Lists files, directories, modules, or symbols with descriptions the tree carries | Delete; roles unreadable from names go to the existing ARCHITECTURE.md or docs page |
 | Implementation detail | How one module works at a depth only its maintainer needs | The code, its tests, or docs |
 | Mechanically enforced | A named test, lint, script, or CI job asserts it, confirmed by reading the assertion | One-line pointer: "`architecture.test.ts` asserts import layering; when this file and the test disagree, the test wins" |
@@ -141,4 +142,4 @@ A README-only directory that is not a workspace package or app gets no AGENTS.md
 
 ## Ledger
 
-One row per clause: file, line, clause (first 80 characters), category, disposition (`keep`, `move <destination>`, `drop <reason>`), evidence (the enforcer path read, the existence check run, or the memory topic written). The loss check reads this ledger against the rewritten files, and the report's moved and dropped lists are derived from it.
+One row per clause: file, line, clause (first 80 characters), category, disposition (`keep`, `move <destination>`, `drop <reason>`), evidence (the enforcer path read, the existence check run, or the memory topic written or promoted). The loss check reads this ledger against the rewritten files, and the report's moved and dropped lists are derived from it.
