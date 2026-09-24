@@ -55,4 +55,5 @@ Short is not the goal; lean is. Do not cut into the do-not-cut floor: verificati
 
 - `node scripts/validate-skills.mjs` passes. It enforces the mechanical checks (frontmatter parses, `name:` equals the directory name, the skill is listed in `.claude-plugin/plugin.json` and `README.md`), and CI runs the same script on every PR touching skills.
 - `npx skills add <repo> -l` lists the skill (proves the consumer-side CLI parses the frontmatter too).
+- `python3 scripts/test-memory-scripts.py` passes when a change touches `use-project-memory/scripts/check.py` or `clean-memory/scripts/audit.py`; CI runs it beside the validator.
 - Bump the `.claude-plugin/plugin.json` version.
