@@ -1,6 +1,7 @@
 ---
 name: create-branch
 description: Create a new branch off the default base (not the current HEAD, so unrelated commits stay behind) and move all uncommitted changes onto it. Use when you started work on the wrong branch or on main.
+argument-hint: "[branch-name] [--base <branch>] [--keep-base] [--cwd <path>]"
 ---
 
 ## Context
@@ -31,7 +32,7 @@ When in doubt and the set is small, err on branching off the default base.
 
 ### Process
 
-1. If there are no uncommitted changes AND no ignored candidates, abort with a message. (If no branch name is provided via `$ARGUMENTS`, infer one from the uncommitted changes using conventional branch naming: `feat/`, `fix/`, `chore/`, `refactor/`.)
+1. `--cwd <path>` in `$ARGUMENTS` names the repository or worktree to act in: rerun the Context probes there with `git -C <path>` and run every git command there. If there are no uncommitted changes AND no ignored candidates, abort with a message. (If no branch name is provided via `$ARGUMENTS`, infer one from the uncommitted changes using conventional branch naming: `feat/`, `fix/`, `chore/`, `refactor/`.)
 2. If branching off the default base (not current HEAD):
    - `git fetch origin` so the base is current, not a stale local ref
    - `git stash push -u -m "create-branch-skill-transfer"` to capture both tracked + untracked

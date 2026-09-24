@@ -1,6 +1,7 @@
 ---
 name: commit-changes
 description: Stage and commit only uncommitted file changes into clean, categorized commits; existing commits are left untouched.
+argument-hint: "[--cwd <path>]"
 ---
 
 ## Context
@@ -15,7 +16,7 @@ Uncommitted diff stat: !`git diff --stat HEAD 2>/dev/null`
 
 Categorize **only the current uncommitted changes** into clean commits. Leave existing commits untouched.
 
-1. Read diffs (`git diff HEAD`). Untracked/new files don't appear in `git diff HEAD`; read those files directly so they're categorized, not missed. Group by **purpose** using conventional commits (`feat:`, `fix:`, `chore:`, `refactor:`, `docs:`, `style:`, `test:`, `perf:`, `ci:`, `build:`, `revert:`).
+1. `--cwd <path>` in `$ARGUMENTS` names the repository or worktree to act in: rerun the Context probes there with `git -C <path>` and run every git command there. Read diffs (`git diff HEAD`). Untracked/new files don't appear in `git diff HEAD`; read those files directly so they're categorized, not missed. Group by **purpose** using conventional commits (`feat:`, `fix:`, `chore:`, `refactor:`, `docs:`, `style:`, `test:`, `perf:`, `ci:`, `build:`, `revert:`).
 2. For each group, stage by explicit paths only: `git add <files>` + `git commit`. Never `git add -A` or `git add .`.
 3. Verify `git status` is clean, show `git log --oneline` of new commits.
 

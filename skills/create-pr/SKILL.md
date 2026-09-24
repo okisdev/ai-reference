@@ -1,7 +1,7 @@
 ---
 name: create-pr
 description: create or open a GitHub pull request (PR) from the current branch with a title and body that follow the repo's conventions and the user's writing style
-argument-hint: "[base-branch] [--draft]"
+argument-hint: "[base-branch] [--draft] [--cwd <path>]"
 ---
 
 ## Context
@@ -21,7 +21,7 @@ Repo PR template (if present): !`for p in .github/pull_request_template.md .gith
 
 Execute immediately without asking. Skip steps that don't apply.
 
-1. **Pre-flight guards** (treat any `$ARGUMENTS` / `$1` as the user input; `$1` is the optional base branch). Run in order.
+1. **Pre-flight guards** (treat any `$ARGUMENTS` / `$1` as the user input; `$1` is the optional base branch; a `--cwd <path>` names the repository or worktree to act in, so drop it and its value before reading the base positional, rerun the Context probes there with `git -C <path>` and `gh` run from `<path>`, and run every git and gh command there). Run in order.
    - Abort if the current branch is the base/default branch; run `/create-branch` first to move the work onto a feature branch.
    - Abort if no commits exist between branch and base ("nothing to PR").
    - Abort if any commit subject matches `/^(WIP|wip:?|fixup!|squash!)/i`, unless `--draft` was passed (then proceed and mark draft); to clean them up, run `/organize-commits`, then re-run.
