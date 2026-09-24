@@ -61,6 +61,8 @@ Verify every substantive review comment on a GitHub PR against the current codeb
    - Treat ```` ```suggestion ```` blocks as the primary, testable artifact (GitHub renders them as one-click "Commit suggestion" buttons). Read the suggestion first, surrounding prose as justification; verify it in isolation: would applying it compile and match existing patterns?
    - Cross-check any factual claim ("type X exists in module Y", "pattern Z is used in other-file.ts") with `Grep` before accepting it.
    - Mentally apply the suggested fix and verify types/callers/tests still pass; bots frequently suggest fixes that fail type-check or break callers.
+   - A badge, confidence score, or severity label is not evidence in either direction; when two reviewers disagree about the same code, read that code path and say which side the evidence supports.
+   - A claim about render counts, memoization, or effect ordering is settled by a probe that counts executions on the base and on the head, not by reasoning about it.
    - Assign one verdict (review bots split "Critical Issues" from "Suggestions"; critical issues deserve Confirmed/Refuted, plain suggestions can take their verdict with a one-line reason):
      - **Confirmed**: claim correct and the suggested fix works as-is.
      - **Partial**: claim has merit but the fix is wrong or incomplete; propose an adjusted fix (e.g. `Pick<ThreadListItemRuntime, "foo">` rather than the bare type).
