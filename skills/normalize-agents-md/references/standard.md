@@ -6,9 +6,9 @@ An instruction file holds the facts an agent cannot infer from the tree in a min
 
 | File | Role |
 |---|---|
-| `AGENTS.md` | The canonical file, at the repository root and in any package that needs rules of its own. Every harness reads it. |
-| `CLAUDE.md` | Exactly `@AGENTS.md` and a newline. A `## Claude Code` section below the import holds only content no other harness can use (plan mode, hooks, Claude-only tools). |
-| `CLAUDE.local.md` | Personal and gitignored; never touched. |
+| `AGENTS.md` | The canonical file, at the repository root and in any package that needs rules of its own. Every harness reads it; Claude Code (2.1.277 and later) loads it wherever it would load CLAUDE.md, as long as no `CLAUDE.md`, `.claude/CLAUDE.md`, or `CLAUDE.local.md` sits on the path from the working directory to the root. |
+| `CLAUDE.md` | None. Any `CLAUDE.md` or `.claude/CLAUDE.md`, even an `@AGENTS.md` stub, switches Claude Code back to CLAUDE.md-only loading, so each is retired: shared content merges into AGENTS.md and Claude-only content (plan mode, hooks, Claude-only tools) moves to `.claude/rules/`. Claude Code before 2.1.277, and on Bedrock, Vertex, or Foundry, reads only CLAUDE.md; a repository that must serve those keeps a stub holding `@AGENTS.md` beside every AGENTS.md and says why. |
+| `CLAUDE.local.md` | Personal and gitignored; never touched. It also switches its owner's Claude Code to CLAUDE.md-only loading, so a person who keeps one imports `@AGENTS.md` from it; the report names each one found. |
 | Nested `AGENTS.md` | The path-scoped layer that all three harnesses share: Codex and Grok concatenate root to cwd, Claude loads it when it reads files in that directory. `.claude/rules/` is Claude-only and never holds a rule another harness needs. A directory earns one by the coverage test below, never by existing. |
 | `GEMINI.md`, `.cursor/rules/*.mdc`, `.github/copilot-instructions.md` | Harness mirrors; left as found, with any duplication of AGENTS.md reported rather than resolved. |
 
@@ -52,7 +52,7 @@ Apply to one clause. A clause that fails the first question leaves the file; one
 | Contributor process | PR etiquette addressed to contributors | CONTRIBUTING.md in a public repository, with one pointer left |
 | Generic best practice | Names nothing repo-specific | Delete; global instructions carry habits |
 | Package-scoped rule in the root | Applies only under one package | That package's AGENTS.md |
-| Placeholder | Would read the same in any repository: a generator's block, a scaffold preamble, a template heading with nothing repo-specific under it, a title that names the file, a TODO | Delete; a file that was only placeholder goes with its stub; a generator with a switch is turned off in the same pass (see Placeholders and generators) |
+| Placeholder | Would read the same in any repository: a generator's block, a scaffold preamble, a template heading with nothing repo-specific under it, a title that names the file, a TODO | Delete; a file that was only placeholder goes too; a generator with a switch is turned off in the same pass (see Placeholders and generators) |
 
 ## Coverage
 
@@ -62,7 +62,7 @@ A directory without an AGENTS.md gets one only when at least one of these holds,
 2. Its verification command or toolchain differs from the root: another package manager, a different language runtime, a deploy tool of its own, a test or typecheck entry the root does not run.
 3. Its own README, manifest, or scripts name a trap an agent working there would hit.
 
-Examples and templates never get one; the root's rules cover them. A file with nothing to say is not created, because an empty nested file costs a read in every harness and invites the next accretion. A repository with no root file gets the minimal root from the template: title line, commands, the editing contract, and the CLAUDE.md stub.
+Examples and templates never get one; the root's rules cover them. A file with nothing to say is not created, because an empty nested file costs a read in every harness and invites the next accretion. A repository with no root file gets the minimal root from the template: title line, commands, and the editing contract.
 
 ## Template
 
@@ -119,7 +119,7 @@ Empty headings are dropped. Rules are grouped under sub-headings only past about
 
 ## Placeholders and generators
 
-A placeholder is text that would read the same in any repository: the fixed block a framework writes, a scaffold preamble ("This file provides guidance to Claude Code"), a template heading with nothing repo-specific under it, a title that names the file instead of the project, a TODO or fill-in marker, a section that restates the README. Placeholders are deleted whatever wrote them; a file that was only placeholder is deleted together with its CLAUDE.md stub. Content is not a placeholder because a tool wrote it: a compiled output that carries this repository's own rules (Ruler's rendered block) is edited at its source and never deleted.
+A placeholder is text that would read the same in any repository: the fixed block a framework writes, a scaffold preamble ("This file provides guidance to Claude Code"), a template heading with nothing repo-specific under it, a title that names the file instead of the project, a TODO or fill-in marker, a section that restates the README. Placeholders are deleted whatever wrote them; a file that was only placeholder is deleted. Content is not a placeholder because a tool wrote it: a compiled output that carries this repository's own rules (Ruler's rendered block) is edited at its source and never deleted.
 
 A generator that would write the placeholder back is switched off in the same pass when it has a switch. When it has none, or the marker is unknown, the placeholder is still deleted and the report names the marker, so a re-creation shows up in the next pass and the generator is then hunted down.
 
@@ -130,7 +130,7 @@ A generator that would write the placeholder back is switched off in the same pa
 | Ruler | `# START Ruler Generated Files` to `# END Ruler Generated Files` | Compiled from `.ruler/` sources, repo-specific | Not a placeholder; edit `.ruler/`, report it |
 | Unknown markers | Any other `BEGIN` and `END` pair with generic wording | Owner not identified | Delete and report the marker |
 
-`@path` imports load at launch in Claude (four hops deep, no context saved) and are plain text to Codex and Grok; an import line is never edited or moved, and a symlinked `CLAUDE.md` stays a symlink. A CLAUDE.md stub whose AGENTS.md is deleted goes with it.
+`@path` imports load at launch in Claude (four hops deep, no context saved) and are plain text to Codex and Grok; an import line is never edited or moved. A `CLAUDE.md` symlinked to AGENTS.md is retired by removing the link.
 
 ## README and AGENTS.md
 
