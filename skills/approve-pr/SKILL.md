@@ -37,7 +37,7 @@ Delegate the approve-or-decline verdict to `verify-pr` (consume its recommendati
 
    Then re-read `headRefOid`, and if it moved since step 2 abort and re-run from step 3 (a stale approval keeps gating code nobody judged). Then resolve your latest prior review:
    ```bash
-   gh api repos/<o>/<r>/pulls/<n>/reviews --jq '[.[] | select(.user.login=="<me>")] | last | {id, state}'
+   gh api --paginate --slurp repos/<o>/<r>/pulls/<n>/reviews | jq '[.[][] | select(.user.login=="<me>")] | last | {id, state}'
    ```
    If it is already `APPROVED`, refresh the body in place rather than stacking a duplicate (`gh api --method PUT repos/<o>/<r>/pulls/<n>/reviews/<id> -f body="<text>"`); otherwise submit a fresh review:
    ```bash
