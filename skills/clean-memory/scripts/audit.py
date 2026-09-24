@@ -22,7 +22,6 @@ URL = re.compile(r"(?:[A-Za-z][A-Za-z0-9+.-]*://)\S+")
 REF = re.compile(r"(?<![\w/])#(\d{2,})(?!\w)")
 WIKILINK = re.compile(r"\[\[([^\]]+)\]\]")
 OWNER = r"(?=[A-Za-z0-9-]{1,39}/)(?=[A-Za-z0-9-]*[A-Za-z])[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*"
-GITHUB_OWNER = re.compile(r"(?<![@A-Za-z0-9._-])github\.com/(" + OWNER + r")/([A-Za-z0-9._-]+)(?![A-Za-z0-9._/-])", re.IGNORECASE)
 GITHUB_REPOSITORY = re.compile(r"(?<![@A-Za-z0-9._-])github\.com/(" + OWNER + r")/([A-Za-z0-9._-]+)(?![A-Za-z0-9._/-])", re.IGNORECASE)
 OWNER_REPOSITORY = re.compile(r"(?<![@A-Za-z0-9._/-])(" + OWNER + r")/([A-Za-z0-9._-]+)(?![A-Za-z0-9._/-])", re.IGNORECASE)
 GITHUB_ORIGIN = re.compile(r"(?:https://github\.com/|git@github\.com:|ssh://(?:git@)?github\.com/)(" + OWNER + r")/([A-Za-z0-9._-]+?)(?:\.git)?/?$", re.IGNORECASE)
@@ -122,7 +121,7 @@ def path_anchors(text):
             continue
         start = text.rfind("\n", 0, match.start()) + 1
         end = text.find("\n", match.end())
-        found.append({"anchor": token, "path": core, "line": core != token, "context": text[start:len(text) if end == -1 else end], "context_start": match.start() - start})
+        found.append({"anchor": token, "path": core, "line": core != token, "context": text[start:len(text) if end == -1 else end]})
     return found
 
 
@@ -150,7 +149,7 @@ def origin_slug(root):
 def known_owners_for(texts, own_slug):
     owners = set()
     for text in texts:
-        owners.update(match.group(1).lower() for match in GITHUB_OWNER.finditer(text) if repository_slug(*match.groups()) != own_slug)
+        owners.update(match.group(1).lower() for match in GITHUB_REPOSITORY.finditer(text) if repository_slug(*match.groups()) != own_slug)
         for match in OWNER_REPOSITORY.finditer(text):
             owner, repository = match.group(1).lower(), match.group(2).lower()
             if repository_slug(owner, repository) == own_slug or repository.endswith(EXTENSIONS):
@@ -169,7 +168,7 @@ def anchor_scope(anchor, siblings, top_levels, known_owners, own_slug):
         return "cross-repo"
     for match in OWNER_REPOSITORY.finditer(context):
         owner, repository = match.group(1).lower(), match.group(2).lower()
-        if repository_slug(owner, repository) == own_slug or match.start() == anchor["context_start"] or owner in top_levels or repository.endswith(EXTENSIONS):
+        if repository_slug(owner, repository) == own_slug or owner in top_levels or repository.endswith(EXTENSIONS):
             continue
         if owner in known_owners or REPOSITORY_WORD.search(context):
             return "cross-repo"
