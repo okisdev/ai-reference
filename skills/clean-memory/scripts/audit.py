@@ -15,16 +15,23 @@ GENERIC_NAMES = {"package.json", "README.md", "index.ts", "SKILL.md", "CLAUDE.md
 STATUS_NAMES = {"SHIPPED", "CLOSED", "OPEN", "PARKED", "DISPROVEN", "SUPERSEDED", "VERIFIED", "BLOCKED"}
 INDEX_LINE = re.compile(r"^\s*[-*]\s+\[[^\]]+\]\(([^)]+\.md)\)(?:\s+(?:—|;|-)\s*(.*))?\s*$")
 BACKTICK = re.compile(r"`([^`]+)`")
-LINE_SUFFIX = re.compile(r":\d+$")
+LINE_SUFFIX = re.compile(r":(?:\d+(?:-\d+|,\d+)*|[A-Za-z_][A-Za-z0-9_]*)$")
 SHA = re.compile(r"(?<![A-Za-z0-9_])([0-9a-f]{7,40})(?![A-Za-z0-9_])")
+UUID = re.compile(r"(?<![A-Za-z0-9_])[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}(?![A-Za-z0-9_])", re.IGNORECASE)
 URL = re.compile(r"(?:[A-Za-z][A-Za-z0-9+.-]*://)\S+")
 REF = re.compile(r"(?<![\w/])#(\d{2,})(?!\w)")
 WIKILINK = re.compile(r"\[\[([^\]]+)\]\]")
+OWNER = r"(?=[A-Za-z0-9-]{1,39}/)(?=[A-Za-z0-9-]*[A-Za-z])[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*"
+GITHUB_OWNER = re.compile(r"(?<![@A-Za-z0-9._-])github\.com/(" + OWNER + r")/([A-Za-z0-9._-]+)(?![A-Za-z0-9._/-])", re.IGNORECASE)
+GITHUB_REPOSITORY = re.compile(r"(?<![@A-Za-z0-9._-])github\.com/(" + OWNER + r")/([A-Za-z0-9._-]+)(?![A-Za-z0-9._/-])", re.IGNORECASE)
+OWNER_REPOSITORY = re.compile(r"(?<![@A-Za-z0-9._/-])(" + OWNER + r")/([A-Za-z0-9._-]+)(?![A-Za-z0-9._/-])", re.IGNORECASE)
+GITHUB_ORIGIN = re.compile(r"(?:https://github\.com/|git@github\.com:|ssh://(?:git@)?github\.com/)(" + OWNER + r")/([A-Za-z0-9._-]+?)(?:\.git)?/?$", re.IGNORECASE)
+REPOSITORY_WORD = re.compile(r"\b(?:upstream|repository|repo)\b", re.IGNORECASE)
 
-def run(command, cwd, data=None):
+def run(command, cwd, data=None, timeout=None):
     try:
-        return subprocess.run(command, cwd=str(cwd), input=data, capture_output=True, text=True, check=False)
-    except OSError:
+        return subprocess.run(command, cwd=str(cwd), input=data, capture_output=True, text=True, check=False, timeout=timeout)
+    except (OSError, subprocess.TimeoutExpired):
         return None
 def parse_args(args):
     repo, memory, json_output, strict, use_gh, stale_days = None, None, False, False, False, 60
@@ -115,7 +122,7 @@ def path_anchors(text):
             continue
         start = text.rfind("\n", 0, match.start()) + 1
         end = text.find("\n", match.end())
-        found.append({"anchor": token, "path": core, "line": core != token, "context": text[start:len(text) if end == -1 else end]})
+        found.append({"anchor": token, "path": core, "line": core != token, "context": text[start:len(text) if end == -1 else end], "context_start": match.start() - start})
     return found
 
 
@@ -129,19 +136,52 @@ def sibling_repositories(root):
         return set()
 
 
-def anchor_scope(anchor, siblings):
-    context = anchor["context"].lower()
-    if any(re.search(r"(?<![\w-])" + re.escape(name.lower()) + r"(?![\w-])", context) for name in siblings):
+def repository_slug(owner, repository):
+    repository = repository.lower()
+    return owner.lower(), repository[:-4] if repository.endswith(".git") else repository
+
+
+def origin_slug(root):
+    result = run(["git", "remote", "get-url", "origin"], root)
+    match = GITHUB_ORIGIN.fullmatch(result.stdout.strip()) if result and result.returncode == 0 else None
+    return repository_slug(*match.groups()) if match else None
+
+
+def known_owners_for(texts, own_slug):
+    owners = set()
+    for text in texts:
+        owners.update(match.group(1).lower() for match in GITHUB_OWNER.finditer(text) if repository_slug(*match.groups()) != own_slug)
+        for match in OWNER_REPOSITORY.finditer(text):
+            owner, repository = match.group(1).lower(), match.group(2).lower()
+            if repository_slug(owner, repository) == own_slug or repository.endswith(EXTENSIONS):
+                continue
+            if re.match(r"(?:#\d+(?!\w)|@)", text[match.end():]):
+                owners.add(owner)
+    return owners
+
+
+def anchor_scope(anchor, siblings, top_levels, known_owners, own_slug):
+    context = anchor["context"]
+    context_lower = context.lower()
+    if any(re.search(r"(?<![\w-])" + re.escape(name.lower()) + r"(?![\w-])", context_lower) for name in siblings):
         return "cross-repo"
-    if any(phrase in context for phrase in HISTORY_PHRASES):
+    if any(repository_slug(*match.groups()) != own_slug for match in GITHUB_REPOSITORY.finditer(context)):
+        return "cross-repo"
+    for match in OWNER_REPOSITORY.finditer(context):
+        owner, repository = match.group(1).lower(), match.group(2).lower()
+        if repository_slug(owner, repository) == own_slug or match.start() == anchor["context_start"] or owner in top_levels or repository.endswith(EXTENSIONS):
+            continue
+        if owner in known_owners or REPOSITORY_WORD.search(context):
+            return "cross-repo"
+    if any(phrase in context_lower for phrase in HISTORY_PHRASES):
         return "historical"
     return "repo"
 
 def sha_anchors(text):
-    urls, found = [(match.start(), match.end()) for match in URL.finditer(text)], []
+    urls, uuids, found = [(match.start(), match.end()) for match in URL.finditer(text)], [(match.start(), match.end()) for match in UUID.finditer(text)], []
     for match in SHA.finditer(text):
         value = match.group(1)
-        if not value.isdigit() and not any(start <= match.start(1) < end for start, end in urls): found.append(value)
+        if not value.isdigit() and not any(start <= match.start(1) < end for start, end in urls) and not any(start <= match.start(1) and match.end(1) <= end for start, end in uuids): found.append(value)
     return found
 
 def ref_anchors(text):
@@ -188,21 +228,30 @@ def sha_status(root, shas):
 
 def refs_status(root, refs, use_gh):
     if not use_gh: return {}, len(refs)
-    statuses, lookups = {}, 0
-    for value in sorted(set(refs), key=int):
-        if lookups >= 60: break
-        issue = run(["gh", "issue", "view", value, "--json", "state", "--jq", ".state"], root)
-        lookups += 1
-        if issue and issue.returncode == 0 and issue.stdout.strip():
-            statuses[value] = issue.stdout.strip()
-            continue
-        if lookups >= 60:
-            statuses[value] = "unknown"
-            continue
-        pull = run(["gh", "pr", "view", value, "--json", "state", "--jq", ".state"], root)
-        lookups += 1
-        statuses[value] = pull.stdout.strip() if pull and pull.returncode == 0 and pull.stdout.strip() else "unknown"
-    return statuses, sum(1 for value in refs if value not in statuses)
+    issue = run(["gh", "issue", "list", "--state", "open", "--limit", "1000", "--json", "number"], root, timeout=30)
+    pull = run(["gh", "pr", "list", "--state", "open", "--limit", "1000", "--json", "number"], root, timeout=30)
+    def numbers(result):
+        if not result or result.returncode != 0:
+            return None
+        try:
+            data = json.loads(result.stdout)
+        except json.JSONDecodeError:
+            return None
+        if not isinstance(data, list) or any(not isinstance(item, dict) or not isinstance(item.get("number"), int) for item in data):
+            return None
+        return {str(item["number"]) for item in data}
+    issues, pulls = numbers(issue), numbers(pull)
+    if issues is None or pulls is None:
+        return {}, len(refs)
+    open_refs = issues | pulls
+    return {value: "OPEN" if value in open_refs else "CLOSED" for value in set(refs)}, 0
+
+def topic_body(text):
+    lines = text.splitlines(keepends=True)
+    if not lines or lines[0].strip() != "---":
+        return text
+    end = next((index for index in range(1, len(lines)) if lines[index].strip() == "---"), None)
+    return "".join(lines[end + 1:]) if end is not None else text
 
 def cleanup(root, memory):
     sidecar = memory / ".clean-memory.json"
@@ -248,18 +297,24 @@ def record_topics(memory, entries, archive_entries, root, stale_days):
     indexed = {Path(entry["file"]).name for entry in entries}
     archived = {Path(entry["file"]).name for entry in archive_entries}
     top_levels = {path.name for path in root.iterdir()}
+    top_level_owners = {name.lower() for name in top_levels}
     siblings = sibling_repositories(root)
+    own_slug = origin_slug(root)
     tracked = tracked_paths(root)
     basenames = {}
     for path in tracked:
         basenames.setdefault(Path(path).name, set()).add(path)
-    raw = []
+    topic_data = []
     for path in files:
         try:
             data = path.read_bytes()
         except OSError:
             continue
-        text, metadata = data.decode("utf-8", errors="replace"), frontmatter(data.decode("utf-8", errors="replace"))
+        topic_data.append((path, data, data.decode("utf-8", errors="replace")))
+    known_owners = known_owners_for((topic_body(text) for _, _, text in topic_data), own_slug)
+    raw = []
+    for path, data, text in topic_data:
+        metadata = frontmatter(text)
         modified = date_for(metadata.get("modified"))
         verified = date_for(metadata.get("verified"))
         age_from = verified or modified or dt.datetime.fromtimestamp(path.stat().st_mtime).date()
@@ -269,10 +324,12 @@ def record_topics(memory, entries, archive_entries, root, stale_days):
             if anchor["path"] in seen or not (anchor["path"].endswith(EXTENSIONS) or anchor["path"].lstrip("./").split("/", 1)[0] in top_levels):
                 continue
             seen.add(anchor["path"])
-            anchor["scope"] = anchor_scope(anchor, siblings)
+            anchor["scope"] = anchor_scope(anchor, siblings, top_level_owners, known_owners, own_slug)
             anchor["resolved"] = resolved_path(anchor["path"], root, tracked, basenames)
             paths.append(anchor)
-        raw.append({"topic": path.stem, "bytes": len(data), "frontmatter_name": metadata.get("name"), "type": metadata.get("type"), "modified": metadata.get("modified"), "verified": metadata.get("verified"), "modified_date": modified, "age_days": (dt.date.today() - age_from).days, "index_hook": hook, "status": status_for(hook), "paths": paths, "shas": sha_anchors(text), "refs": ref_anchors(text), "uncited": not sha_anchors(text) and not ref_anchors(text) and not any(anchor["line"] for anchor in paths), "stale": (dt.date.today() - age_from).days > stale_days, "orphan_file": path.name not in indexed and path.name not in archived, "archived": path.name in archived and path.name not in indexed})
+        body = topic_body(text)
+        shas, refs = sha_anchors(body), ref_anchors(body)
+        raw.append({"topic": path.stem, "bytes": len(data), "frontmatter_name": metadata.get("name"), "type": metadata.get("type"), "modified": metadata.get("modified"), "verified": metadata.get("verified"), "modified_date": modified, "age_days": (dt.date.today() - age_from).days, "index_hook": hook, "status": status_for(hook), "paths": paths, "shas": shas, "refs": refs, "uncited": not shas and not refs and not any(anchor["line"] for anchor in paths), "stale": (dt.date.today() - age_from).days > stale_days, "orphan_file": path.name not in indexed and path.name not in archived, "archived": path.name in archived and path.name not in indexed})
     newest = newest_changes(root, [record["modified_date"] for record in raw if record["modified_date"]])
     for record in raw:
         for anchor in record["paths"]:
@@ -301,11 +358,15 @@ def report(root, memory, stale_days, use_gh):
         if not path.is_file():
             continue
         try:
-            matches = WIKILINK.finditer(path.read_text(encoding="utf-8", errors="replace"))
+            text = path.read_text(encoding="utf-8", errors="replace")
         except OSError:
             continue
+        code_spans = [(match.start(), match.end()) for match in BACKTICK.finditer(text)]
+        matches = WIKILINK.finditer(text)
         for match in matches:
             target = match.group(1).split("|", 1)[0].strip()
+            if any(start <= match.start() and match.end() <= end for start, end in code_spans) or target.startswith("..."):
+                continue
             if target not in names:
                 broken.append({"file": path.name, "link": target})
     over_budget = any(item["rule"] == "index-budget" for item in format_violations)
