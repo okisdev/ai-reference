@@ -39,6 +39,8 @@ Class strings inside the fragment are Tailwind output, not stable selectors. Pre
 
 Element handles and coordinates go stale on navigation and reflow: re-query after every navigation, and click by coordinates only when a screenshot taken immediately before supplied them.
 
+A value set directly (chrome-devtools `fill`) can leave a React-controlled field's state empty, which shows as a submit that stays disabled; click the field and type into it (`type_text`) instead, because typing fires the input events React listens to.
+
 Wait for hydration inside the same `evaluate_script` call that queries the node:
 ```js
 () => new Promise(r => setTimeout(r, 1500)).then(() => {
