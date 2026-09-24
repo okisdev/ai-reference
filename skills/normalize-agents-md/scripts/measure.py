@@ -242,6 +242,7 @@ def readme_lines(readmes):
 
 def apply_flags(records, actual_paths, chains, root):
     codex_files = {chain["files"][-1] for chain in chains if chain["bytes"] > CODEX_CAP and chain["files"]}
+    has_agents = any(path.name == "AGENTS.md" for path in actual_paths.values())
     for record in records:
         flags, path = record["flags"], actual_paths[record["path"]]
         if record["chars"] > GROK_CAP:
@@ -252,6 +253,8 @@ def apply_flags(records, actual_paths, chains, root):
             flags.append("over-target")
         if record["stub"]:
             flags.append("stub")
+        if has_agents and path.name in {"CLAUDE.md", "CLAUDE.local.md"}:
+            flags.append("claude-md")
         if record["symlink_target"] is not None:
             flags.append("symlink")
         flags.extend("managed:" + name for name in record["managed_blocks"])
@@ -304,7 +307,7 @@ def markdown(records, chains, generators, readmes, summary):
             lines.append("| {directory} | {state} | {block} | {template} |".format(directory=generator["directory"], state=generator["state"], block=generator["block"], template=str(generator["template"]).lower()))
     if readmes:
         lines.extend(readme_lines(readmes))
-    lines.extend(["", "{instruction_files} instruction files, {over_hard_cap} over a hard cap, {over_target} over target.".format(**summary)])
+    lines.extend(["", "{instruction_files} instruction files, {over_hard_cap} over a hard cap, {over_target} over target, {claude_md} CLAUDE files keeping Claude Code off AGENTS.md.".format(**summary)])
     if generators:
         lines[-1] += " {count} generators, {on} on, {blocks} with a block.".format(count=len(generators), on=sum(generator["state"] == "on" for generator in generators), blocks=sum(generator["block"] != "none" for generator in generators))
     if readmes:
@@ -329,7 +332,7 @@ def main():
     generators = discover_generators(generator_paths, root, records)
     readmes = discover_readmes(readme_paths, root)
     records.sort(key=lambda record: (-record["bytes"], record["path"]))
-    summary = {"instruction_files": len(records), "over_hard_cap": sum("grok-cap" in record["flags"] or "codex-chain" in record["flags"] for record in records), "over_target": sum("over-target" in record["flags"] for record in records)}
+    summary = {"instruction_files": len(records), "over_hard_cap": sum("grok-cap" in record["flags"] or "codex-chain" in record["flags"] for record in records), "over_target": sum("over-target" in record["flags"] for record in records), "claude_md": sum("claude-md" in record["flags"] for record in records)}
     if json_output:
         print(json.dumps({"root": str(root), "scope": str(scope), "files": records, "chains": chains, "generators": generators, "readmes": readmes, "summary": summary}, ensure_ascii=False))
     elif not records:
