@@ -1,11 +1,14 @@
 """Usage: audit.py [REPO] [--memory DIR] [--json] [--strict] [--gh] [--stale-days N]."""
 import datetime as dt
+import importlib.util
 import json
 import os
 import re
 import subprocess
 import sys
 from pathlib import Path
+
+sys.dont_write_bytecode = True
 
 EXTENSIONS = (".ts", ".tsx", ".js", ".mjs", ".cjs", ".py", ".md", ".mdx", ".json", ".yaml", ".yml", ".toml", ".sh", ".css", ".swift", ".rs", ".go", ".sql", ".plist", ".entitlements")
 GENERIC_NAMES = {"package.json", "README.md", "index.ts", "SKILL.md", "CLAUDE.md", "AGENTS.md", "MEMORY.md"}
@@ -228,6 +231,18 @@ def leakage(root):
             if count: found.append({"file": str(path), "lines": count})
     return sorted(found, key=lambda value: value["file"])
 
+def format_check(memory):
+    path = Path(__file__).resolve().parents[2] / "use-project-memory" / "scripts" / "check.py"
+    if not path.is_file():
+        return {"unavailable": True}
+    spec = importlib.util.spec_from_file_location("memory_format_check", path)
+    if spec is None or spec.loader is None:
+        return {"unavailable": True}
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    result = module.check(memory)
+    return {"violations": result["violations"], "limits": result["limits"]}
+
 def record_topics(memory, entries, archive_entries, root, stale_days):
     files = sorted(path for path in memory.glob("*.md") if path.name not in {"MEMORY.md", "ARCHIVE.md"} and path.is_file())
     indexed = {Path(entry["file"]).name for entry in entries}
@@ -257,7 +272,7 @@ def record_topics(memory, entries, archive_entries, root, stale_days):
             anchor["scope"] = anchor_scope(anchor, siblings)
             anchor["resolved"] = resolved_path(anchor["path"], root, tracked, basenames)
             paths.append(anchor)
-        raw.append({"topic": path.stem, "bytes": len(data), "frontmatter_name": metadata.get("name"), "type": metadata.get("type"), "modified": metadata.get("modified"), "verified": metadata.get("verified"), "modified_date": modified, "age_days": (dt.date.today() - age_from).days, "index_hook": hook, "status": status_for(hook), "paths": paths, "shas": sha_anchors(text), "refs": ref_anchors(text), "uncited": not sha_anchors(text) and not ref_anchors(text) and not any(anchor["line"] for anchor in paths), "stale": (dt.date.today() - age_from).days > stale_days, "oversized": len(data) > 8192, "orphan_file": path.name not in indexed and path.name not in archived, "archived": path.name in archived and path.name not in indexed})
+        raw.append({"topic": path.stem, "bytes": len(data), "frontmatter_name": metadata.get("name"), "type": metadata.get("type"), "modified": metadata.get("modified"), "verified": metadata.get("verified"), "modified_date": modified, "age_days": (dt.date.today() - age_from).days, "index_hook": hook, "status": status_for(hook), "paths": paths, "shas": sha_anchors(text), "refs": ref_anchors(text), "uncited": not sha_anchors(text) and not ref_anchors(text) and not any(anchor["line"] for anchor in paths), "stale": (dt.date.today() - age_from).days > stale_days, "orphan_file": path.name not in indexed and path.name not in archived, "archived": path.name in archived and path.name not in indexed})
     newest = newest_changes(root, [record["modified_date"] for record in raw if record["modified_date"]])
     for record in raw:
         for anchor in record["paths"]:
@@ -271,6 +286,9 @@ def report(root, memory, stale_days, use_gh):
     index_path, archive_path = memory / "MEMORY.md", memory / "ARCHIVE.md"
     index_text = index_path.read_text(encoding="utf-8", errors="replace")
     archive_text = archive_path.read_text(encoding="utf-8", errors="replace") if archive_path.is_file() else ""
+    format_data = format_check(memory)
+    format_violations = format_data.get("violations", [])
+    oversized = {item["file"] for item in format_violations if item["rule"] == "topic-size"}
     entries, archive_entries = index_entries(index_text), index_entries(archive_text)
     topics, sha_states = record_topics(memory, entries, archive_entries, root, stale_days)
     all_refs = [value for topic in topics for value in topic["refs"]]
@@ -290,7 +308,7 @@ def report(root, memory, stale_days, use_gh):
             target = match.group(1).split("|", 1)[0].strip()
             if target not in names:
                 broken.append({"file": path.name, "link": target})
-    over_budget = len(index_text.splitlines()) > 200 or len(index_text.encode("utf-8")) > 25600
+    over_budget = any(item["rule"] == "index-budget" for item in format_violations)
     live = [topic for topic in topics if not topic["archived"]]
     dead = [{"topic": topic["topic"], "anchor": anchor["anchor"]} for topic in live for anchor in topic["paths"] if anchor["dead"]]
     path_total = sum(anchor["scope"] == "repo" for topic in live for anchor in topic["paths"])
@@ -306,8 +324,9 @@ def report(root, memory, stale_days, use_gh):
     cleanup_days, cleanup_commits = cleanup(root, memory)
     mass_drift = path_total >= 20 and path_dead / path_total > 0.30
     index_bytes = len(index_text.encode("utf-8"))
-    summary = {"topics": len(topics), "archived": len(topics) - len(live), "index_lines": len(index_text.splitlines()), "index_bytes": index_bytes, "archive_lines": len(archive_text.splitlines()), "paths": {"total": path_total, "dead": path_dead, "drifted": path_drifted, "cross_repo": path_cross, "historical": path_historical}, "shas": {"total": sha_total, "unknown": sha_unknown}, "refs": {"total": ref_total, "closed_or_merged": ref_closed, "skipped": skipped}, "uncited": uncited, "stale": stale, "orphans": len(orphan_lines) + len(orphan_files), "last_cleanup_days": cleanup_days, "commits_since_cleanup": cleanup_commits, "mass_drift": mass_drift}
+    summary = {"topics": len(topics), "archived": len(topics) - len(live), "index_lines": len(index_text.splitlines()), "index_bytes": index_bytes, "archive_lines": len(archive_text.splitlines()), "paths": {"total": path_total, "dead": path_dead, "drifted": path_drifted, "cross_repo": path_cross, "historical": path_historical}, "shas": {"total": sha_total, "unknown": sha_unknown}, "refs": {"total": ref_total, "closed_or_merged": ref_closed, "skipped": skipped}, "uncited": uncited, "stale": stale, "orphans": len(orphan_lines) + len(orphan_files), "last_cleanup_days": cleanup_days, "commits_since_cleanup": cleanup_commits, "mass_drift": mass_drift, "format_violations": len(format_violations)}
     for topic in topics:
+        topic["oversized"] = topic["topic"] + ".md" in oversized
         topic["path_total"] = sum(anchor["scope"] == "repo" for anchor in topic["paths"])
         topic["path_dead"] = sum(anchor["dead"] for anchor in topic["paths"])
         topic["path_excluded"] = sum(anchor["scope"] != "repo" for anchor in topic["paths"])
@@ -315,7 +334,7 @@ def report(root, memory, stale_days, use_gh):
         topic["sha_unknown"] = sum(sha_states.get(value) == "unknown" for value in topic["shas"])
         topic["ref_closed"] = sum(ref_states.get(value) in {"CLOSED", "MERGED"} for value in topic["refs"])
         topic["flags"] = [name for name, enabled in (("uncited", topic["uncited"]), ("stale", topic["stale"]), ("oversized", topic["oversized"]), ("orphan-file", topic["orphan_file"]), ("archived", topic["archived"]), ("excluded:" + str(topic["path_excluded"]), topic["path_excluded"] > 0)) if enabled]
-    return {"root": str(root), "memory": str(memory), "topics": topics, "dead_anchors": sorted(dead, key=lambda value: (value["topic"], value["anchor"])), "index": {"lines": len(index_text.splitlines()), "bytes": index_bytes, "archive_lines": len(archive_text.splitlines()), "orphan_lines": orphan_lines, "orphan_files": orphan_files, "broken_links": broken, "over_budget": over_budget}, "leakage": leakage(root), "summary": summary}
+    return {"root": str(root), "memory": str(memory), "topics": topics, "dead_anchors": sorted(dead, key=lambda value: (value["topic"], value["anchor"])), "index": {"lines": len(index_text.splitlines()), "bytes": index_bytes, "archive_lines": len(archive_text.splitlines()), "orphan_lines": orphan_lines, "orphan_files": orphan_files, "broken_links": broken, "over_budget": over_budget}, "format": format_data, "leakage": leakage(root), "summary": summary}
 def markdown(data):
     summary = data["summary"]
     cleanup = "last cleanup never" if summary["last_cleanup_days"] is None else "last cleanup {} days ago ({} commits since)".format(summary["last_cleanup_days"], summary["commits_since_cleanup"])
@@ -345,6 +364,16 @@ def markdown(data):
         print("none")
     for item in problems["orphan_files"]:
         print("orphan file: " + item)
+    print("\nFormat problems")
+    if data["format"].get("unavailable"):
+        print("unavailable")
+    elif data["format"]["violations"]:
+        for item in data["format"]["violations"][:60]:
+            print("{file}:{line}: {rule}: {detail}".format(**dict(item, line=item["line"] or 0)))
+        if len(data["format"]["violations"]) > 60:
+            print("and {} more".format(len(data["format"]["violations"]) - 60))
+    else:
+        print("none")
     if data["leakage"]:
         print("\nLeakage\n\n| file | lines |\n| --- | ---: |")
         for item in data["leakage"]:
@@ -365,6 +394,6 @@ def main():
         print(json.dumps(data, ensure_ascii=False, default=str))
     else:
         markdown(data)
-    return 1 if strict and (data["index"]["over_budget"] or data["summary"]["orphans"] or data["summary"]["mass_drift"]) else 0
+    return 1 if strict and (data["index"]["over_budget"] or data["summary"]["orphans"] or data["summary"]["mass_drift"] or data["summary"]["format_violations"]) else 0
 if __name__ == "__main__":
     raise SystemExit(main())
