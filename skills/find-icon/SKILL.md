@@ -1,14 +1,14 @@
 ---
 name: find-icon
-description: Locate a verified icon for a brand, product, or UI concept and deliver it as a lucide-react import or a vendored SVG component when asked to find or add icons.
+description: Find, add, or swap an icon or logo for a brand, product, vendor, file type, or UI concept (图标, logo, 文件图标).
 argument-hint: "<brand|product|concept>..."
 ---
 
 ## Context
 
-Existing icon registry directories: !`find . -name node_modules -type d -prune -o -type d -iname icons -print 2>/dev/null | head -5 || echo "(none)"`
+Existing icon registry directories: !`out=$(find . -name node_modules -type d -prune -o -type d -iname icons -print 2>/dev/null | head -5); echo "${out:-(none)}"`
 
-Package.json files declaring lucide-react: !`find . -name node_modules -type d -prune -o -name package.json -print 2>/dev/null | xargs grep -l lucide-react 2>/dev/null | head -5 || echo "(none)"`
+Package.json files declaring lucide-react: !`out=$(find . -name node_modules -type d -prune -o -name package.json -print 2>/dev/null | xargs grep -l lucide-react 2>/dev/null | head -5); echo "${out:-(none)}"`
 
 Installed lucide-react version: !`node -e "console.log(require('lucide-react/package.json').version)" 2>/dev/null || echo "(not installed)"`
 

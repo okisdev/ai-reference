@@ -1,6 +1,6 @@
 ---
 name: read-source
-description: Answer an API or behavior question about a dependency from authoritative source by reading installed code, the published npm artifact, or the upstream repository at the pinned version before ever trusting docs.
+description: Answer how a dependency behaves, or whether it supports something, from its source at the pinned version, including asks to read a library's or upstream's source (结合源代码, 看看上游).
 argument-hint: "<package> [symbol] [@version]"
 ---
 

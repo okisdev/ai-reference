@@ -7,7 +7,7 @@ argument-hint: "<pr-number-or-url> [--merge] [--request-changes] [--comment] [--
 ## Context
 
 Repository: !`gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null || echo "unknown"`
-Default branch: !`git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@refs/remotes/origin/@@' || echo main`
+Default branch: !`out=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@refs/remotes/origin/@@'); echo "${out:-main}"`
 Current branch: !`git branch --show-current 2>/dev/null`
 My login: !`gh api user --jq .login 2>/dev/null || echo "unknown"`
 
@@ -15,7 +15,7 @@ My login: !`gh api user --jq .login 2>/dev/null || echo "unknown"`
 
 Review a GitHub PR as a maintainer and, when it earns it, post the single GitHub approval; otherwise report and decline. Auto-post only the approval; non-approving writes need an explicit opt-in. Execute immediately without asking.
 
-Delegate the approve-or-decline verdict to `verify-pr` (consume its recommendation), the unresolved-thread triage to `verify-pr-comments`, the review body to `summarize-review` when your own commits are on the PR, and the optional post-approval merge to `ship-pr` (it owns the merge gate and the merge, and validates the merge method). Own only the self-approval guard, the verdict-to-action mapping, and the `gh pr review` write. Invoke the others by name and act on their output; never inline or reimplement their logic.
+Delegate the approve-or-decline verdict to `verify-pr` (consume its recommendation, from a current report when the workflow already holds one), the unresolved-thread triage to `verify-pr-comments`, the review body to `summarize-review` when your own commits are on the PR, and the optional post-approval merge to `ship-pr` (it owns the merge gate and the merge, and validates the merge method). Own only the self-approval guard, the verdict-to-action mapping, and the `gh pr review` write. Invoke the others by name and act on their output; never inline or reimplement their logic.
 
 ### Process
 
@@ -23,13 +23,9 @@ Delegate the approve-or-decline verdict to `verify-pr` (consume its recommendati
 
 2. **Fetch PR state and run the self-approval guard.** Read `gh pr view <n> --repo <o>/<r> --json number,author,headRefOid,state,reviewDecision`. If `state` is not `OPEN`, report and stop. Self-approval guard (owned): if `author.login` equals the My login probe, stop before any write. GitHub rejects approving your own PR (`Can not approve your own pull request`), so report that it needs a different maintainer, or `/ship-pr <n>` to drive your own change to merge while it waits for someone else's approval. Record `headRefOid` for the stale-head recheck in step 5.
 
-3. **Run verify-pr as the gate.** Invoke `/verify-pr <n>` and consume its final recommendation verbatim, one of close or redirect, merge as-is, merge after small fixes, or push back. Do not re-derive correctness or necessity. An approval binds to the SHA verify-pr reported as its Verified head, so on a re-approval after the author pushed, pass `--since <the previously approved head>` and judge that delta rather than approving a head nobody read.
+3. **Take verify-pr as the gate.** When the current workflow already holds a complete verify-pr report (verdict table, final recommendation, and Verified head) whose Verified head and base equal the freshly fetched `headRefOid` and `baseRefOid` from step 2, use it instead of invoking verify-pr again, since a retargeted base changes the diff without moving the head; otherwise invoke `/verify-pr <n>`. Consume its final recommendation verbatim, one of close or redirect, merge as-is, merge after small fixes, or push back. Do not re-derive correctness or necessity. Reuse skips only the invocation: step 4 still reads thread state fresh, the decision table still applies, and step 5 still rechecks the head. An approval binds to the SHA verify-pr reported as its Verified head, so on a re-approval after the author pushed, pass `--since <the previously approved head>` and judge that delta rather than approving a head nobody read.
 
-4. **Triage unresolved threads.** Count unresolved review threads (`reviewThreads` is GraphQL-only, not a `gh pr view --json` field):
-   ```bash
-   gh api graphql -F owner=<o> -F repo=<r> -F num=<n> -f query='query($owner:String!,$repo:String!,$num:Int!){repository(owner:$owner,name:$repo){pullRequest(number:$num){reviewThreads(first:100){nodes{isResolved}}}}}' --jq '[.data.repository.pullRequest.reviewThreads.nodes[]|select(.isResolved==false)]|length'
-   ```
-   If any are unresolved, invoke `/verify-pr-comments <n>`. A thread that is Fresh and valid (Confirmed or Partial) and unaddressed blocks approval; Resolved, Stale, Refuted, and Out-of-scope threads do not. Branch protection may not enforce thread resolution, so treat this as a policy gate rather than relying on the merge to block.
+4. **Triage unresolved threads.** Read the review threads with the recipe in [`verify-pr-comments/references/threads.md`](../verify-pr-comments/references/threads.md) (`reviewThreads` is GraphQL-only, not a `gh pr view --json` field) and count the unresolved ones with the `jq -s` filter shown there. Read them fresh every time, including when step 3 reused a report. If any are unresolved, invoke `/verify-pr-comments <n>`. A thread that is Fresh and valid (Confirmed or Partial) and unaddressed blocks approval; Resolved, Stale, Refuted, and Out-of-scope threads do not. Branch protection may not enforce thread resolution, so treat this as a policy gate rather than relying on the merge to block.
 
 5. **Map the verdict to an action and post.** Apply the decision table below. Reach the approval only on merge as-is with no fresh blocking thread.
 
@@ -45,7 +41,7 @@ Delegate the approve-or-decline verdict to `verify-pr` (consume its recommendati
    <body>
    EOF
    ```
-   After posting, read `reviewDecision`; if it is still `REVIEW_REQUIRED`, report what is outstanding (for example a code-owner review on a protected path).
+   After posting, read `reviewDecision`; if it is still `REVIEW_REQUIRED`, report what is outstanding (for example a code-owner review on a protected path). Then stop; only the `--merge` hand-off in step 7 continues, and this skill never watches checks, since `ship-pr` owns the wait.
 
 6. **On a decline, write only the opt-in path.** When an opt-in flag authorizes a non-approving write (`--request-changes` for a push back, `--comment` for a note), post it via `--body-file -`. Otherwise report verify-pr's recommendation and any blocking thread, and stop without writing.
 

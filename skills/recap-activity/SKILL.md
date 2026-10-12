@@ -1,6 +1,6 @@
 ---
 name: recap-activity
-description: Recap what a person, team, project, or this computer did, or what failed, over a time window from whatever records the machine and its connected services hold, read-only, and say so when nothing covers it.
+description: Recap what I, my team, a project, or this computer did, or what failed, today, this week, or over any window (这周做了什么, 昨天为什么失败), read-only, and say so when nothing covers it.
 argument-hint: "<who-or-what> [in <where>] [<window>]"
 ---
 

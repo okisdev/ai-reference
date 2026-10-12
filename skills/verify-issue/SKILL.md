@@ -7,7 +7,7 @@ argument-hint: "<issue-number-or-url>"
 ## Context
 
 Repository: !`gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null || echo "unknown"`
-Default branch: !`git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@refs/remotes/origin/@@' || echo main`
+Default branch: !`out=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@refs/remotes/origin/@@'); echo "${out:-main}"`
 
 ## Instructions
 
@@ -49,4 +49,4 @@ Match verification depth to what the conclusion rests on; escalate past reading 
    - **Prior art**, related open, merged, or closed PRs and issues from step 3, with number, state, and a one-line summary (for a closed PR, why it was closed; for a closed duplicate issue, the close reason, such as wontfix, by-design, or not-planned).
    - **Conclusion**, whether the issue is valid. State which claim is load-bearing and how deeply it was verified. Call out any inaccurate framing in the issue body, especially load-bearing reasoning the issue relied on that proved wrong, even when the practical request still stands. If a duplicate was closed as wontfix, by-design, or not-planned, treat that as the maintainer already having ruled on this exact request and factor it into the validity call. A long-closed issue with the same symptom that was closed as fixed is the opposite signal: a regression lead, not a duplicate to close against.
    - **Extra findings**, adjacent gaps surfaced during verification that aren't in the issue itself.
-   - **Possible fix directions**, brief suggestions if the issue is valid and no covering PR exists. If a covering PR (open or closed) was found, recommend running `/verify-pr` on it instead of proposing a new fix, and note why a closed one was abandoned.
+   - **Possible fix directions**, brief suggestions if the issue is valid and no covering PR exists. A PR counts as covering only after the issue's own repro or entry point has run against that PR's head (in a throwaway worktree set up as `/verify-pr` step 4 does, never the primary checkout), and the report says whether it removes the cause or masks the symptom; a `Fixes #X` line or green CI is not that evidence. If a covering PR (open or closed) is confirmed that way, recommend running `/verify-pr` on it instead of proposing a new fix, and note why a closed one was abandoned. A PR whose head still shows the symptom does not cover the issue; keep it under Prior art and propose the fix direction.

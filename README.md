@@ -10,43 +10,43 @@ Follows the [Agent Skills](https://skills.sh) format.
 
 #### create-branch
 
-Create a new branch and move all uncommitted changes to it. Defaults to branching off the default base so unrelated commits don't leak in; supports `--base` and `--keep-base` overrides.
+Create a new branch and move all uncommitted changes to it. Defaults to branching off the default base so unrelated commits don't leak in; supports `--base` and `--keep-base` overrides. Skips the stash when HEAD already sits on the freshened base.
 
 **Triggers:** "Move these changes to a new branch", "Start a feat branch for this"
 
 #### commit-changes
 
-Stage and commit only the current uncommitted changes into clean, conventional-commit groups. Leaves existing commits untouched.
+Stage and commit only the current uncommitted changes into clean, conventional-commit groups, one commit per distinct purpose. Owns the index: records anything already staged, unstages it, and stages each group by path, confirming the staged list before every commit, then proves each commit is signed when the repo signs. Leaves existing commits untouched.
 
 **Triggers:** "Commit my changes", "Split these changes into commits"
 
 #### organize-commits
 
-Reorganize uncommitted changes and/or messy commits on the current branch into clean, categorized commits grouped by purpose.
+Reorganize uncommitted changes and/or messy commits on the current branch into clean, categorized commits grouped by purpose. Hands an uncommitted-only scope to `commit-changes`, re-stages each group by path after a soft reset, and accepts `--base` and `--cwd`.
 
 **Triggers:** "Clean up the commits on this branch", "Reorganize this branch's history"
 
 #### create-pr
 
-Create a GitHub PR from the current branch with a title and body that follow the repo's conventions and the user's writing style. Auto-detects the repo's PR template, places `closes #N` at the top of the body, derives a `type(scope):` title from recent merged PRs, splits the test plan into "already verified" vs "reviewer should verify", and runs pre-flight guards for empty PR / WIP commits / behind-base / merge commits.
+Create a GitHub PR from the current branch with a title and body that follow the repo's conventions and the user's writing style. Auto-detects the repo's PR template, places `closes #N` at the top of the body, derives a `type(scope):` title from recent merged PRs, splits the test plan into "already verified" vs "reviewer should verify", and runs pre-flight guards for empty PR / WIP commits / behind-base / merge commits. Takes the base from `--base <branch>` or a leading branch name rather than a positional probe, and always passes `--head` and `--repo` so multi-remote checkouts open the PR on the first try.
 
 **Triggers:** "Open a PR", "Create a pull request for this branch"
 
 #### verify-issue
 
-Fetch a GitHub issue and verify each of its claims against the current codebase with concrete `file:line` evidence. Escalates past surface code reading when the conclusion depends on it: running repros for behavioral claims, checking canonical upstream source for third-party and runtime claims, and adversarially testing the load-bearing claim and the issue's own reasoning.
+Fetch a GitHub issue and verify each of its claims against the current codebase with concrete `file:line` evidence. Escalates past surface code reading when the conclusion depends on it: running repros for behavioral claims, checking canonical upstream source for third-party and runtime claims, and adversarially testing the load-bearing claim and the issue's own reasoning. A PR counts as covering the issue only after the issue's own repro runs against its head, and the report says whether it removes the cause or masks the symptom.
 
 **Triggers:** "Verify issue #123", "Is this issue still valid?"
 
 #### verify-pr
 
-Verify a GitHub PR against its stated goal and the surrounding codebase. Judges first whether the PR should exist at all (necessity, redundancy, honest scope), then correctness, tests, paradigm and convention conformance, and side effects. Conformance is judged against the repo's own precedents (the nearest sibling hook, test, doc example, or type), not against generic best practice, and each deviation cites the in-repo pattern it breaks. Produces a maintainer-ready verdict that can recommend closing a redundant PR even when it is technically clean, separates blocking issues from optional polish, and marks each pre-existing gap as fold in (fixable inside the PR's own files and checks) or follow-up issue. The verdict binds to the head SHA it was computed on, and `--since <sha>` re-reads only what landed after a previous pass so re-verifying a PR that keeps moving costs the delta rather than the whole patch.
+Verify a GitHub PR against its stated goal and the surrounding codebase. Judges first whether the PR should exist at all (necessity, redundancy, honest scope), then correctness, tests, paradigm and convention conformance, and side effects. Conformance is judged against the repo's own precedents (the nearest sibling hook, test, doc example, or type), not against generic best practice, and each deviation cites the in-repo pattern it breaks. Produces a maintainer-ready verdict that can recommend closing a redundant PR even when it is technically clean, separates blocking issues from optional polish, and marks each pre-existing gap as fold in (fixable inside the PR's own files and checks) or follow-up issue. The verdict binds to the head SHA it was computed on, and `--since <sha>` re-reads only what landed after a previous pass so re-verifying a PR that keeps moving costs the delta rather than the whole patch. It reads AGENTS.md and CLAUDE.md first (a written rule outranks a sibling precedent), says whether a fix removes the cause or patches a symptom, reproduces only in a `.claude/worktrees` checkout, reports pending checks without waiting on them, and names one winner when two open PRs overlap.
 
 **Triggers:** "Should we merge PR #456?", "Verify this PR before merge". This is the whole-PR verdict; for per-comment triage of the review threads use `verify-pr-comments`.
 
 #### verify-pr-comments
 
-Fetch review comments on a GitHub PR (bots + humans), classify by staleness, and verify each fresh claim against the current code, reporting which to accept, reject, or defer with fix drafts.
+Fetch review comments on a GitHub PR (bots + humans), classify by staleness, and verify each fresh claim against the current code, reporting which to accept, reject, or defer with fix drafts. Reads every review thread through a paginated recipe shared with `approve-pr`, and judges edited-in-place issue comments by `updated_at`.
 
 **Triggers:** "Check the PR review comments", "Verify the bot comments on #456"
 
@@ -58,19 +58,19 @@ Write a maintainer-style summary review of a GitHub PR as a message to the origi
 
 #### approve-pr
 
-Review a GitHub PR as a maintainer and, when it earns it, post the GitHub APPROVED review; otherwise report and decline. The maintainer-side counterpart to `ship-pr`: it owns the self-approval guard, the verify-pr-verdict to review-action mapping, and the `gh pr review` write (including the anti-stacking PUT-replace of a prior review), and it delegates the approve-or-decline verdict to `verify-pr`, thread triage to `verify-pr-comments`, the review body to `summarize-review`, and the optional post-approval merge to `ship-pr`. Auto-posts only an approval; `--request-changes`, `--comment`, and a close recommendation never write without an explicit opt-in.
+Review a GitHub PR as a maintainer and, when it earns it, post the GitHub APPROVED review; otherwise report and decline. The maintainer-side counterpart to `ship-pr`: it owns the self-approval guard, the verify-pr-verdict to review-action mapping, and the `gh pr review` write (including the anti-stacking PUT-replace of a prior review), and it delegates the approve-or-decline verdict to `verify-pr`, thread triage to `verify-pr-comments`, the review body to `summarize-review`, and the optional post-approval merge to `ship-pr`. Auto-posts only an approval; `--request-changes`, `--comment`, and a close recommendation never write without an explicit opt-in. Reuses a verify-pr report already made for the same head instead of rerunning it, and stops after posting rather than watching checks.
 
 **Triggers:** "Approve PR #4621", "Review and approve this PR", "Approve and merge #4621"
 
 #### ship-pr
 
-Drive a change all the way to a merged PR: implement if needed, branch, open the PR, then monitor CI and review threads on a recurring loop, addressing feedback each cycle and merging once the gate passes. Auto-detects the entry point (uncommitted changes, an existing branch, or an already open PR) and resumes at the right step rather than forcing the full flow, auto-detects GitButler versus plain git, and waits for every check and review to settle (reviews and CI are expected to finish in about 15 minutes; skip only a still-pending item that has gone quiet well past that window). Composes `create-branch`, `commit-changes`, and `create-pr` to create, `verify-pr` to judge the PR, and `verify-pr-comments` to triage the threads; it owns the loop, the merge gate, and the merge itself. When shepherding another author's PR it delegates to `approve-pr` by default to post the maintainer approval the merge gate needs, rather than forcing the merge; `--admin` is reserved for your own PRs, where GitHub blocks self-approval. Every wait in the loop is heartbeat-bounded: a wall-clock budget picked up front, a visible per-tick status line naming each pending check, and stalled items sidestepped instead of polled forever. Only the user shrinks the wait set (`--advisory` or a named skip), never a memory note; an explicit "merge now" merges at once, and a PR merged outside the loop ends it. Checks the open PRs for the same fix before branching, batches fix pushes until the head's checks and review bots settle, counts only the latest run of each check name, bounds every watch call below the shell's time limit, and `--cwd <path>` carries a task worktree or another repository through every composed skill.
+Drive a change all the way to a merged PR: implement if needed, branch, open the PR, then monitor CI and review threads on a recurring loop, addressing feedback each cycle and merging once the gate passes. Auto-detects the entry point (uncommitted changes, an existing branch, or an already open PR) and resumes at the right step rather than forcing the full flow, auto-detects GitButler versus plain git, and waits for every check and review to settle (reviews and CI are expected to finish in about 15 minutes; skip only a still-pending item that has gone quiet well past that window). Composes `create-branch`, `commit-changes`, and `create-pr` to create, `verify-pr` to judge the PR, and `verify-pr-comments` to triage the threads; it owns the loop, the merge gate, and the merge itself. When shepherding another author's PR it delegates to `approve-pr` by default to post the maintainer approval the merge gate needs, rather than forcing the merge; `--admin` is reserved for your own PRs, where GitHub blocks self-approval. Every wait in the loop is heartbeat-bounded: a wall-clock budget picked up front, a visible per-tick status line naming each pending check, and stalled items sidestepped instead of polled forever. Only the user shrinks the wait set (`--advisory` or a named skip), never a memory note; an explicit "merge now" merges at once, and a PR merged outside the loop ends it. Checks the open PRs for the same fix before branching, batches fix pushes until the head's checks and review bots settle, counts only the latest run of each check name, bounds every watch call below the shell's time limit, and `--cwd <path>` carries a task worktree or another repository through every composed skill. Without a `.changeset/` directory it makes the version bump or changelog entry that CONTRIBUTING.md or AGENTS.md documents, and when the watch cannot cover the wait it falls back to a bounded poll.
 
 **Triggers:** "Ship this change", "Take this PR to merge", "Open a PR and merge it when CI is green"
 
 #### upgrade-deps
 
-Upgrade every dependency the repository actually has: npm workspaces via taze, Python projects via uv, and GitHub Actions via ratchet. Prefers root `package.json` dependency scripts over the generic recipe; repins SDK-matrix-governed packages after blanket bumps (Expo via `expo install --fix`); leaves Actions alone when Dependabot or Renovate owns them; validates with the repository's build, lint, and test scripts, pins back an individual major that breaks, writes a patch changeset only when `.changeset/` exists, and ends with a validated uncommitted tree, where committing composes `commit-changes` and shipping composes `ship-pr`.
+Upgrade every dependency the repository actually has: npm workspaces via taze, Python projects via uv, and GitHub Actions via ratchet. Prefers root `package.json` dependency scripts over the generic recipe; repins SDK-matrix-governed packages after blanket bumps (Expo via `expo install --fix`); leaves Actions alone when Dependabot or Renovate owns them; validates with the repository's build, lint, and test scripts, pins back an individual major that breaks, writes a patch changeset only when `.changeset/` exists, and ends with a validated uncommitted tree, where committing composes `commit-changes` and shipping composes `ship-pr`. Drops an SDK hold once the blocker's latest peer range accepts the new major, and lists exact-pinned dependencies with newer releases as held or bumped.
 
 **Triggers:** "Upgrade all dependencies", "Bump deps and fix what breaks", "Refresh the lockfile"
 
@@ -85,12 +85,6 @@ Locate a verified icon for a brand, product, AI model, or UI concept and deliver
 Render and verify a web UI change in a real browser: manages the dev server lifecycle (stale lock cleanup, nohup start with a recorded PID, readiness polling, port drift detection), waits for hydration, asserts the specific claim with a DOM query, and backs every visual claim with a screenshot that is actually read. Parses pasted DOM fragments to their source file and line, respects per-repo visual QA ownership, and never kills processes by name. Waits are budgeted: the readiness poll is bounded, and expiry kills the recorded PID and reports the failure with log evidence.
 
 **Triggers:** "Verify the UI change in the browser", "The spacing still looks wrong, check it", "Render this page and confirm the fix"
-
-#### audit-repo
-
-Run a multi-round parallel verification sweep over recent work or a whole repository: each round dispatches verification agents across distinct angles (correctness, conformance, rendered UI, tests and types, docs and dead surface), findings land in a fix.md ledger with evidence, fixes are re-verified before they count, and rounds loop until one comes back clean. Non-trivial findings need two independent verifiers, and the ledger never ships.
-
-**Triggers:** "Audit everything we did today", "Run verification rounds until clean", "Sweep the repo for problems"
 
 #### optimize-repo
 
@@ -110,12 +104,6 @@ Inspect a live database with real SQL before reasoning from ORM schema files: re
 
 **Triggers:** "What's actually in the users table?", "Check the live schema against our drizzle schema", "Why does prod data look wrong?"
 
-#### onboard-repo
-
-Build a structured understanding of a repository before any edit: reads the repo's own orientation docs first, maps workspaces and entry points, extracts the idiom from 2 to 3 nearest siblings of whatever the task will touch, collects reusable prior art, reconciles with project memory, and delivers a compact map where every claim cites a file. Research and comparison asks end at the map with zero edits.
-
-**Triggers:** "Read and understand the whole codebase", "Get familiar with this repo before we start", "Map this project"
-
 #### design-dashboard
 
 Design or redesign an admin, ops, or customer dashboard end to end in the repository's own design law. Frames the dashboard's job first (Decide versus Read, audience, the question each screen answers), diagnoses in measurements rather than adjectives (`scripts/density.mjs` counts the stacked defaults: body size, radius, control and row heights, hand-styled panels, widths, rules, shadows), reads the law in a fixed ladder (the app's own AGENTS.md contract, the organization's `design.md`, a sibling app on the same stack, and only then the reference's application density defaults, which it writes back as the repository's own), takes exactly one attributed contribution per reference project, fixes the navigation and page grammar (groups by whose data, a URL only when the unit of analysis changes, one detail grammar, URL as the state container), composes `plan-charts` for content, publishes a blueprint artifact in a fixed section order with every fork decided and the gain quantified, implements the core first and the pages in parallel waves, verifies in a browser in a declared order with measured pixels, runs the polish loop on pasted component stacks, and leaves the contract in AGENTS.md at an uncommitted tree.
@@ -130,7 +118,7 @@ Decide what a dashboard shows and in which form, including forms and data it doe
 
 #### use-project-memory
 
-Read and write Claude project auto-memory (`~/.claude/projects/<encoded>/memory/`) so Claude, Grok, and Codex share one store. Resolves worktrees to the primary repo directory and treats `MEMORY.md` as a short index. Admits only facts that change a later decision and that the tree, git history, a PR or issue, an instruction file, or a skill cannot give: what shipped, measurements, and session reports go nowhere, a repository rule goes to AGENTS.md once it recurs, and a memory never relaxes a gate a skill or AGENTS.md sets. Rewrites a topic to current truth instead of appending to it, and ships `scripts/check.py`, which every write runs to hold hooks to 80 characters, topics to 4 KB, and the index to bullets within 200 lines and 25 KB; `check.py --hook` is a Claude Code PostToolUse hook for `Write|Edit` that applies the same check to memory writes made without the skill, judging only the lines each write adds.
+Read and write Claude project auto-memory (`~/.claude/projects/<encoded>/memory/`) so Claude, Grok, and Codex share one store. Resolves worktrees to the primary repo directory and treats `MEMORY.md` as a short index. Writes on a user decision, an external system fact, or a private operational fact, never to save an analysis, plan, or build status just delivered. Admits only facts that change a later decision and that the tree, git history, a PR or issue, an instruction file, or a skill cannot give: what shipped, measurements, and session reports go nowhere, a repository rule goes to AGENTS.md once it recurs, and a memory never relaxes a gate a skill or AGENTS.md sets. Rewrites a topic to current truth instead of appending to it, and ships `scripts/check.py`, which every write runs to hold hooks to 80 characters, topics to 4 KB, and the index to bullets within 200 lines and 25 KB; `check.py --hook` is a Claude Code PostToolUse hook for `Write|Edit` that applies the same check to memory writes made without the skill, judging only what each write introduced, so trimming a topic that is already over its limit is never blocked.
 
 **Triggers:** "Remember this about the repo", "What do we already know about this project?", "Write that into project memory"
 
@@ -158,27 +146,15 @@ Mine recent session transcripts for durable lessons and turn them into proposed 
 
 **Triggers:** "What should we learn from this session?", "Turn yesterday's debugging into a skill edit", "Distill the last week of sessions"
 
-#### verify-cli
-
-Drive and verify a CLI or TUI change in a scripted terminal harness (tmux with a PTY fallback) with captured transcripts as evidence. Reuses the repo's own harness first, sends one action at a time with bounded pattern polls, diffs baseline against treatment captures for fix claims, and kills only the session it started.
-
-**Triggers:** "Verify the CLI output", "Reproduce this TUI bug", "Prove the prompt flow works"
-
-#### create-verify-skill
-
-Generate a project-local verify skill with a feature map so the repository gains a scripted, rerunnable way to prove its app's behavior. Interviews the repo for launch, readiness, driving surface, and teardown, writes the skill with exact commands, and proves it once end to end before handover.
-
-**Triggers:** "Give this repo a verify skill", "We have no scripted way to prove the app works"
-
 #### normalize-agents-md
 
-Rewrite a repository's instruction files into short normative AGENTS.md files and retire CLAUDE.md, since Claude Code 2.1.277 and later loads AGENTS.md wherever it would load CLAUDE.md once no CLAUDE.md is on the path. Measures every file against the caps each harness actually reads (Codex's shared 32 KiB root-to-cwd chain, Grok's 10,000 characters per file, Claude's 200 line target), classifies every clause and routes it: rules stay as one bullet each with at most one because-clause, incident narrative and rationale are dropped because git and the PR carry them, rules held in project memory are promoted into the file and leave memory, inventories and module internals go to the code or docs, package rules move down into the package's own file, and a rule an existing test asserts becomes a pointer. Deletes every placeholder (framework blocks, scaffold preambles, file-name titles, empty template sections) and switches off the generator in the same pass when it has a switch (Next.js `agentRules: false`), creates a package file only where a coverage test says the tree needs one, sorts README and AGENTS.md content by reader (agent instructions that ended up in a README move out, product prose that ended up in AGENTS.md moves back), keeps `@import` lines byte for byte, moves Claude-only content to `.claude/rules/`, names every `CLAUDE.local.md` because it turns AGENTS.md loading off for its owner, proves nothing load-bearing was lost with a fresh-context loss check, and leaves the tree uncommitted with a before and after report. Ships `scripts/measure.py`, which lists every instruction file, chain, and generator and which a repository can run with `--strict` in CI to fail on the next accretion.
+Rewrite a repository's instruction files into short normative AGENTS.md files and retire CLAUDE.md, since Claude Code 2.1.277 and later loads AGENTS.md wherever it would load CLAUDE.md once no CLAUDE.md is on the path. Measures every file against the caps each harness actually reads (Codex's shared 32 KiB root-to-cwd chain, Grok's 10,000 characters per file, Claude's 200 line target), classifies every clause and routes it: rules stay as one bullet each with at most one because-clause, incident narrative and rationale are dropped because git and the PR carry them, rules held in project memory are promoted into the file and leave memory, inventories and module internals go to the code or docs, package rules move down into the package's own file, and a rule an existing test asserts becomes a pointer. Deletes every placeholder (framework blocks, scaffold preambles, file-name titles, empty template sections) and switches off the generator in the same pass when it has a switch (Next.js `agentRules: false`), creates a package file only where a coverage test says the tree needs one, sorts README and AGENTS.md content by reader (agent instructions that ended up in a README move out, product prose that ended up in AGENTS.md moves back), keeps `@import` lines byte for byte, moves Claude-only content to `.claude/rules/`, names every `CLAUDE.local.md` because it turns AGENTS.md loading off for its owner, proves nothing load-bearing was lost with a fresh-context loss check, and leaves the tree uncommitted with a before and after report. Ships `scripts/measure.py`, which lists every instruction file, chain, and generator and which a repository can run with `--strict` in CI to fail on the next accretion. Rewrites a dirty instruction file on top of the working copy and names the pending diff instead of skipping it.
 
 **Triggers:** "Clean up AGENTS.md", "Our CLAUDE.md has become a changelog", "Normalize the instruction files across the monorepo"
 
 #### clean-memory
 
-Verify a repository's project memory against reality and forget safely. `scripts/audit.py` checks every anchor a topic body carries (paths and symbols against `git ls-files`, line ranges and symbol suffixes included; SHAs against the object store; issue and PR numbers against GitHub with `--gh`, two list calls that cover every ref), skips paths on lines that name another repository (a GitHub URL, or an owner/repo of a known owner or on an upstream line), marks anchors that changed after the memory was written, finds orphans, format problems through `use-project-memory`'s `check.py`, and project facts leaking into other harnesses' memory stores, and declares mass drift when a third of the anchors are dead. The skill snapshots the store, verifies flagged topics in fresh-context subagents with `file:line` evidence, then confirms, corrects, compacts, promotes into AGENTS.md, archives, disproves, supersedes, deletes, demotes, or escalates each one through `use-project-memory`'s conventions (a topic git or GitHub already records is derivable and goes, and one that relaxes a skill's gate is disproved), archives terminal index lines on every pass so the index each session loads stays short, rebuilds the store when the architecture moved under it, and records the run in a sidecar that `use-project-memory` reads to suggest the next pass after thirty days.
+Verify a repository's project memory against reality and forget safely. `scripts/audit.py` checks every anchor a topic body carries (paths and symbols against `git ls-files`, line ranges and symbol suffixes included; SHAs against the object store; issue and PR numbers against GitHub with `--gh`, two list calls that cover every ref), skips paths on lines that name another repository (a GitHub URL, or an owner/repo of a known owner or on an upstream line), marks anchors that changed after the memory was written, finds orphans, format problems through `use-project-memory`'s `check.py`, and project facts leaking into other harnesses' memory stores, and declares mass drift when a third of the anchors are dead. The skill snapshots the store, verifies flagged topics in fresh-context subagents with `file:line` evidence, then confirms, corrects, compacts, promotes into AGENTS.md, archives, disproves, supersedes, deletes, demotes, or escalates each one through `use-project-memory`'s conventions (a topic git or GitHub already records is derivable and goes, and one that relaxes a skill's gate is disproved), archives terminal index lines on every pass so the index each session loads stays short, rebuilds the store when the architecture moved under it, and records the run in a sidecar that `use-project-memory` reads to suggest the next pass after thirty days. Keeps its ledger beside the snapshot so a pass that dies resumes from its last settled row, and its verifiers never run a probe that touches the user's machine state.
 
 **Triggers:** "Clean up the project memory", "Half of these memories are outdated", "Check what memory still holds after the refactor"
 

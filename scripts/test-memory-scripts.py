@@ -165,6 +165,31 @@ with tempfile.TemporaryDirectory() as temporary:
     result = hook({"tool_name": "Edit", "tool_input": {"file_path": str(index), "old_string": "x", "new_string": good_line}, "tool_response": {"filePath": str(index), "originalFile": before}})
     expect(result.returncode == 0 and not result.stderr.strip(), "hook passes a compliant added line in an index with older violations")
 
+    budget_store = base / ".claude" / "projects" / "budget-project" / "memory"
+    budget_store.parent.mkdir(parents=True)
+    build_budget(budget_store)
+    budget_index = budget_store / "MEMORY.md"
+    budget_lines = budget_index.read_text(encoding="utf-8").splitlines(keepends=True)
+    at_limit = "".join(budget_lines[:200])
+    budget_index.write_text(at_limit + budget_lines[200], encoding="utf-8")
+    result = hook({"tool_name": "Edit", "tool_input": {"file_path": str(budget_index), "old_string": "", "new_string": budget_lines[200]}, "tool_response": {"filePath": str(budget_index), "originalFile": at_limit}})
+    expect(result.returncode == 2 and "index-budget: 201 lines (limit 200)" in result.stderr, "hook blocks an edit that grows the index past 200 lines: " + result.stderr[:300])
+
+    over_limit = budget_index.read_text(encoding="utf-8") + "- [Extra](t0.md) — OPEN extra\n"
+    budget_index.write_text(over_limit, encoding="utf-8")
+    budget_index.write_text(over_limit.replace("- [Extra](t0.md) — OPEN extra\n", ""), encoding="utf-8")
+    result = hook({"tool_name": "Edit", "tool_input": {"file_path": str(budget_index), "old_string": "- [Extra](t0.md) — OPEN extra\n", "new_string": ""}, "tool_response": {"filePath": str(budget_index), "originalFile": over_limit}})
+    expect(result.returncode == 0 and not result.stderr.strip(), "hook passes an edit that removes a line while the index remains over budget")
+
+    wide_line = "- [Wide](t0.md) — " + "界" * 70 + "\n"
+    wide_before = wide_line * (25600 // len(wide_line.encode("utf-8")))
+    wide_after = wide_before + wide_line
+    budget_index.write_text(wide_after, encoding="utf-8")
+    result = hook({"tool_name": "Edit", "tool_input": {"file_path": str(budget_index), "old_string": "", "new_string": wide_line}, "tool_response": {"filePath": str(budget_index), "originalFile": wide_before}})
+    expect(result.returncode == 2 and "index-budget" in result.stderr and "bytes (limit 25600)" in result.stderr, "hook blocks an edit that crosses the byte budget: " + result.stderr[:300])
+    result = hook({"tool_name": "Write", "tool_input": {"file_path": str(budget_index), "content": wide_after}, "tool_response": {"type": "create", "filePath": str(budget_index), "originalFile": None}})
+    expect(result.returncode == 2 and "index-budget" in result.stderr, "hook blocks a new index that exceeds the byte budget")
+
     fresh = base / ".claude" / "projects" / "fresh-project" / "memory"
     fresh.mkdir(parents=True)
     (fresh / "MEMORY.md").write_text("- [Long](long.md) — " + "q" * 90 + "\n", encoding="utf-8")
@@ -173,6 +198,25 @@ with tempfile.TemporaryDirectory() as temporary:
 
     result = hook({"tool_name": "Write", "tool_input": {"file_path": str(store / "big.md"), "content": ""}, "tool_response": {"type": "update", "filePath": str(store / "big.md"), "originalFile": "old"}})
     expect(result.returncode == 2 and "topic-size" in result.stderr, "hook reports an oversized topic write")
+    big_topic = store / "big.md"
+    original_big = big_topic.read_text(encoding="utf-8")
+    smaller_big = original_big.replace("z" * 5000, "z" * 4800)
+    big_topic.write_text(smaller_big, encoding="utf-8")
+    result = hook({"tool_name": "Edit", "tool_input": {"file_path": str(big_topic), "old_string": "z" * 5000, "new_string": "z" * 4800}, "tool_response": {"filePath": str(big_topic), "originalFile": original_big}})
+    expect(result.returncode == 0 and not result.stderr.strip(), "hook passes an edit that shrinks an already oversized topic")
+    larger_big = smaller_big.replace("z" * 4800, "z" * 4801)
+    big_topic.write_text(larger_big, encoding="utf-8")
+    result = hook({"tool_name": "Edit", "tool_input": {"file_path": str(big_topic), "old_string": "z" * 4800, "new_string": "z" * 4801}, "tool_response": {"filePath": str(big_topic), "originalFile": smaller_big}})
+    expect(result.returncode == 2 and "topic-size" in result.stderr, "hook blocks an edit that grows an already oversized topic")
+    new_topic = store / "new-big.md"
+    new_topic.write_text(FM.format(name="new-big", type="project", body="z" * 5000), encoding="utf-8")
+    result = hook({"tool_name": "Write", "tool_input": {"file_path": str(new_topic), "content": new_topic.read_text(encoding="utf-8")}, "tool_response": {"type": "create", "filePath": str(new_topic), "originalFile": None}})
+    expect(result.returncode == 2 and "topic-size" in result.stderr, "hook blocks a new oversized topic")
+    broken_topic = store / "badtype.md"
+    original_broken = broken_topic.read_text(encoding="utf-8")
+    broken_topic.write_text(original_broken.replace("Short.", "Longer body."), encoding="utf-8")
+    result = hook({"tool_name": "Edit", "tool_input": {"file_path": str(broken_topic), "old_string": "Short.", "new_string": "Longer body."}, "tool_response": {"filePath": str(broken_topic), "originalFile": original_broken}})
+    expect(result.returncode == 0 and not result.stderr.strip(), "hook passes a body edit when the topic frontmatter was already broken")
     result = hook({"tool_name": "Write", "tool_input": {"file_path": str(store / "good.md"), "content": ""}, "tool_response": {"type": "update", "filePath": str(store / "good.md"), "originalFile": "old"}})
     expect(result.returncode == 0 and not result.stderr.strip(), "hook passes a compliant topic write")
     result = hook({"tool_name": "Write", "tool_input": {"file_path": str(store / "old.md"), "content": ""}, "tool_response": {"type": "update", "filePath": str(store / "old.md"), "originalFile": "old"}})

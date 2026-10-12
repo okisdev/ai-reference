@@ -7,7 +7,7 @@ argument-hint: "<pr-number-or-url>"
 ## Context
 
 Repository: !`gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null || echo "unknown"`
-Default branch: !`git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@refs/remotes/origin/@@' || echo main`
+Default branch: !`out=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@refs/remotes/origin/@@'); echo "${out:-main}"`
 Current branch: !`git branch --show-current 2>/dev/null`
 
 ## Instructions
@@ -22,24 +22,7 @@ Verify every substantive review comment on a GitHub PR against the current codeb
    - `gh api repos/<owner>/<repo>/issues/<num>/comments --paginate`: issue-level PR comments (where `changeset-bot`, `vercel`, `greptile-apps` post status).
    - `gh pr view <num> --comments`: human-readable mix but lacks `commit_id` for staleness detection; fallback only.
 
-2. **Fetch resolution state for inline-comment threads** via GraphQL (REST does not expose this):
-   ```bash
-   gh api graphql -F owner=<owner> -F repo=<repo> -F num=<num> -f query='
-     query($owner: String!, $repo: String!, $num: Int!) {
-       repository(owner: $owner, name: $repo) {
-         pullRequest(number: $num) {
-           reviewThreads(first: 100) {
-             nodes {
-               isResolved
-               isOutdated
-               comments(first: 10) { nodes { databaseId } }
-             }
-           }
-         }
-       }
-     }'
-   ```
-   Build a map from inline comment ID to its thread's `isResolved` and `isOutdated`. Resolved-thread comments carry the **Resolved** verdict (not Stale) and are excluded from re-verification unless the user explicitly asks.
+2. **Fetch resolution state for inline-comment threads** via GraphQL (REST does not expose this), with the paginated read in `references/threads.md`. Build a map from inline comment ID (`databaseId`) to its thread's `isResolved` and `isOutdated`. Resolved-thread comments carry the **Resolved** verdict (not Stale) and are excluded from re-verification unless the user explicitly asks.
 
 3. **Determine the latest commit**: `gh api repos/<owner>/<repo>/pulls/<num> --jq .head.sha`. Fresh comments are judged against this `commit_id`.
 
@@ -54,6 +37,7 @@ Verify every substantive review comment on a GitHub PR against the current codeb
 5. **Classify each remaining comment by staleness**:
    - **Inline comments**: judge by `isOutdated` from the reviewThreads map (step 2). `isOutdated: true` => **Stale**; `isOutdated: false` => **Fresh**, verify it.
    - **Top-level review summary bodies**: these carry no thread, so use `commit_id` equality. `commit_id === latest head SHA` => **Fresh**, verify it; otherwise **Stale**.
+   - **Issue-level comments**: these carry no `commit_id`, and bots edit them in place, so judge by `updated_at` against the head commit's date (`gh api repos/<owner>/<repo>/commits/<head-sha> --jq .commit.committer.date`). An `updated_at` older than the head => **Stale** (mark it "Stale (updated `<updated_at>`)"); otherwise **Fresh**, verify it.
    - Mark stale entries "Stale (last seen at `<sha[:7]>`)" and move on; don't reverify unless the user asks.
 
 6. **Verify each fresh, substantive comment**:

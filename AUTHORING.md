@@ -47,7 +47,10 @@ Short is not the goal; lean is. Do not cut into the do-not-cut floor: verificati
 - Naming: `verb-noun`, imperative, reads like the `/command` it becomes (`create-pr`, `verify-pr`, `ship-pr`).
 - Register: in-repo formal. Sentence case, no em-dashes or en-dashes as punctuation, no hard wrapping of prose.
 - Frontmatter YAML is strict: a `description` plain scalar cannot contain an unquoted `: ` (a colon then a space), or `npx skills` silently skips the whole skill. Quote the value, or rephrase the colon to a period or semicolon.
+- A `description` leads with the job in the user's own words, in the language they type it, not with the skill's mechanism.
 - Context probes must be portable to macOS bash 3.2: a `case` pattern inside `$()` needs a leading `(`.
+- Context probes never use positional parameters, awk fields included, because Claude Code replaces `$N` with an argument before the shell runs and model invocations pass prose, so parse `$ARGUMENTS` in the Process (the validator enforces it).
+- A piped check keeps its exit status with `set -o pipefail`, because `cmd | tail` reports tail's success.
 - Waits and monitors: a step that waits on an external process states a heartbeat (a visible per-tick status line plus a liveness re-check, not just still-pending) and a wall-clock budget with the expiry action spelled out (keep waiting through the expected window, drop only a still-pending item that has gone quiet well past it, surface failed items as blockers, kill and report owned processes). No skill ships an unbounded wait. A command bound delivers SIGTERM (the ship-pr step 3 wrapper), never a bare `alarm; exec`: Go binaries such as gh catch SIGALRM and keep running.
 - Process steps are written to be copied into the executing agent's plan verbatim, one self-contained action each; a consciously skipped step stays visible as `skip: <reason>` rather than silently dropped. An agent that paraphrases a checklist drops its gates.
 

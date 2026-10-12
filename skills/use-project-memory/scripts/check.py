@@ -103,8 +103,9 @@ def indexed_paths(path, directory):
     return paths
 
 
-def check_topic(path, directory, violations, archived=False):
-    data = path.read_bytes()
+def check_topic(path, directory, violations, archived=False, data=None):
+    if data is None:
+        data = path.read_bytes()
     name = name_for(path, directory)
     if not archived and len(data) > LIMITS["topic_bytes"]:
         add(violations, name, None, "topic-size", "{} bytes (limit {})".format(len(data), LIMITS["topic_bytes"]))
@@ -228,7 +229,7 @@ def is_store_file(path):
     return path.suffix == ".md" and canonical_store
 
 
-def check_hook_index(path, directory, lines, original, tool_name, tool_input, violations):
+def check_hook_index(data, directory, lines, original, tool_name, tool_input, violations):
     if original is None:
         if tool_name == "Write":
             added = list(enumerate(lines, 1))
@@ -236,8 +237,9 @@ def check_hook_index(path, directory, lines, original, tool_name, tool_input, vi
             old_string = tool_input.get("old_string")
             new_string = tool_input.get("new_string")
             if not isinstance(old_string, str) or not isinstance(new_string, str):
-                return
-            added = added_edit_lines(lines, old_string, new_string)
+                added = []
+            else:
+                added = added_edit_lines(lines, old_string, new_string)
     else:
         added = added_lines(lines, original)
     for number, line in added:
@@ -251,6 +253,11 @@ def check_hook_index(path, directory, lines, original, tool_name, tool_input, vi
             add(violations, "MEMORY.md", number, "hook-length", "{} characters (limit {})".format(len(hook), LIMITS["hook_chars"]))
         if not linked_file_exists(directory, target):
             add(violations, "MEMORY.md", number, "orphan-line", "{} does not exist in the store".format(target))
+    original_lines = len(original.splitlines()) if original is not None else 0
+    original_bytes = len(original.encode("utf-8")) if original is not None else 0
+    if ((len(lines) > LIMITS["index_lines"] and len(lines) > original_lines)
+            or (len(data) > LIMITS["index_bytes"] and len(data) > original_bytes)):
+        add(violations, "MEMORY.md", None, "index-budget", "{} lines (limit {}), {} bytes (limit {})".format(len(lines), LIMITS["index_lines"], len(data), LIMITS["index_bytes"]))
 
 
 def check_hook():
@@ -277,12 +284,13 @@ def check_hook():
         return 0
     directory = path.parent
     try:
-        lines = path.read_bytes().decode("utf-8", errors="replace").splitlines()
+        data = path.read_bytes()
+        lines = data.decode("utf-8", errors="replace").splitlines()
     except OSError:
         return 0
     violations = []
     if path.name == "MEMORY.md":
-        check_hook_index(path, directory, lines, original, tool_name, tool_input, violations)
+        check_hook_index(data, directory, lines, original, tool_name, tool_input, violations)
     else:
         live_paths = indexed_paths(directory / "MEMORY.md", directory)
         archived_paths = indexed_paths(directory / "ARCHIVE.md", directory) - live_paths
@@ -290,7 +298,16 @@ def check_hook():
             archived = path.relative_to(directory) in archived_paths
         except ValueError:
             archived = False
-        check_topic(path, directory, violations, archived)
+        check_topic(path, directory, violations, archived, data)
+        if original is not None:
+            original_data = original.encode("utf-8")
+            previous = []
+            check_topic(path, directory, previous, archived, original_data)
+            previous_rules = {(item["rule"], item["detail"]) for item in previous}
+            violations = [item for item in violations if (
+                item["rule"] == "topic-size" and len(data) > len(original_data)
+                or item["rule"] != "topic-size" and (item["rule"], item["detail"]) not in previous_rules
+            )]
     if not violations:
         return 0
     for violation in violations:
