@@ -1,6 +1,6 @@
 ---
 name: verify-ui
-description: Render and verify a web UI change in a real browser with a managed dev server, DOM assertions, and screenshots when asked to verify UI work or act on visual feedback.
+description: Render and verify a web UI in a real browser, loaded before using chrome-devtools or claude-in-chrome, when asked to look at a result, take a screenshot, open localhost, check mobile or dark mode, or act on pasted-image feedback (看看效果, 截图, 打开浏览器).
 argument-hint: "[url-or-route] [--port <n>] [--mobile]"
 ---
 
@@ -10,7 +10,7 @@ Dev script: !`jq -r '.scripts.dev // "(none)"' package.json 2>/dev/null || echo 
 
 Framework marker: !`if ls next.config.* >/dev/null 2>&1; then echo "next.config"; elif ls vite.config.* >/dev/null 2>&1; then echo "vite.config"; else echo "(unknown)"; fi`
 
-Listening dev ports: !`lsof -nP -iTCP:3000-3010 -sTCP:LISTEN 2>/dev/null | head -5 || echo "(none)"`
+Listening dev ports: !`out=$(lsof -nP -iTCP:3000-3010 -sTCP:LISTEN 2>/dev/null | head -5); echo "${out:-(none)}"`
 
 ## Instructions
 
@@ -24,8 +24,8 @@ Verify the claimed visual state in a real rendered browser with a screenshot or 
 4. Poll readiness with `curl --retry --retry-connrefused` against the expected port, then read the actual port from the log. Frameworks silently shift port when the default is busy (Next.js moves to 3001 on EADDRINUSE), and a hardcoded URL then tests the wrong app. Bound the poll (about 90 seconds); when it expires, stop waiting, capture the log tail as the failure evidence, kill the recorded PID, and report the startup failure instead of retrying past the budget.
 5. Navigate with the browser tooling (Chrome DevTools MCP: `navigate_page`, `resize_page`, `emulate`, `evaluate_script`, `take_screenshot`) and size the viewport to the context the feedback came from; `--mobile` or a phone screenshot as the reference means a phone viewport.
 6. Wait for hydration before asserting. Navigation resolves before the app hydrates, so sleep 1 to 2 seconds or poll for an app marker inside `evaluate_script` before querying.
-7. Assert the specific claim. Query the exact node (the pasted fragment's file and line locate the component; edit that file rather than guessing from class names), take a screenshot, read it, and judge the result against the ask.
-8. Iterate. Apply the edit, let hot reload pick it up, re-assert and re-screenshot the same URL at the same viewport, and report with the evidence. A "this fixes X" claim needs both sides: capture the broken state from the pre-change code first (same URL, viewport, and steps), then the fixed state, since an after-only screenshot cannot show that anything changed. A fix to a shared component is re-asserted on every page that renders it, not only the page the feedback named.
+7. Assert the specific claim. Query the exact node (the pasted fragment's file and line locate the component; open that file rather than guessing from class names), take a screenshot, read it, and judge the result against the ask.
+8. Iterate only when the request authorized fixing. Apply the edit, let hot reload pick it up, re-assert and re-screenshot the same URL at the same viewport, and report with the evidence. A "this fixes X" claim needs both sides: capture the broken state from the pre-change code first (same URL, viewport, and steps), then the fixed state, since an after-only screenshot cannot show that anything changed. A fix to a shared component is re-asserted on every page that renders it, not only the page the feedback named. When the request asked only to look, or a read-only caller composes this skill for evidence, apply no edit: capture the state, report what the screenshots and assertions show, and hand the finding back.
 9. Tear down. Kill only the recorded PID of the server this skill started, and leave any pre-existing server running.
 
 ### Rules

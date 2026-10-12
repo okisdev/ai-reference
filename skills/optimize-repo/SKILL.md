@@ -1,16 +1,16 @@
 ---
 name: optimize-repo
-description: Run an optimization pass over a repository or recent changes that simplifies and deletes, reuses existing primitives, conforms to repo conventions, syncs docs, verifies, and ends uncommitted.
+description: Extract, decouple, refactor, remove redundancy and dead code, and reuse existing helpers (抽离, 解耦, 重构, 冗余, 简化代码), then verify and leave the changes uncommitted.
 argument-hint: "[scope] [--code-only|--docs-only]"
 ---
 
 ## Context
 
-Current branch and default base: !`printf '%s (default base: %s)' "$(git branch --show-current 2>/dev/null || echo unknown)" "$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||' || echo main)"`
+Current branch and default base: !`b=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||'); b=${b:-main}; printf '%s (default base: %s)' "$(git branch --show-current 2>/dev/null || echo unknown)" "$b"`
 
-Dirty status: !`git status --short 2>/dev/null | head -10 || echo "(unable to read status)"`
+Dirty status: !`git rev-parse --git-dir >/dev/null 2>&1 && { out=$(git status --short | head -10); echo "${out:-(clean)}"; } || echo "(unable to read status)"`
 
-Release evidence: !`git tag -l 2>/dev/null | head -3 || echo "(no tags)"`
+Release evidence: !`out=$(git tag -l 2>/dev/null | head -3); echo "${out:-(no tags)}"`
 
 Root package.json private field: !`test -f package.json && jq -r '.private // "unset"' package.json 2>/dev/null || echo "(no package.json)"`
 

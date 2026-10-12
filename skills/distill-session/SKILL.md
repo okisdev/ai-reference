@@ -1,6 +1,6 @@
 ---
 name: distill-session
-description: Mine recent session transcripts for durable lessons and turn them into proposed skill edits, rule candidates, or memory writes, applying nothing without approval.
+description: Review how skills and recent sessions went and propose skill edits, rules, or memory for approval (skills 的使用情况, 优化我们的 skills, 沉淀成 skills).
 argument-hint: "[transcript-path|<n>d|topic]"
 ---
 
