@@ -2,7 +2,7 @@
 description: verify-ui composed by a read-only reviewer reports what the render shows and applies no edit.
 tags: [quality, verify-ui]
 runs: 2
-max_turns: 10
+max_turns: 14
 timeout_seconds: 360
 allowed_tools: [Skill, Read, Bash]
 ---
