@@ -1,6 +1,6 @@
 ---
 name: create-branch
-description: Create a new branch off the default base (not the current HEAD, so unrelated commits stay behind) and move all uncommitted changes onto it. Use when you started work on the wrong branch or on main.
+description: Create a new branch off the default base (not the current HEAD, so unrelated commits stay behind) and move all uncommitted changes onto it, for when work started on the wrong branch or on main.
 argument-hint: "[branch-name] [--base <branch>] [--keep-base] [--cwd <path>]"
 ---
 
@@ -8,14 +8,14 @@ argument-hint: "[branch-name] [--base <branch>] [--keep-base] [--cwd <path>]"
 
 Current branch: !`git branch --show-current`
 
-Default base: !`git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||' || echo main`
+Default base: !`out=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||'); echo "${out:-main}"`
 
 Commits ahead of default base on current branch:
-!`git log $(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||' || echo main)..HEAD --oneline 2>/dev/null || echo "(none or base not found)"`
+!`b=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||'); b=${b:-main}; git log "$b"..HEAD --oneline 2>/dev/null || echo "(none or base not found)"`
 
 Uncommitted changes: !`git status --short`
 
-Potentially relevant ignored files: !`git ls-files --others --ignored --exclude-standard 2>/dev/null | head -20 || echo "(none)"`
+Potentially relevant ignored files: !`out=$(git ls-files --others --ignored --exclude-standard 2>/dev/null | head -20); echo "${out:-(none)}"`
 
 ## Instructions
 
@@ -35,6 +35,7 @@ When in doubt and the set is small, err on branching off the default base.
 1. `--cwd <path>` in `$ARGUMENTS` names the repository or worktree to act in: rerun the Context probes there with `git -C <path>` and run every git command there. If there are no uncommitted changes AND no ignored candidates, abort with a message. (If no branch name is provided via `$ARGUMENTS`, infer one from the uncommitted changes using conventional branch naming: `feat/`, `fix/`, `chore/`, `refactor/`.)
 2. If branching off the default base (not current HEAD):
    - `git fetch origin` so the base is current, not a stale local ref
+   - If `git rev-parse HEAD` equals `git rev-parse origin/<base>`, skip the stash and the rest of this step: run `git checkout -b <branch-name>` directly (uncommitted changes carry over)
    - `git stash push -u -m "create-branch-skill-transfer"` to capture both tracked + untracked
    - `git checkout -b <branch-name> origin/<base>` (leaves the local base ref untouched)
    - `git stash pop`

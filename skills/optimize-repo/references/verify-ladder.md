@@ -9,9 +9,9 @@ Run typecheck, then lint fix, then lint, then the narrowest test run covering th
 - Lint: `pnpm lint 2>&1 | tail -60`
 - Narrowest test: `pnpm vitest run <file>`
 - Build: `pnpm turbo build --filter=<pkg>`
-- Chained: `pnpm --filter <pkg> typecheck 2>&1 | tail -60 && pnpm lint:fix >/dev/null && pnpm lint 2>&1 | tail -60 && pnpm vitest run <file> && pnpm turbo build --filter=<pkg>`
+- Chained: `set -o pipefail; pnpm --filter <pkg> typecheck 2>&1 | tail -60 && pnpm lint:fix >/dev/null && pnpm lint 2>&1 | tail -60 && pnpm vitest run <file> && pnpm turbo build --filter=<pkg>`
 
-Always truncate with `tail` because full output floods the transcript.
+Always truncate with `tail` because full output floods the transcript, and run every piped rung under `set -o pipefail`: a pipe reports tail's exit status, so without it a failed check passes. The chained recipe sets it; prefix a standalone Typecheck or Lint run with `set -o pipefail;`.
 
 ## Failure decode
 
