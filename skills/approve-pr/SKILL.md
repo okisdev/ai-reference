@@ -8,10 +8,12 @@ argument-hint: "<pr-number-or-url> [--merge] [--request-changes] [--comment] [--
 
 Repository: !`gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null || echo "unknown"`
 Default branch: !`out=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@refs/remotes/origin/@@'); echo "${out:-main}"`
-Current branch: !`git branch --show-current 2>/dev/null`
+Current branch: !`git branch --show-current 2>/dev/null || echo "(not a git repository)"`
 My login: !`gh api user --jq .login 2>/dev/null || echo "unknown"`
 
 ## Instructions
+
+**The one rule: approve the head you judged, once, then stop.** The approval binds to the SHA `verify-pr` reported, is posted once (refreshed in place when you already approved), and ends the skill, since `ship-pr` owns the checks and the merge. The bar is a note a maintainer would sign: the verdict and the one reason it holds, what you ran against what you only read, and what still stands and why it does not block. Open [examples/approval.md](examples/approval.md), or [examples/decline.md](examples/decline.md) when the decision table says do not approve, before writing, and check the draft against [examples/rejected.md](examples/rejected.md).
 
 Review a GitHub PR as a maintainer and, when it earns it, post the single GitHub approval; otherwise report and decline. Auto-post only the approval; non-approving writes need an explicit opt-in. Execute immediately without asking.
 
@@ -29,7 +31,7 @@ Delegate the approve-or-decline verdict to `verify-pr` (consume its recommendati
 
 5. **Map the verdict to an action and post.** Apply the decision table below. Reach the approval only on merge as-is with no fresh blocking thread.
 
-   Draft the body to fit what actually happened. When commits of yours sit on the PR (compare the commit authors against the My login probe), this is a takeover and the report belongs to `/summarize-review <n>`. When you changed nothing, write it here: a short conversational note to the author, prose, no headings, saying the verdict and the one reason it holds, the evidence behind whatever the approval rests on (what you executed against what you only read), and anything still standing with why it does not block. A paragraph or two is the whole of it. Say nothing the diff already says, since re-narrating the patch back to the person who wrote it is what makes an approval read like a form.
+   Draft the body to fit what actually happened. When commits of yours sit on the PR (compare the commit authors against the My login probe), this is a takeover and the report belongs to `/summarize-review <n>`. When you changed nothing, write it here: a short conversational note to the author, prose, no headings, saying the verdict and the one reason it holds, the evidence behind whatever the approval rests on (what you executed against what you only read), and anything still standing with why it does not block. A paragraph or two is the whole of it. Cite a maintainer's decision by the comment that made it, not by a later PR that applied it (seen: a later PR was cited as authority when an earlier maintainer comment ruled). Say nothing the diff already says, since re-narrating the patch back to the person who wrote it is what makes an approval read like a form.
 
    Then re-read `headRefOid`, and if it moved since step 2 abort and re-run from step 3 (a stale approval keeps gating code nobody judged). Then resolve your latest prior review:
    ```bash
@@ -41,7 +43,7 @@ Delegate the approve-or-decline verdict to `verify-pr` (consume its recommendati
    <body>
    EOF
    ```
-   After posting, read `reviewDecision`; if it is still `REVIEW_REQUIRED`, report what is outstanding (for example a code-owner review on a protected path). Then stop; only the `--merge` hand-off in step 7 continues, and this skill never watches checks, since `ship-pr` owns the wait.
+   After posting, read `reviewDecision`; if it is still `REVIEW_REQUIRED`, report what is outstanding (for example a code-owner review on a protected path). Then stop; only the `--merge` hand-off in step 7 continues, and this skill never watches checks, since `ship-pr` owns the wait (seen: it kept watching checks after posting until the user said CI was fine).
 
 6. **On a decline, write only the opt-in path.** When an opt-in flag authorizes a non-approving write (`--request-changes` for a push back, `--comment` for a note), post it via `--body-file -`. Otherwise report verify-pr's recommendation and any blocking thread, and stop without writing.
 
@@ -60,6 +62,7 @@ Delegate the approve-or-decline verdict to `verify-pr` (consume its recommendati
 
 ### Rules
 
+- No trace of tooling in anything posted under the user's name: no `Co-Authored-By` trailer naming a coding tool, no generated-by line, no session link (seen: tool trailers and session links the user had to strip from merged PRs).
 - The only state-changing `gh pr review` this skill posts without an explicit opt-in is the approval. `--request-changes` and `--comment` require an opt-in; a close or redirect recommendation is reported, never executed.
 - Pass every review body via `--body-file -` with a quoted heredoc (`<<'EOF'`), never `-b/--body "..."`; the summarize-review body carries backticks and code that string interpolation mangles.
 - `PUT /pulls/<n>/reviews/<id>` edits the body text only, never the review state; it cannot upgrade a prior COMMENTED, CHANGES_REQUESTED, or DISMISSED review to APPROVED. Submit a fresh `--approve` to change state.

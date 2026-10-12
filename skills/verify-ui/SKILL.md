@@ -8,11 +8,13 @@ argument-hint: "[url-or-route] [--port <n>] [--mobile]"
 
 Dev script: !`jq -r '.scripts.dev // "(none)"' package.json 2>/dev/null || echo "(none)"`
 
-Framework marker: !`if ls next.config.* >/dev/null 2>&1; then echo "next.config"; elif ls vite.config.* >/dev/null 2>&1; then echo "vite.config"; else echo "(unknown)"; fi`
+Framework marker: !`if find . -maxdepth 1 -name 'next.config.*' -print -quit | grep -q .; then echo "next.config"; elif find . -maxdepth 1 -name 'vite.config.*' -print -quit | grep -q .; then echo "vite.config"; else echo "(unknown)"; fi`
 
 Listening dev ports: !`out=$(lsof -nP -iTCP:3000-3010 -sTCP:LISTEN 2>/dev/null | head -5); echo "${out:-(none)}"`
 
 ## Instructions
+
+**The one rule: every visual claim rests on what the browser rendered and you read.** A diff that reads right, a green build, and a 200 response all stop short of pixels, and a fix claim needs the broken state and the fixed state under the same URL, viewport, and steps. The bar is a report where each claim sits beside the evidence that decides it, with the URL, port, and viewport it was measured at, every page that renders a shared component, and what was not checked: open [examples/render-check.md](examples/render-check.md) before reporting, and check the draft against [examples/rejected.md](examples/rejected.md).
 
 Verify the claimed visual state in a real rendered browser with a screenshot or DOM assertion as evidence, manage the dev server lifecycle cleanly, and never kill processes by name.
 
@@ -25,7 +27,7 @@ Verify the claimed visual state in a real rendered browser with a screenshot or 
 5. Navigate with the browser tooling (Chrome DevTools MCP: `navigate_page`, `resize_page`, `emulate`, `evaluate_script`, `take_screenshot`) and size the viewport to the context the feedback came from; `--mobile` or a phone screenshot as the reference means a phone viewport.
 6. Wait for hydration before asserting. Navigation resolves before the app hydrates, so sleep 1 to 2 seconds or poll for an app marker inside `evaluate_script` before querying.
 7. Assert the specific claim. Query the exact node (the pasted fragment's file and line locate the component; open that file rather than guessing from class names), take a screenshot, read it, and judge the result against the ask.
-8. Iterate only when the request authorized fixing. Apply the edit, let hot reload pick it up, re-assert and re-screenshot the same URL at the same viewport, and report with the evidence. A "this fixes X" claim needs both sides: capture the broken state from the pre-change code first (same URL, viewport, and steps), then the fixed state, since an after-only screenshot cannot show that anything changed. A fix to a shared component is re-asserted on every page that renders it, not only the page the feedback named. When the request asked only to look, or a read-only caller composes this skill for evidence, apply no edit: capture the state, report what the screenshots and assertions show, and hand the finding back.
+8. Iterate only when the request authorized fixing. Apply the edit, let hot reload pick it up, re-assert and re-screenshot the same URL at the same viewport, and report with the evidence. A "this fixes X" claim needs both sides: capture the broken state from the pre-change code first (same URL, viewport, and steps), then the fixed state, since an after-only screenshot cannot show that anything changed. A fix to a shared component is re-asserted on every page that renders it, not only the page the feedback named. When the request asked only to look, or a read-only caller composes this skill for evidence, apply no edit: capture the state, report what the screenshots and assertions show, and hand the finding back (seen: a read-only caller's run was told to apply edits).
 9. Tear down. Kill only the recorded PID of the server this skill started, and leave any pre-existing server running.
 
 ### Rules
@@ -36,3 +38,4 @@ Verify the claimed visual state in a real rendered browser with a screenshot or 
 - Never add Playwright or another browser dependency to the project just for this verification; use what is installed or the browser tooling.
 - Never inject DOM or app state to produce the state under test; drive the UI the way a user would, and use state inspection only to confirm what was observed.
 - In a workspace showing personal or customer data, do not save screenshots or snapshots without the user's agreement.
+- Run every browser check through this process, a quick look at localhost and a check another skill composes included; a raw `chrome-devtools` or `claude-in-chrome` call skips the standing-instructions check, the port read, the hydration wait, and the teardown (seen: browser checks in 82 sessions ran through raw browser tools without it).

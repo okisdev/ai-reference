@@ -9,7 +9,7 @@
 
 ## Window
 
-Search qualifiers and `gh run list --created` take an offset range such as `2026-01-15T00:00:00+08:00..2026-01-15T23:59:59+08:00`, or a bound such as `>=2026-01-15T00:00:00+08:00`. A bare `2026-01-15` is the UTC day, which at +08:00 runs from 08:00 that day to 08:00 the next. Pass REST parameters with `-X GET -f`, which encodes the offset; a raw `+` pasted into a URL turns into a space. Records come back stamped in UTC, so `jq` comparisons take the window's bounds in UTC (`YYYY-MM-DDTHH:MM:SSZ`).
+Search qualifiers and `gh run list --created` take an offset range such as `2026-01-15T00:00:00+08:00..2026-01-15T23:59:59+08:00`, or a bound such as `>=2026-01-15T00:00:00+08:00`. A bare `2026-01-15` is the UTC day, which at +08:00 runs from 08:00 that day to 08:00 the next (seen: a bare date passed to GitHub was a UTC day, so a failure at 00:28 local landed in the wrong day). Pass REST parameters with `-X GET -f`, which encodes the offset; a raw `+` pasted into a URL turns into a space. Records come back stamped in UTC, so `jq` comparisons take the window's bounds in UTC (`YYYY-MM-DDTHH:MM:SSZ`).
 
 ## Person digest
 
@@ -55,7 +55,7 @@ Why an open PR waits:
 gh pr view <number> -R <owner>/<name> --json url,reviewDecision,mergeStateStatus,statusCheckRollup --jq '{url, reviewDecision, mergeStateStatus, checks: ([.statusCheckRollup[] | .conclusion // .state] | group_by(.) | map({(.[0]): length}) | add)}'
 ```
 
-The aggregate counts to compare against, paired as PRs opened to `totalPullRequestContributions`, PRs reviewed to `totalPullRequestReviewContributions`, issues opened to `totalIssueContributions`, and default branch commits to `totalCommitContributions`. They leave out comment-only reviews and some private repository work, so a gap is expected:
+The aggregate counts to compare against, paired as PRs opened to `totalPullRequestContributions`, PRs reviewed to `totalPullRequestReviewContributions`, issues opened to `totalIssueContributions`, and default branch commits to `totalCommitContributions`. They leave out comment-only reviews and some private repository work, so a gap is expected (seen: GitHub's review contributions left out comment-only reviews, 172 PRs against the 175 counted):
 
 ```
 gh api graphql -f query='query($login:String!,$org:ID!,$from:DateTime!,$to:DateTime!){user(login:$login){contributionsCollection(organizationID:$org,from:$from,to:$to){totalCommitContributions totalPullRequestContributions totalPullRequestReviewContributions totalIssueContributions}}}' -f login=<login> -f org=<node-id> -f from=<start> -f to=<end>

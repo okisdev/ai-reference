@@ -8,13 +8,13 @@ argument-hint: "[table-or-question] [--write]"
 
 DATABASE_URL presence: !`test -f .env && grep -q '^DATABASE_URL=' .env && echo "in .env" || echo "(none)"`
 
-ORM marker: !`if ls drizzle.config.* >/dev/null 2>&1; then echo "drizzle"; elif test -f prisma/schema.prisma; then echo "prisma"; elif { test -f wrangler.jsonc && grep -q d1_databases wrangler.jsonc; } || { test -f wrangler.toml && grep -q d1_databases wrangler.toml; }; then echo "wrangler d1"; else echo "(none)"; fi`
+ORM marker: !`if find . -maxdepth 1 -name 'drizzle.config.*' -print -quit | grep -q .; then echo "drizzle"; elif test -f prisma/schema.prisma; then echo "prisma"; elif { test -f wrangler.jsonc && grep -q d1_databases wrangler.jsonc; } || { test -f wrangler.toml && grep -q d1_databases wrangler.toml; }; then echo "wrangler d1"; else echo "(none)"; fi`
 
 Packages with a database directory or schema file: !`out=$(find . -name node_modules -type d -prune -o \( -type d \( -iname db -o -iname database \) -o -iname schema.prisma -o -iname schema.ts \) -print 2>/dev/null | head -10); echo "${out:-(none)}"`
 
 ## Instructions
 
-Read the live database first with targeted SQL, compare it against the ORM schema second, and treat any mismatch as the finding; write only when explicitly asked.
+**The one rule: the live database answers first.** Read it with targeted SQL before reasoning from the ORM schema, treat any mismatch between the two as the finding, and stay read-only unless `--write` or an explicit ask says otherwise; a great report names the route and environment every query ran against, quotes both sides of every drift, backs each claim with a bounded query, and never prints a credential. The bar is [examples/inspection.md](examples/inspection.md): open it before writing, and check the draft against [examples/rejected.md](examples/rejected.md).
 
 ### Process
 
@@ -30,4 +30,4 @@ Read the live database first with targeted SQL, compare it against the ORM schem
 
 - Read-only is the default; no `INSERT`, `UPDATE`, `DELETE`, DDL, or schema push without `--write` or an explicit ask.
 - A destructive statement always follows a `SELECT` of the same rows with the count reported.
-- Connection strings and credentials never appear in output; name the host or project, never the full URL.
+- Connection strings and credentials never appear in output; name the host or project, never the full URL, and that includes a connection string the user pasted into the prompt (seen: a connection string pasted in a prompt).

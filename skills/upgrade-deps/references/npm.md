@@ -42,7 +42,7 @@ Two pnpm guards routinely interrupt upgrades.
 | --- | --- | --- |
 | A workspace package declares an `expo` dependency | Run `npx expo install --fix` from that package directory | Blanket bumpers do not know SDK compatibility matrices and can select versions that crash at runtime. |
 
-To intentionally hold an SDK package back after a blanket bump, first read the blocker's newest peer range with `npm view <blocker>@latest peerDependencies` (the blocker is the package whose peer range rejects the held package's new major) and drop the hold when that range accepts the new major, bumping the blocker to its latest release. Otherwise restore only that manifest with `git checkout -- <workspace>/package.json`, then reinstall with the detected package manager and run its dedupe command when one exists.
+To intentionally hold an SDK package back after a blanket bump, first read the blocker's newest peer range with `npm view <blocker>@latest peerDependencies` (the blocker is the package whose peer range rejects the held package's new major; seen: an outdated SDK hold was restored without rechecking its blocker) and drop the hold when that range accepts the new major, bumping the blocker to its latest release. Otherwise restore only that manifest with `git checkout -- <workspace>/package.json`, then reinstall with the detected package manager and run its dedupe command when one exists.
 
 ## Changesets
 

@@ -8,9 +8,11 @@ argument-hint: "<pr-number-or-url>"
 
 Repository: !`gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null || echo "unknown"`
 Default branch: !`out=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@refs/remotes/origin/@@'); echo "${out:-main}"`
-Current branch: !`git branch --show-current 2>/dev/null`
+Current branch: !`git branch --show-current 2>/dev/null || echo "(not a git repository)"`
 
 ## Instructions
+
+**The one rule: judge each comment against the code at the current head.** Staleness comes from the signal each comment type carries (thread `isOutdated`, review `commit_id`, issue-level `updated_at`), and a claim is Confirmed only after you read the file as it stands and cross-checked what the comment asserts, never from the reviewer's quoted diff, a badge, or a severity label. The bar is a matrix a maintainer could act on without rereading the threads, every verdict pinned to `file:line` or a probe: open [examples/triage.md](examples/triage.md) before writing, and check the draft against [examples/rejected.md](examples/rejected.md).
 
 Verify every substantive review comment on a GitHub PR against the current codebase (not whether the PR should merge, that is `/verify-pr`). Execute immediately without asking.
 
@@ -37,7 +39,7 @@ Verify every substantive review comment on a GitHub PR against the current codeb
 5. **Classify each remaining comment by staleness**:
    - **Inline comments**: judge by `isOutdated` from the reviewThreads map (step 2). `isOutdated: true` => **Stale**; `isOutdated: false` => **Fresh**, verify it.
    - **Top-level review summary bodies**: these carry no thread, so use `commit_id` equality. `commit_id === latest head SHA` => **Fresh**, verify it; otherwise **Stale**.
-   - **Issue-level comments**: these carry no `commit_id`, and bots edit them in place, so judge by `updated_at` against the head commit's date (`gh api repos/<owner>/<repo>/commits/<head-sha> --jq .commit.committer.date`). An `updated_at` older than the head => **Stale** (mark it "Stale (updated `<updated_at>`)"); otherwise **Fresh**, verify it.
+   - **Issue-level comments**: these carry no `commit_id`, and bots edit them in place, so judge by `updated_at` against the head commit's date (`gh api repos/<owner>/<repo>/commits/<head-sha> --jq .commit.committer.date`). An `updated_at` older than the head => **Stale** (mark it "Stale (updated `<updated_at>`)"); otherwise **Fresh**, verify it (seen: staleness was misjudged; users said many reviews update one conversation).
    - Mark stale entries "Stale (last seen at `<sha[:7]>`)" and move on; don't reverify unless the user asks.
 
 6. **Verify each fresh, substantive comment**:

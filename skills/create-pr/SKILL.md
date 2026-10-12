@@ -6,22 +6,22 @@ argument-hint: "[base-branch | --base <branch>] [--draft] [--cwd <path>]"
 
 ## Context
 
-Repository: !`gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null`
-Current branch: !`git branch --show-current`
+Repository: !`gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null || echo "(not a GitHub repo or gh unavailable)"`
+Current branch: !`git branch --show-current 2>/dev/null || echo "(not a git repository)"`
 Base branch (the repo default; step 1 replaces it when the arguments name a base): !`out=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@refs/remotes/origin/@@'); echo "${out:-main}"`
 Remote status: !`git status --short -b | head -1`
 Existing PR: !`gh pr list --head "$(git branch --show-current)" --state open --json url -q '.[0].url // "(none)"' 2>/dev/null || echo "(none)"`
-Commits: !`b=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@refs/remotes/origin/@@'); b=${b:-main}; git log --pretty='%h %s' "$(git merge-base HEAD "$b")"..HEAD 2>/dev/null`
-Diff stat: !`b=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@refs/remotes/origin/@@'); b=${b:-main}; git diff --stat "$(git merge-base HEAD "$b")"..HEAD 2>/dev/null`
-Recent merged PRs (style reference): !`gh pr list --state merged --limit 8 --json number,title --jq '.[] | "#\(.number) \(.title)"' 2>/dev/null`
+Commits: !`b=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@refs/remotes/origin/@@'); b=${b:-main}; git log --pretty='%h %s' "$(git merge-base HEAD "$b")"..HEAD 2>/dev/null || echo "(none or base not found)"`
+Diff stat: !`b=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@refs/remotes/origin/@@'); b=${b:-main}; git diff --stat "$(git merge-base HEAD "$b")"..HEAD 2>/dev/null || echo "(none or base not found)"`
+Recent merged PRs (style reference): !`gh pr list --state merged --limit 8 --json number,title --jq '.[] | "#\(.number) \(.title)"' 2>/dev/null || echo "(none)"`
 Repo PR template (if present): !`for p in .github/pull_request_template.md .github/PULL_REQUEST_TEMPLATE.md docs/pull_request_template.md PULL_REQUEST_TEMPLATE.md pull_request_template.md; do [ -f "$p" ] && { echo "--- using: $p ---"; cat "$p"; exit 0; }; done; echo "(no template found)"`
 
 ## Instructions
 
-Execute immediately without asking. Skip steps that don't apply.
+**The one rule: the PR reads as if the user wrote it.** Their title shape, their lowercase register, their body sections, every verified claim backed by the command that proved it, and nothing that says how it was made. The bar is [examples/fix.md](examples/fix.md) and [examples/feature.md](examples/feature.md); open the closer one before composing and check the draft against [examples/rejected.md](examples/rejected.md). Execute immediately without asking, skipping steps that don't apply.
 
 1. **Pre-flight guards** (treat any `$ARGUMENTS` as the user input; a `--cwd <path>` names the repository or worktree to act in, so drop it and its value before reading the base, rerun the Context probes there with `git -C <path>` and `gh` run from `<path>`, and run every git and gh command there). Run in order.
-   - Take the base from the arguments: `--base <branch>`, or a leading token that is not a flag and names a branch. When it differs from the `Base branch` probe, rerun Commits and Diff stat against it before composing (`git log --pretty='%h %s' $(git merge-base HEAD <base>)..HEAD` and `git diff --stat $(git merge-base HEAD <base>)..HEAD`); the guards below use that base.
+   - Take the base from the arguments: `--base <branch>`, or a leading token that is not a flag and names a branch. When it differs from the `Base branch` probe, rerun Commits and Diff stat against it before composing (`git log --pretty='%h %s' $(git merge-base HEAD <base>)..HEAD` and `git diff --stat $(git merge-base HEAD <base>)..HEAD`); the guards below use that base (seen: probes that read `$1` took the second word of prose arguments as the base in 121 of 451 runs).
    - Abort if the current branch is the base/default branch; run `/create-branch` first to move the work onto a feature branch.
    - Abort if no commits exist between branch and base ("nothing to PR").
    - Abort if any commit subject matches `/^(WIP|wip:?|fixup!|squash!)/i`, unless `--draft` was passed (then proceed and mark draft); to clean them up, run `/organize-commits`, then re-run.
@@ -37,7 +37,7 @@ Execute immediately without asking. Skip steps that don't apply.
 
 5. **Compose the body.** If a repo PR template was found above, use that template verbatim and fill in any HTML comment placeholders with content derived from commits and diff. Otherwise use the body format and body rules in [references/body-format.md](references/body-format.md).
 
-6. **Create.** `gh pr create --head <current branch> --repo <Repository probe> --title <title> --body "$(cat <<'EOF' ... EOF)"`, with `--head <fork-owner>:<branch>` when the branch was pushed to a fork rather than to the Repository probe's repo (always HEREDOC the body to preserve formatting and avoid shell escaping; always pass `--head` and `--repo`, because multi-remote checkouts fail without them). Add `--base <base>` only when step 1 took a base from the arguments; otherwise omit `--base` so gh keeps defaulting to the repo default branch, and never feed a leading `--draft` to `--base`. Add `--draft` if pre-flight signaled it. Do not pass `--fill`, `--web`, or any reviewer/label/milestone flag unless the user explicitly asked.
+6. **Create.** `gh pr create --head <current branch> --repo <Repository probe> --title <title> --body "$(cat <<'EOF' ... EOF)"`, with `--head <fork-owner>:<branch>` when the branch was pushed to a fork rather than to the Repository probe's repo (always HEREDOC the body to preserve formatting and avoid shell escaping; always pass `--head` and `--repo`; seen: 73 of 504 runs failed with "you must first push the current branch" in multi-remote checkouts until retried with `--head`). Add `--base <base>` only when step 1 took a base from the arguments; otherwise omit `--base` so gh keeps defaulting to the repo default branch, and never feed a leading `--draft` to `--base`. Add `--draft` if pre-flight signaled it. Do not pass `--fill`, `--web`, or any reviewer/label/milestone flag unless the user explicitly asked.
 
 7. **Print** the resulting PR URL.
 
@@ -56,3 +56,4 @@ Apply to title and body; override the repo template's prose style (its section s
 - **casing**: casual register. Lowercase except proper nouns (`React`, `TypeScript`, `GitHub`), conventionally-uppercase acronyms (`API`, `HTTP`, `URL`), and case-sensitive code identifiers.
 - **dash rule**: never use em dashes, en dashes, or hyphens used as sentence punctuation. Break thoughts with a period, semicolon, comma, or parentheses. Identifier hyphens (`react-ai-sdk`, `tool-call`) stay.
 - **no hard wrap**: each paragraph and each bullet stays on one line however long it gets.
+- **no trace of tooling**: no session links, tool `Co-Authored-By` trailers, or generated-by lines (seen: trailers and session links the user had to strip from merged PRs).

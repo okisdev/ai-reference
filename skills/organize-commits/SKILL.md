@@ -9,12 +9,12 @@ argument-hint: "[base-branch | --base <branch>] [--cwd <path>]"
 Current branch: !`git symbolic-ref --short HEAD 2>/dev/null || echo "(detached HEAD or no commits yet)"`
 Base branch (the repo default from `origin/HEAD`, then `main`; step 1 replaces it when the arguments name a base): !`out=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@refs/remotes/origin/@@'); echo "${out:-main}"`
 Upstream: !`git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null || echo "(no upstream tracked)"`
-Behind / ahead of upstream (first count behind, second count ahead): !`git rev-list --left-right --count '@{upstream}...HEAD' 2>/dev/null || echo "(n/a)"`
+Behind / ahead of upstream (first count behind, second count ahead; seen: awk probe fields were substituted by the harness and broke this line in 26 of 53 runs): !`git rev-list --left-right --count '@{upstream}...HEAD' 2>/dev/null || echo "(n/a)"`
 Pushed commits in range: !`(BASE=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@refs/remotes/origin/@@'); BASE=${BASE:-main}; git rev-list --count "$(git merge-base HEAD "$BASE" 2>/dev/null)..@{upstream}" 2>/dev/null) || echo "(no upstream tracked)"`
 
 ### Uncommitted changes
 
-!`git status --short`
+!`git status --short 2>/dev/null || echo "(not a git repository)"`
 
 ### Commits on this branch vs base
 
@@ -25,6 +25,8 @@ Pushed commits in range: !`(BASE=$(git symbolic-ref refs/remotes/origin/HEAD 2>/
 !`(BASE=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@refs/remotes/origin/@@'); BASE=${BASE:-main}; git diff --stat "$(git merge-base HEAD "$BASE" 2>/dev/null)..HEAD" 2>/dev/null) || echo "(no committed diff to show)"`
 
 ## Instructions
+
+**The one rule: a regroup rewrites history, never content.** A great run prints the plan before anything moves, asks before every reset, records a recovery ref first, stages each group by explicit path against the plan's list, and ends with a clean tree whose content is unchanged (on a committed-only regroup, `HEAD^{tree}` equals `ORIGINAL_TREE`). The bar is [examples/regroup.md](examples/regroup.md); open it before planning and check the run against [examples/rejected.md](examples/rejected.md).
 
 Analyze all changes (committed + uncommitted), group by **purpose**, and create clean commits. **Always print the categorization plan first; pause for confirmation before any destructive operation** (`git reset`, anything that requires force-push to publish).
 
@@ -38,14 +40,15 @@ Analyze all changes (committed + uncommitted), group by **purpose**, and create 
 
 ### Process
 
-1. **Plan** (`--cwd <path>` in `$ARGUMENTS` names the repository or worktree to act in: rerun the Context probes there with `git -C <path>` and run every git command there. The base comes from the arguments: `--base <branch>`, or a leading token that is not a flag and names a branch; when it differs from the `Base branch` probe, rerun the three range probes (Pushed commits in range, Commits on this branch vs base, Diff stat: committed vs base) against it by assigning `BASE=<base>`): state the scenario number above; for scenario 1, run `/commit-changes` (passing `--cwd <path>` when given) and stop. Otherwise read the actual diffs before grouping, not just the stats above (uncommitted via `git diff HEAD`, the committed range via `git diff $(git merge-base HEAD <base>)..HEAD`), then categorize. Print one line per planned commit in the form `<conventional-prefix>(<scope>): <subject> (<file count> file(s))`, then list which files go in each.
+1. **Plan** (`--cwd <path>` in `$ARGUMENTS` names the repository or worktree to act in: rerun the Context probes there with `git -C <path>` and run every git command there (seen: a repository or worktree path was passed without `--cwd`). The base comes from the arguments: `--base <branch>`, or a leading token that is not a flag and names a branch; when it differs from the `Base branch` probe, rerun the three range probes (Pushed commits in range, Commits on this branch vs base, Diff stat: committed vs base) against it by assigning `BASE=<base>`): state the scenario number above; for scenario 1, run `/commit-changes` (passing `--cwd <path>` when given) and stop. Otherwise read the actual diffs before grouping, not just the stats above (uncommitted via `git diff HEAD`, the committed range via `git diff $(git merge-base HEAD <base>)..HEAD`), then categorize. Print one line per planned commit in the form `<conventional-prefix>(<scope>): <subject> (<file count> file(s))`, then list which files go in each.
 2. **Confirm (only when destructive)**: for scenarios 2, 3, 4, ask before running `git reset`. For scenario 3 specifically, call out "rewriting N pushed commit(s); publishing requires force-push".
-3. **Execute**: before any `git reset`, record a recovery ref: `git branch _backup/<branch>` (or note the current tip with `git rev-parse HEAD`), and for a committed-only regroup (scenarios 2 and 3, no uncommitted changes joining) also record the content identity: `ORIGINAL_TREE=$(git rev-parse HEAD^{tree})`. Then run `git reset --soft $(git merge-base HEAD <base>)` if needed; that stages the whole range, so record it (`git diff --cached --name-only --no-renames`), unstage it with `git restore --staged :/`, and stage each group by path (`git add -f` for a recorded path git ignores), confirming `git diff --cached --name-only --no-renames` equals that group's list before its `git commit`. If the regroup goes wrong, restore the original history with `git reset --hard _backup/<branch>` (or `git reset --hard <recorded-sha>`).
+3. **Execute**: before any `git reset`, record a recovery ref: `git branch _backup/<branch>` (or note the current tip with `git rev-parse HEAD`), and for a committed-only regroup (scenarios 2 and 3, no uncommitted changes joining) also record the content identity: `ORIGINAL_TREE=$(git rev-parse HEAD^{tree})`. Then run `git reset --soft $(git merge-base HEAD <base>)` if needed; that stages the whole range, so record it (`git diff --cached --name-only --no-renames`), unstage it with `git restore --staged :/`, and stage each group by path (`git add -f` for a recorded path git ignores), confirming `git diff --cached --name-only --no-renames` equals that group's list before its `git commit` (seen: a soft reset left the whole range staged, so the first group's commit swallowed everything). If the regroup goes wrong, restore the original history with `git reset --hard _backup/<branch>` (or `git reset --hard <recorded-sha>`).
 4. **Verify**: `git status` is clean, then `git log --oneline -<n>` to show the rewritten tip. On a committed-only regroup, compare `git rev-parse HEAD^{tree}` against `ORIGINAL_TREE`; a mismatch means the rewrite changed content, not just history, so stop and reconcile before any publication.
 5. **Recommended sanity check**: run the project's `build` / `test` if it's quick.
 
 ### Rules
 
+- No trace of tooling in a commit message: no `Co-Authored-By` trailer naming a coding tool, no generated-by line, no session link (seen: without a global rule, the default commit flow appended a coding tool's co-author trailer to every commit).
 - As many commits as the work has distinct concerns, no more; a single-file polish change is fine as one commit.
 - Use conventional commit prefixes: `feat:`, `fix:`, `docs:`, `style:`, `refactor:`, `perf:`, `test:`, `ci:`, `build:`, `chore:`, `revert:`.
 - Stage by explicit paths; avoid `git add -A` and `git add .` so sensitive files (`.env`, credentials) don't sneak in.
