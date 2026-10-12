@@ -10,7 +10,7 @@ DATABASE_URL presence: !`test -f .env && grep -q '^DATABASE_URL=' .env && echo "
 
 ORM marker: !`if ls drizzle.config.* >/dev/null 2>&1; then echo "drizzle"; elif test -f prisma/schema.prisma; then echo "prisma"; elif { test -f wrangler.jsonc && grep -q d1_databases wrangler.jsonc; } || { test -f wrangler.toml && grep -q d1_databases wrangler.toml; }; then echo "wrangler d1"; else echo "(none)"; fi`
 
-Packages with a database directory or schema file: !`find . -name node_modules -type d -prune -o \( -type d \( -iname db -o -iname database \) -o -iname schema.prisma -o -iname schema.ts \) -print 2>/dev/null | head -10 || echo "(none)"`
+Packages with a database directory or schema file: !`out=$(find . -name node_modules -type d -prune -o \( -type d \( -iname db -o -iname database \) -o -iname schema.prisma -o -iname schema.ts \) -print 2>/dev/null | head -10); echo "${out:-(none)}"`
 
 ## Instructions
 

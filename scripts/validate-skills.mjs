@@ -162,6 +162,12 @@ for (const skillPath of skillPaths) {
 
   const lines = contents.split(/\r?\n/);
 
+  for (const [index, line] of lines.entries()) {
+    if (line.includes("!`") && /\$(?:[1-9]|\{[1-9])/.test(line)) {
+      fail(`${relativePath(skillPath)}:${index + 1}: Context probe uses a positional parameter; Claude Code replaces $N with an argument before the shell runs, so parse $ARGUMENTS in the Process instead`);
+    }
+  }
+
   if (lines[0] !== "---") {
     fail(`${relativePath(skillPath)} must begin with a --- line.`);
     continue;
