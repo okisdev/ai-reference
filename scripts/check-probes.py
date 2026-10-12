@@ -28,10 +28,11 @@ def git(*args, cwd, env):
 
 def main():
     found = list(probes())
-    shells = ["/bin/bash"]
     zsh = shutil.which("zsh")
-    if zsh:
-        shells.append(zsh)
+    if not zsh:
+        print("zsh not found: Context probes also run under zsh, so install it before this check")
+        return 1
+    shells = ["/bin/bash", zsh]
     failures = []
 
     with tempfile.TemporaryDirectory(prefix="check-probes-") as temporary:

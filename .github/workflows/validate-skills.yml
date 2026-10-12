@@ -21,6 +21,7 @@ jobs:
           node-version: 20
       - run: npm install --no-save js-yaml
       - run: node scripts/validate-skills.mjs
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq zsh
       - run: python3 scripts/check-probes.py
         env:
           GH_TOKEN: ""
