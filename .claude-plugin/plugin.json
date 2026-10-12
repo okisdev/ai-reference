@@ -1,7 +1,7 @@
 {
   "name": "okisdev",
   "description": "Personal skills collection by okisdev",
-  "version": "0.0.41",
+  "version": "0.0.42",
   "author": {
     "name": "okisdev"
   },
@@ -20,17 +20,13 @@
     "./skills/upgrade-deps",
     "./skills/find-icon",
     "./skills/verify-ui",
-    "./skills/audit-repo",
     "./skills/optimize-repo",
     "./skills/read-source",
     "./skills/inspect-db",
-    "./skills/onboard-repo",
     "./skills/use-project-memory",
     "./skills/diagnose-root",
     "./skills/mirror-reference",
     "./skills/distill-session",
-    "./skills/verify-cli",
-    "./skills/create-verify-skill",
     "./skills/normalize-agents-md",
     "./skills/clean-memory",
     "./skills/design-dashboard",
