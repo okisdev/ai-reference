@@ -39,7 +39,7 @@ Verify every substantive review comment on a GitHub PR against the current codeb
 5. **Classify each remaining comment by staleness**:
    - **Inline comments**: judge by `isOutdated` from the reviewThreads map (step 2). `isOutdated: true` => **Stale**; `isOutdated: false` => **Fresh**, verify it.
    - **Top-level review summary bodies**: these carry no thread, so use `commit_id` equality. `commit_id === latest head SHA` => **Fresh**, verify it; otherwise **Stale**.
-   - **Issue-level comments**: these carry no `commit_id`, and bots edit them in place, so judge by `updated_at` against the head commit's date (`gh api repos/<owner>/<repo>/commits/<head-sha> --jq .commit.committer.date`). An `updated_at` older than the head => **Stale** (mark it "Stale (updated `<updated_at>`)"); otherwise **Fresh**, verify it (seen: staleness was misjudged; users said many reviews update one conversation).
+   - **Issue-level comments**: these carry no `commit_id`, and bots edit them in place, so judge by `updated_at` against the head commit's date (`gh api repos/<owner>/<repo>/commits/<head-sha> --jq .commit.committer.date`). An `updated_at` older than the head => **Stale** (mark it "Stale (updated `<updated_at>`)"); otherwise **Fresh**, verify it (seen: staleness was misjudged on bot comments that many reviews update in place).
    - Mark stale entries "Stale (last seen at `<sha[:7]>`)" and move on; don't reverify unless the user asks.
 
 6. **Verify each fresh, substantive comment**:

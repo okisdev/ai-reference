@@ -33,7 +33,7 @@ Why each part fails:
 - The `CLAUDE.md` stub: every `CLAUDE.md` is retired, because even an `@AGENTS.md` stub switches Claude Code back to CLAUDE.md-only loading; a stub is for a repository that must serve Claude Code before 2.1.277 or Bedrock, Vertex, or Foundry, and the report says so.
 - The scaffold line in the stub: a placeholder never survives. `measure.py` flags `placeholder` on both files and `claude-md` on the stub, and this report shows no run of it.
 - `# AGENTS.md`: a title that names the file instead of the project is a placeholder.
-- The project overview: product description goes to the README, and one title line stays.
+- The project overview: product description goes to the README; only the title and its one-line summary stay.
 - The first bullet holds two rules and the incident story: one rule per bullet with at most one because-clause, and the narrative goes nowhere because git and the PR carry it. The import rule is asserted by `architecture.test.ts`, so it becomes a one-line pointer to the test.
 - `Write clean, maintainable code`: generic best practice that names nothing in this repository.
 - `apps/ holds the api and the worker`: an inventory line that only says what a directory holds; `ls` gives it.

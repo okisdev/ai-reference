@@ -1,4 +1,4 @@
-# Feature PR (merged as #33)
+# Feature PR (adapted from #33)
 
 The bar for a feature: the first bullet says what the user can now do, the next bullets name the mechanisms in the order a reader meets them, verified items quote measured numbers, and notes state what was deliberately not done.
 
@@ -16,7 +16,6 @@ Title: `feat: add recap-activity, the activity and failure recap skill`
 ### already verified
 
 - [x] `node scripts/validate-skills.mjs` -> all skills validated
-- [x] every playbook command ran against live GitHub, Vercel, and local stores; context probes print the same under bash 3.2 and zsh, inside a repo, a task worktree, and outside a repo
 - [x] the skill ran end to end on five real asks across three revisions: a weekly org digest (172 PRs, 175 reviewed, 108 issues, matching independent queries), a month of failed Vercel deployments (34 failures, with 56 blocked and 69 canceled set apart), a why on a day without failures (named the nearest failure with its distance and stopped at a labeled hypothesis), a week of computer usage, and a service with no reachable store (provisional nothing with the remedy)
 
 ### reviewer should verify

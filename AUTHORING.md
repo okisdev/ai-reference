@@ -29,7 +29,7 @@ Detail that is looked up rather than read every run (large tables, repeated mech
 Two parts set the quality bar, and every skill whose output a person reads carries them:
 
 - The intent line under `## Instructions` opens with the one rule that matters, in bold (`**The one rule: ...**`), then names what a great result looks like and points at the examples.
-- `skills/<name>/examples/` holds one or two outputs that cleared the bar (real ones when they exist, each opening with a sentence on why it is the bar) and one rejected output whose every fault is named against the rule it breaks. The skill tells the agent to open the closest example before producing its output and to check the draft against the rejected one.
+- `skills/<name>/examples/` holds one output that cleared the bar for each distinct shape of output the skill produces, usually one or two (real ones when they exist, each opening with a sentence on why it is the bar) and one rejected output whose every fault is named against the rule it breaks. The skill tells the agent to open the closest example before producing its output and to check the draft against the rejected one.
 
 ## The diet
 

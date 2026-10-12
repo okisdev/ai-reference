@@ -1,6 +1,6 @@
 # List (failed deployments, a month)
 
-The bar for a list: failures are clustered by project, error code, and the first error line of the build log, never by an exit code message that hides the cause; each cluster carries its count, first and last seen, whether the latest deployment of the same project and target still fails, a sample link, and its cause in one line; and records that match the filter's wording but not its intent (blocked, canceled) get their own table grouped by the reason they carry. Condensed from a real run: project names other than the public ones are replaced and their links dropped. The report's language follows the user; this structure and density do not change.
+The bar for a list: failures are clustered by project, error code, and the first error line of the build log, never by an exit code message that hides the cause; each cluster carries its count, first and last seen, whether the latest deployment of the same project, target, and branch still fails, a sample link, and its cause in one line; and records that match the filter's wording but not its intent (blocked, canceled) get their own table grouped by the reason they carry. Condensed from a real run: project names other than the public ones are replaced and their links dropped. The report's language follows the user; this structure and density do not change.
 
 ---
 

@@ -6,7 +6,7 @@ The bar for an inspection: the answer first, the route and environment named onc
 
 **Answer.** `orders.status` has drifted from the schema and the drift has already produced bad data: the live column is nullable with no default, `packages/db/schema.ts:41` declares it `notNull().default("pending")`, and 3 of 14208 rows hold NULL.
 
-**Route.** `DATABASE_URL` from `.env` through `psql` (probe: `in .env`, ORM marker `drizzle`), host `ep-quiet-glade-a1b2c3.us-east-2.aws.neon.tech`, database `app`, which is the project's dev branch and not production. Read-only; nothing was written.
+**Route.** `DATABASE_URL` from `.env` through `psql` (probe: `in .env`, ORM marker `drizzle`), host `db.dev.acme.internal`, database `app`, which is the dev database and not production. Read-only; nothing was written.
 
 **Queries** (every one bounded, columns named):
 - `\dt` listed 9 tables, `orders` among them.
@@ -22,4 +22,4 @@ The bar for an inspection: the answer first, the route and environment named onc
 | `status` | `text`, nullable, no default | `:41` `text("status").notNull().default("pending")` |
 | `user_id` index | `orders_user_id_idx` btree (`user_id`) exists | no index declared on `user_id` (`:52-58`) |
 
-**Not determined.** Whether the migration that added `NOT NULL` ever ran on this branch, and whether production shows the same drift; neither was queried. Fixing either side needs `--write`.
+**Not determined.** Whether the migration that added `NOT NULL` ever ran on this database, and whether production shows the same drift; neither was queried. Fixing either side needs `--write`.
