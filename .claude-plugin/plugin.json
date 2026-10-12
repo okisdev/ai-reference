@@ -1,7 +1,7 @@
 {
   "name": "okisdev",
   "description": "Personal skills collection by okisdev",
-  "version": "0.0.40",
+  "version": "0.0.41",
   "author": {
     "name": "okisdev"
   },
@@ -34,6 +34,7 @@
     "./skills/normalize-agents-md",
     "./skills/clean-memory",
     "./skills/design-dashboard",
-    "./skills/plan-charts"
+    "./skills/plan-charts",
+    "./skills/recap-activity"
   ]
 }

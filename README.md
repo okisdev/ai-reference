@@ -140,6 +140,12 @@ Diagnose a failure to its origin with a reproduction first: runs the failing thi
 
 **Triggers:** "Why does this keep happening?", "Is this a root fix?", "Fix this properly, not a patch"
 
+#### recap-activity
+
+Recap what a person, team, project, or this computer did, or what failed, over a time window, from whatever records exist. Parses the ask into a subject, window, and shape (a digest, a filtered list such as failed deployments, or a why), finds every store that can speak to it (playbooks first, then installed CLIs and harness connectors, then an app's own data on disk), probes each one, and says there is nothing to recap, listing every place it looked, when no store holds records for the window. Playbooks carry verified commands and traps for GitHub (offset ranges because a bare date is a UTC day, reviews in every state timed by when they happened, comments inside the window), Vercel (BLOCKED and CANCELED apart from failures, build logs split by their first error, runtime logs bisected under the CLI's 50 row cap), the workspace (unpushed work without squash-merged leftovers, agent sessions joined to the PRs they linked), and this machine (app usage, browser and shell history, opened files, and downloads, each converted from its own epoch). Every count comes from collected records, a why follows `diagnose-root` on the first failing event or on the nearest one when the window holds none, private content is summarized rather than quoted, and every system stays read-only.
+
+**Triggers:** "What did I ship in the org this week?", "Which Vercel deployments failed this month?", "Why did the app fail yesterday?", "Summarize how I used this computer last week"
+
 #### mirror-reference
 
 Extract the load-bearing pattern from a reference URL, repository, or sibling path and re-express it in this codebase's own idiom: studies references through `gh` rather than scraping, separates the pattern from its styling and tokens, implements with the repo's own primitives, and ships a deviation report stating where and why the result diverges from the reference. Never clones class strings, tokens, or naming verbatim.
