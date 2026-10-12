@@ -6,7 +6,7 @@ argument-hint: "[transcript-path|<n>d|topic]"
 
 ## Context
 
-This repo's Claude transcripts: !`d=~/.claude/projects/$(pwd | sed 's#[/.]#-#g'); out=$(ls -t "$d"/*.jsonl 2>/dev/null | head -3); echo "${out:-(none)}"`
+This repo's Claude transcripts: !`root=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null | sed 's#/\.git$##'); d=~/.claude/projects/$(printf '%s' "${root:-$(pwd)}" | sed 's#[/.]#-#g'); out=$(find ~/.claude/projects -mindepth 2 -maxdepth 2 -name '*.jsonl' \( -path "$d/*" -o -path "$d--claude-worktrees-*/*" \) -print0 2>/dev/null | xargs -0 -r ls -t 2>/dev/null | head -3); echo "${out:-(none)}"`
 
 Other harness stores present: !`out=""; test -d ~/.codex/sessions && out="$out codex"; test -d ~/.grok/sessions && out="$out grok"; echo "${out:-(none)}"`
 

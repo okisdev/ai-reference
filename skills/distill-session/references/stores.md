@@ -6,7 +6,7 @@ Verified layouts as of 2026-08. When a path does not exist, skip that harness si
 
 | Harness | Path | Notes |
 |---|---|---|
-| Claude Code | `~/.claude/projects/<encoded-cwd>/<session-uuid>.jsonl` | `<encoded-cwd>` maps `/`, `.`, and every non-ASCII character to `-`. Worktrees of one repo share the primary worktree's directory. Sidecar dirs (`memory/`, session subdirs) are not transcripts; take only `*.jsonl` files at the top level. |
+| Claude Code | `~/.claude/projects/<encoded-cwd>/<session-uuid>.jsonl` | `<encoded-cwd>` maps `/`, `.`, and every non-ASCII character to `-`. A session started in a task worktree (`<repo>/.claude/worktrees/<topic>`) gets its own `<encoded-repo>--claude-worktrees-<topic>` directory, so a repository's transcripts are its directory plus those. Sidecar dirs (`memory/`, session subdirs) are not transcripts; take only `*.jsonl` files at the top level. |
 | Codex | `~/.codex/sessions/YYYY/MM/DD/rollout-<timestamp>-<uuid>.jsonl` | Date-partitioned; resolve the window by directory date, not mtime alone. |
 | Grok | `~/.grok/sessions/<url-encoded-cwd>/<session-uuid>/chat_history.jsonl` | The cwd directory is URL-encoded (`%2F` for `/`). `events.jsonl` in the same dir is tool traffic; `chat_history.jsonl` is the conversation. |
 
