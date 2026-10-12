@@ -6,18 +6,20 @@ argument-hint: "[branch-name] [--base <branch>] [--keep-base] [--cwd <path>]"
 
 ## Context
 
-Current branch: !`git branch --show-current`
+Current branch: !`git branch --show-current 2>/dev/null || echo "(not a git repository)"`
 
 Default base: !`out=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||'); echo "${out:-main}"`
 
 Commits ahead of default base on current branch:
 !`b=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||'); b=${b:-main}; git log "$b"..HEAD --oneline 2>/dev/null || echo "(none or base not found)"`
 
-Uncommitted changes: !`git status --short`
+Uncommitted changes: !`git status --short 2>/dev/null || echo "(not a git repository)"`
 
 Potentially relevant ignored files: !`out=$(git ls-files --others --ignored --exclude-standard 2>/dev/null | head -20); echo "${out:-(none)}"`
 
 ## Instructions
+
+**The one rule: no change is lost and no unrelated commit comes along.** A great run ends on a new branch cut from the fresh base (from HEAD only when the commits ahead are the same work), every uncommitted change staged and none committed, reverted, or dropped, `git log <base>..HEAD` showing only commits that belong, reached by the cheapest safe route.
 
 ### Base selection
 
@@ -35,7 +37,7 @@ When in doubt and the set is small, err on branching off the default base.
 1. `--cwd <path>` in `$ARGUMENTS` names the repository or worktree to act in: rerun the Context probes there with `git -C <path>` and run every git command there. If there are no uncommitted changes AND no ignored candidates, abort with a message. (If no branch name is provided via `$ARGUMENTS`, infer one from the uncommitted changes using conventional branch naming: `feat/`, `fix/`, `chore/`, `refactor/`.)
 2. If branching off the default base (not current HEAD):
    - `git fetch origin` so the base is current, not a stale local ref
-   - If `git rev-parse HEAD` equals `git rev-parse origin/<base>`, skip the stash and the rest of this step: run `git checkout -b <branch-name>` directly (uncommitted changes carry over)
+   - If `git rev-parse HEAD` equals `git rev-parse origin/<base>`, skip the stash and the rest of this step: run `git checkout -b <branch-name>` directly (uncommitted changes carry over; seen: every run stashed even when HEAD already sat on the base, and 184 of 289 runs needed only `git checkout -b`)
    - `git stash push -u -m "create-branch-skill-transfer"` to capture both tracked + untracked
    - `git checkout -b <branch-name> origin/<base>` (leaves the local base ref untouched)
    - `git stash pop`

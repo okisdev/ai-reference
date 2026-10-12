@@ -12,4 +12,4 @@ Use judgment on bot nits: common-sense suggestions a competent agent already fol
 
 ship-pr owns the writes (`verify-pr-comments` is read-only): build the reply body safely with `printf '%s' "$reply" | jq -Rs '{body: .}'` and post it via `gh api repos/$OWNER/$REPO/pulls/<n>/comments/<databaseId>/replies --method POST --input -` (inline `-f body='...'` breaks on backticks and code; databaseId is the REST integer from ship-pr's reviewThreads nodes), and resolve via `gh api graphql -f query='mutation($id:ID!){resolveReviewThread(input:{threadId:$id}){thread{isResolved}}}' -f id=<threadId>` (threadId is the opaque node id, so `-f` not `-F`).
 
-Governing rule: do not add comments or changeset prose that only acknowledge review feedback; the test is, would you write it if no reviewer had flagged the code? If no, drop it.
+A reply carries no trace of tooling (no generated-by line, session link, or tool trailer). Governing rule: do not add comments or changeset prose that only acknowledge review feedback; the test is, would you write it if no reviewer had flagged the code? If no, drop it.

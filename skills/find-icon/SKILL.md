@@ -14,11 +14,13 @@ Installed lucide-react version: !`node -e "console.log(require('lucide-react/pac
 
 ## Instructions
 
+**The one rule: an icon exists only once you have seen it at its source.** Search the listing, probe the candidate, fetch the file, extract its path data by script, and confirm a lucide export in the installed version; a name or a path typed from memory is a phantom that builds and renders as nothing. The bar is a delivery where every target names its source and the identifier verified there, and the typecheck proves the import resolves: open [examples/delivery.md](examples/delivery.md) before reporting, and check the draft against [examples/rejected.md](examples/rejected.md).
+
 Locate the correct icon for each target, prove it exists at its source, and deliver it in the form the repository already consumes icons, never writing an icon name or path data from memory.
 
 ### Process
 
-1. Parse `$ARGUMENTS` (each target is a brand, product, AI model, or UI concept; with no arguments, take the targets from the conversation). Classify each target as a UI concept (action, state, object) or a brand mark (company, product, model, agent).
+1. Parse `$ARGUMENTS` (each target is a brand, product, AI model, file type, or UI concept; with no arguments, take the targets from the conversation). A bare ask for a logo or a file icon is a target even when it never says icon or names this skill (seen: it ran only when named, never on asks that said logo or file icon). Classify each target as a UI concept (action, state, object, generic file type) or a brand mark (company, product, model, agent).
 2. Read the probes: the existing icon registry directory and its component pattern decide where vendored icons go, and the installed lucide-react version is the compatibility authority, not upstream docs (lucide-react 1.0 removed all brand icons, so a brand export that older docs show may not exist locally).
 3. Route each target down the source ladder: UI concept to lucide; AI model, provider, or agent brand to lobe-icons; other brand to svgl, then simple-icons; still missing, escalate to the vendor's own repository or official site. Follow [references/sources.md](references/sources.md) for the exact probes and commands for each source.
 4. Prove existence before writing any code: search the source's listing rather than guessing paths (icon file names regularly differ from product names, for example stepfun, hermesagent, ai_zed), probe every candidate and keep only confirmed hits, and for a lucide pick confirm the export exists in the installed lucide-react version.

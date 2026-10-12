@@ -7,11 +7,11 @@ argument-hint: "<symptom-or-error>"
 ## Context
 
 Dirty status: !`git status --short | head -5`
-Recent commits: !`git log --oneline -5` (a fresh regression usually traces here)
+Recent commits: !`git log --oneline -5 2>/dev/null || echo "(none or not a git repository)"` (a fresh regression usually traces here)
 
 ## Instructions
 
-Reproduce the failure before explaining it, trace it to the origin, name the mechanism in one sentence, and fix at the origin or stop at the diagnosis when the ask was a question.
+**The one rule: a why question ends at the diagnosis.** Reproduce the failure before explaining it, trace it to the origin, and report the symptom as observed, the origin as file and line, the mechanism in one sentence, and the evidence between them, with anything unreproduced labeled a hypothesis; edit nothing until a fix is asked, and then fix at the origin. The bar is [examples/diagnosis.md](examples/diagnosis.md): open it before writing, and check the draft against [examples/rejected.md](examples/rejected.md).
 
 ### Process
 
@@ -27,5 +27,5 @@ Reproduce the failure before explaining it, trace it to the origin, name the mec
 
 - No fix before an observed reproduction, and no diagnosis delivered as fact without one; label unreproduced hypotheses as hypotheses.
 - A cause suggested by the user or the issue is one hypothesis among the candidates; verify it independently instead of confirming it.
-- A why question never turns into an edit; deliver the diagnosis and stop.
+- A why question never turns into an edit; deliver the diagnosis and stop (seen: a why question was answered with an edit).
 - A symptom-site workaround ships only with the rejected root fix and the reason recorded in the report.

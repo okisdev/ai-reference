@@ -12,6 +12,8 @@ UI or primitives directories: !`out=$(find . -name node_modules -type d -prune -
 
 ## Instructions
 
+**The one rule: take the pattern and leave the skin.** The result reads as native to this repository and untraceable to the reference in class strings, tokens, colors, and names, and the report says where it diverges and why. The bar is a deviation report with one take and not-take per reference, every adopted pattern attributed, and every deviation argued from this repository's idiom: open [examples/deviation.md](examples/deviation.md) before reporting, and check the draft against [examples/rejected.md](examples/rejected.md).
+
 Study the reference until the pattern separates from its styling, implement the pattern in this repository's own primitives and conventions, and report where and why the result deviates from the reference.
 
 ### Process
@@ -25,7 +27,7 @@ Study the reference until the pattern separates from its styling, implement the 
 
 ### Rules
 
-- Never copy class strings, design tokens, colors, or naming verbatim from a reference; every borrowed pattern is re-expressed in this repository's own primitives.
+- Never copy class strings, design tokens, colors, or naming verbatim from a reference; every borrowed pattern is re-expressed in this repository's own primitives (seen: asks to follow a reference without copying it, as in 参考 X，不要照抄, went ad hoc).
 - More than one reference means attribution per adopted pattern, not a blend nobody can trace.
 - With several references, each contributes one named pattern class (language, density, page skeleton, interaction grammar), stated as take and not-take per reference; a reference's recent direction is read from its dated git history, not its current file state.
 - A reference the task says to study without implementing produces the pattern analysis and deviation notes only, with zero edits.

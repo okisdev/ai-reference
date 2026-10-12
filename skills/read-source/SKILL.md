@@ -12,7 +12,7 @@ node_modules directory: !`test -d node_modules && echo "present" || echo "(none)
 
 ## Instructions
 
-Pick the ladder rung that matches the question, prove the answer in real source at an exact version, and report the answer with the rung and version that proved it.
+**The one rule: every claim about a dependency names the source that proved it.** Pick the ladder rung that matches the question, prove the answer in real source at an exact version, and report the answer first, then the rung, the exact version or ref, and the file and line that settle it; docs and memory never count as proof, and a behavior that reading cannot settle is run in a scratch script or reported as unproven. The bar is [examples/answer.md](examples/answer.md): open it before writing, and check the draft against [examples/rejected.md](examples/rejected.md).
 
 ### Process
 
@@ -25,6 +25,7 @@ Pick the ladder rung that matches the question, prove the answer in real source 
 
 ### Rules
 
+- An ask to read a library's or upstream's source in the user's own words (结合 zod 的源代码看看, 看看上游怎么做的) is this skill's ask: classify the question under it and start at that rung (seen: users asked to read a library's source in their own words and the skill never fired).
 - Never assert an API exists or behaves a certain way from docs or from memory; every claim names the rung and version that proved it.
 - `npm pack` always runs outside the repository tree and always with `--ignore-scripts`.
 - Upstream reads always pin a tag or commit, never the default branch head.

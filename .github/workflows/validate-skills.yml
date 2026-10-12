@@ -7,6 +7,7 @@ on:
       - ".claude-plugin/**"
       - "README.md"
       - "scripts/validate-skills.mjs"
+      - "scripts/check-probes.py"
       - "scripts/test-memory-scripts.py"
       - ".github/workflows/validate-skills.yml"
 
@@ -20,4 +21,8 @@ jobs:
           node-version: 20
       - run: npm install --no-save js-yaml
       - run: node scripts/validate-skills.mjs
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq zsh
+      - run: python3 scripts/check-probes.py
+        env:
+          GH_TOKEN: ""
       - run: python3 scripts/test-memory-scripts.py
