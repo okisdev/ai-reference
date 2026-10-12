@@ -7,7 +7,7 @@ argument-hint: "[pr-number-or-url]"
 ## Context
 
 Repository: !`gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null || echo "unknown"`
-Default branch: !`git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@refs/remotes/origin/@@' || echo main`
+Default branch: !`out=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@refs/remotes/origin/@@'); echo "${out:-main}"`
 Current branch: !`git branch --show-current 2>/dev/null`
 
 ## Instructions
@@ -17,13 +17,13 @@ Output the body for the user to confirm; do not post unless explicitly asked.
 ### Process
 
 1. **Establish baseline and head** (`$ARGUMENTS` is a PR number, a full PR URL, or empty; if empty, infer the PR from the current branch via `gh pr view --json number,title,headRefName`):
-   - Baseline `<first-sha>` (last commit in the PR author's leading run): `gh api repos/<o>/<r>/pulls/<n>/commits --paginate --jq '(.[0].author.login // .[0].commit.author.name) as $a | reduce .[] as $c ({run: true, sha: null}; if .run and (($c.author.login // $c.commit.author.name) == $a) then {run: true, sha: $c.sha} else {run: false, sha: .sha} end) | .sha'`. `.author.login` is null for unlinked-email commits, so fall back to `.commit.author.name` when reducing.
+   - Baseline `<baseline-sha>` (last commit in the PR author's leading run): `gh api repos/<o>/<r>/pulls/<n>/commits --paginate --jq '(.[0].author.login // .[0].commit.author.name) as $a | reduce .[] as $c ({run: true, sha: null}; if .run and (($c.author.login // $c.commit.author.name) == $a) then {run: true, sha: $c.sha} else {run: false, sha: .sha} end) | .sha'`. `.author.login` is null for unlinked-email commits, so fall back to `.commit.author.name` when reducing.
    - Latest head SHA: `gh api repos/<o>/<r>/pulls/<n> --jq .head.sha`
    - First commit's author is the review's audience: `gh api repos/<o>/<r>/pulls/<n>/commits --paginate --jq '.[0].author.login'`
 
-2. **Read the original author's code** at the first PR commit: `git show <first-sha>:<path>` for each changed file.
+2. **Read the original author's final baseline**, the code as their last commit in the leading run left it: `git show <baseline-sha>:<path>` for each changed file.
 
-3. **Diff baseline against head** with `git diff <first-sha> <head-sha>`; this authoritative diff is what you changed. Read full files at HEAD via the `Read` tool only where you need surrounding context the diff alone does not show.
+3. **Diff baseline against head** with `git diff <baseline-sha> <head-sha>`; this authoritative diff is what you changed. Read full files at HEAD via the `Read` tool only where you need surrounding context the diff alone does not show.
 
 4. **Identify shortcomings** in the original implementation:
    - Bugs (data corruption, edge cases, off-by-one, race conditions).
@@ -31,7 +31,7 @@ Output the body for the user to confirm; do not post unless explicitly asked.
    - Anti-patterns (redundant indirection, dead code, misleading names).
    - Performance or correctness gaps (Unicode, concurrency).
    - Style nits worth raising (multi-line block comments, inconsistent naming).
-   - Cite `file:line` in the original commit when concrete.
+   - Cite `file:line` in the baseline when concrete.
    - **Frame each as direct critique of the code, not as "the bot said X".** Do not name the bots.
 
 5. **Identify modifications** between original and current:
