@@ -200,14 +200,25 @@ Verify the review comments on PR #123
 ├── .claude-plugin/plugin.json
 ├── .github/workflows/validate-skills.yml
 ├── AUTHORING.md
-├── scripts/validate-skills.mjs
+├── CHANGELOG.md
+├── evals/
+│   └── <skill>-<case>/          (prompt.md plus graders/, for claude plugin eval)
+├── scripts/
+│   ├── check-probes.py
+│   ├── test-memory-scripts.py
+│   └── validate-skills.mjs
 └── skills/
-    └── (one directory per skill listed under "Available")
+    └── <name>/                  (one directory per skill listed under "Available")
+        ├── SKILL.md
+        ├── examples/            (outputs that cleared the bar, and a rejected one)
+        └── references/
 ```
 
-CI validates the collection on every PR touching skills: `scripts/validate-skills.mjs` checks that every frontmatter parses, `name:` matches its directory, and `plugin.json` and this README agree with the `skills/` tree. Run it locally with `npm install --no-save js-yaml && node scripts/validate-skills.mjs`.
+CI validates the collection on every PR touching skills: `scripts/validate-skills.mjs` checks that every frontmatter parses, `name:` matches its directory, no Context probe uses a positional parameter, and `plugin.json` and this README agree with the `skills/` tree; `scripts/check-probes.py` runs every Context probe in an empty directory and in a repository without a remote, under bash and zsh, and fails on any probe that exits non-zero, since Claude Code will not load such a skill. Run them locally with `npm install --no-save js-yaml && node scripts/validate-skills.mjs` and `python3 scripts/check-probes.py`.
 
-New skills follow [AUTHORING.md](AUTHORING.md): a lean, imperative register with detail pushed into `references/`.
+The eval suite runs with `claude plugin eval . --trust-plugin --allow-tools Bash --no-publish`: every skill has a routing case in the user's own words, and skills whose output a person reads have quality cases for their one rule, each scored with and without the plugin.
+
+New skills follow [AUTHORING.md](AUTHORING.md): a lean, imperative register, the one rule and quality bar up front, rules that carry the fault that taught them, examples beside the skill, and detail pushed into `references/`.
 
 ## License
 
