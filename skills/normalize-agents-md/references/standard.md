@@ -1,6 +1,6 @@
 # Instruction file standard
 
-An instruction file holds the facts an agent cannot infer from the tree in a minute and the rules it would otherwise break. Everything else costs every session and reaches two of the three harnesses truncated.
+An instruction file holds the facts an agent cannot infer from the tree in a minute and the rules it would otherwise break. Everything else costs every session and reaches two of the three harnesses truncated. The same holds for every doc an instruction file orders agents to read.
 
 ## Layout
 
@@ -12,6 +12,14 @@ An instruction file holds the facts an agent cannot infer from the tree in a min
 | Nested `AGENTS.md` | The path-scoped layer that all three harnesses share: Codex and Grok concatenate root to cwd, Claude loads it when it reads files in that directory. `.claude/rules/` is Claude-only and never holds a rule another harness needs. A directory earns one by the coverage test below, never by existing. |
 | `GEMINI.md`, `.cursor/rules/*.mdc`, `.github/copilot-instructions.md` | Harness mirrors; left as found, with any duplication of AGENTS.md reported rather than resolved. |
 
+## Read-path docs
+
+A read-path doc is one an instruction file orders agents to read before a class of change, or one that claims to win over the code: a `DESIGN.md` that every UI change reads first, or a README an AGENTS.md names as the manual or as the registry of routes. Every session that order names reads it, and so does every subagent the work fans out to, so it is held to this standard like an instruction file: the altitude test, the routing table, the ledger, and the loss check apply clause by clause, and it has a target. `measure.py` lists each one with the line that points at it, `required` when that line orders a read or the doc claims precedence, `pointed` otherwise.
+
+A read-path doc states what must stay true, never what currently is. What a surface, route, or command does today is the code's record; restating it turns every code change into a doc change, so the doc grows with the code instead of with its rules (seen: a `DESIGN.md` that ordered each new component added "to this file in the same change" grew from 24 KB to 232 KB in 18 days, about 70 percent of it per-surface description, and was read 251 times in 40 sessions). It keeps the rules every surface follows: tokens, type and spacing scales, component grammar, interaction principles, and the never-rules. A precedence claim survives for those rules only: where the code breaks one, the code is fixed, and no description is written down to win.
+
+Only the parts agents act on are held to this standard: what a person reads the doc for, such as a guide's steps, setup, operation, configuration, a changelog entry, or a decision's rationale, stays as found, the way README content sorts by reader below. A doc off the read path, such as a decision record, an archive, a user guide, or a changelog, is a record or human documentation and is left as found; only a pointer that makes it required reading is rewritten to name the section and the change that needs it.
+
 ## Caps and targets
 
 | Limit | Value | Source |
@@ -21,8 +29,9 @@ An instruction file holds the facts an agent cannot infer from the tree in a min
 | Claude per file | No cap under 4 MiB; the official target is under 200 lines, and adherence drops with length | code.claude.com/docs/en/memory |
 | Root target | 8 KB and about 100 lines | Leaves room for a managed block and for growth before the next pass |
 | Nested target | 5 KB and about 60 lines | A package file is read on top of the root |
+| Read-path doc | 16 KB, and no unit over 600 characters | Read by every session its pointer names and by every subagent those fan out to; a rules doc past this has turned into a description |
 
-`measure.py --strict` fails on a hard cap and reports the targets.
+`measure.py --strict` fails on a hard cap and reports the targets, the read-path docs, and the accretion orders and status lines in each file.
 
 ## Altitude test
 
@@ -43,6 +52,10 @@ Apply to one clause. A clause that fails the first question leaves the file; one
 | Incident narrative | Dates, PR or issue numbers, measurements, "used to", "once", "the failure this rule names" | Nowhere; git, the PR, and the issue already carry it |
 | Rule held in project memory | A memory topic states a trap, prohibition, or command every agent in this directory needs and the repository can publish | A rule here; the claim leaves the topic, and the topic goes once nothing else in it holds, because Codex and Grok never load memory |
 | Inventory | Lists files, directories, modules, or symbols with descriptions the tree carries | Delete; roles unreadable from names go to the existing ARCHITECTURE.md or docs page |
+| As-built description | States what a surface, route, command, or module currently does, shows, or lists; reading its code answers it | Nowhere; a decision in it that would regress silently becomes a test when one can assert it, else one rule |
+| Accretion order | Orders a doc updated alongside code: "a change to this file first", "add it to this file in the same change", "keep the README in sync" | Drop; the editing contract's amendment triggers replace it |
+| Whole-doc read order | Orders a whole doc read before a class of change | Rewrite as a pointer naming the section and the change that requires reading it |
+| Status line | "Last updated", a current milestone, a done list, a dated entry | Nowhere; the tracker, the issue, or the PR carries it |
 | Implementation detail | How one module works at a depth only its maintainer needs | The code, its tests, or docs |
 | Mechanically enforced | A named test, lint, script, or CI job asserts it, confirmed by reading the assertion | One-line pointer: "`architecture.test.ts` asserts import layering; when this file and the test disagree, the test wins" |
 | Command or verification recipe | Non-obvious build, test, lint, typecheck, and their scope | Stays; scripts obvious from the manifest are dropped |
@@ -85,14 +98,18 @@ Root:
 ## Where things live
 
 - `<path>` owns <concern>; read it before changing <what>.
+- Read `<doc>`'s <section> before <the change that needs it>.
 - `packages/<name>/AGENTS.md` carries that package's rules.
 
-## Editing this file
+## Editing docs
 
 - One rule per bullet, imperative, with at most one because-clause naming the failure it prevents.
-- A lesson from one session goes to commit messages, issues, or the maintainer's memory store; a rule enters here only when the same mistake repeats or a review catches it.
+- This file and every doc it orders agents to read state what must stay true, never what currently is: what a change did goes in its commit and PR, what the code does stays in the code, and status goes to the tracker.
+- A change that makes a sentence here false replaces that sentence in the same change, and never appends an account of the change.
+- A lesson from one session goes to commit messages, issues, or the maintainer's memory store; a rule enters only when the owner decides it, the same mistake repeats, or a review catches it.
 - A rule an existing check asserts is a one-line pointer to that check, not a restatement.
-- Keep this file under 8 KB and any nested AGENTS.md under 5 KB; no inventories, dates, issue numbers, or module internals.
+- Keep this file under 8 KB, any nested AGENTS.md under 5 KB, and each doc it orders agents to read under 16 KB, with no inventories, dates, issue numbers, or module internals; an amendment that would pass a target settles the file first.
+- Edit these files with an editor, never through a script, so every amendment stays reviewable.
 ```
 
 Nested (a package or app):
@@ -115,7 +132,20 @@ Nested (a package or app):
 - <Only pointers local to this package.>
 ```
 
-Empty headings are dropped. Rules are grouped under sub-headings only past about twelve bullets. The Editing this file section is copied verbatim into every root file; it is the anti-accretion contract, and a repository never gets a softened copy.
+Read-path doc (a `DESIGN.md`, or the rules part of a manual README):
+
+```md
+# <name>
+
+<One line: what this doc governs and which section to read before which change. Where the code breaks a rule here, the code is fixed.>
+
+## <One section per concern, for example Tokens, Type, Components, Interaction>
+
+- <Imperative rule>, because <the failure it prevents>.
+- `<check>` asserts <invariant>; when this doc and the check disagree, the check wins.
+```
+
+Empty headings are dropped. Rules are grouped under sub-headings only past about twelve bullets. The Editing docs section is copied verbatim into every root file, replacing an older Editing this file section; it is the anti-accretion contract for the file and every doc it orders agents to read, and a repository never gets a softened copy.
 
 ## Placeholders and generators
 
@@ -139,6 +169,8 @@ The two files have different readers and the skill sorts content by reader, in b
 README sections that were written for agents (headings naming agents, Claude, Codex, Cursor, or Copilot; convention, rule, gotcha, or guideline sections that only matter when changing code; do-not lists) are ledgered like any instruction file, moved into AGENTS.md through the routing table, and replaced in the README by at most one line saying where agent instructions live. Human-facing content found in AGENTS.md (product description, feature lists, user setup, architecture overviews written for readers) moves to the README when the README lacks it and is dropped when the README already carries it. The README is edited only in the sections the ledger names; its other content, structure, and badges are left as found. The loss check covers the old README as well as the old instruction files.
 
 A README-only directory that is not a workspace package or app gets no AGENTS.md, because no harness loads anything there; its agent-facing sections move to the nearest ancestor AGENTS.md instead.
+
+A README an instruction file names as the manual or as a registry (routes, bindings, commands) is a read-path doc for those parts. A route, binding, or component table the code carries is an inventory and leaves, one pointer to the file that registers them (the router, the bindings config, the barrel) taking its place, and the AGENTS.md pointer is rewritten to name that file; setup, operation, and configuration written for a person stay.
 
 ## Ledger
 

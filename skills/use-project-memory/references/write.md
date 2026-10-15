@@ -9,6 +9,7 @@ Route every candidate that fails the admission test in `SKILL.md`:
 | Candidate | Home |
 |---|---|
 | What shipped, when, and in which PR; measurements and run ids; a session's progress, plan, analysis, or report | Nowhere: the commit, PR, or issue already carries it; a report the user wants kept goes to an issue or a published page |
+| What the code currently does: a surface, a route, a module's mechanism | Nowhere: the code is its record; a decision in it that would regress silently becomes a test, or a rule in the repository's instruction files |
 | A rule for working in the repository (a trap, a prohibition, a command) that the repository can publish | This store as `feedback` for the first sighting; once it recurs or a review catches it, the repository's `AGENTS.md` under its editing contract (`normalize-agents-md` owns the format), and the rule leaves this store, because Codex and Grok never load it |
 | A change to how a skill behaves | That skill's source, proposed to the user |
 | A habit that holds in every repository | The global instruction file, proposed to the user |
