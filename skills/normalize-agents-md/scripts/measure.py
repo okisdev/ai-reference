@@ -1,4 +1,6 @@
-"""Usage: measure.py [SCOPE] [--json] [--strict]. Reports instruction files, chains, Next.js generators, and READMEs that carry agent-facing lines."""
+"""Usage: measure.py [SCOPE] [--json] [--strict] | measure.py --hook.
+Reports instruction files, read-path docs, chains, Next.js generators, and agent-facing READMEs.
+"""
 
 import json
 import os
@@ -21,8 +23,20 @@ DATED_REFERENCE = re.compile(r"20\d\d-\d\d-\d\d|#\d{2,}|\b\d+(?:\.\d+)?\s*(?:sec
 NEXT_AGENT_RULES_OFF = re.compile(r"agentRules\s*:\s*false")
 PLACEHOLDER = re.compile(r"^#\s+(?:AGENTS|AGENT|CLAUDE|GEMINI)\.md\b|This file provides guidance to|guidance for (?:Claude Code|coding agents|AI coding agents)|^\s*(?:[-*]\s*)?(?:(?-i:TODO)\b|fill (?:me )?in\b)", re.IGNORECASE | re.MULTILINE)
 HISTORY_PHRASES = ("used to", "once hid", "previously", "no longer", "formerly", "the failure this rule names")
+READ_ORDER = re.compile(r"\bread\b[^\n]{0,120}\b(?:before|first)\b|\bbefore (?:any|every|changing|editing|adding|touching)\b|\bwins\b|\bsource of truth\b", re.IGNORECASE)
+PRECEDENCE = re.compile(r"this file wins|where the two disagree|this file is the source of truth|\bchange to this file\b[^.\n]{0,80}\bfirst\b", re.IGNORECASE)
+ACCRETION = re.compile(r"\bin the same change\b|\bchange to this file\b[^.\n]{0,80}\bfirst\b|\b(?:goes|go|added|add)\b[^\n]{0,80}\bfirst\b|\bkeep\b[^.\n]{0,80}\bin sync\b|\b(?:always|also) update\b", re.IGNORECASE)
+DOC_MENTION = re.compile(r"this file|those files|README|DESIGN|\.mdx?\b|\bthe docs\b|\bdocs/", re.IGNORECASE)
+STATUS_LINE = re.compile(r"Last updated|20\d\d-\d\d-\d\d", re.IGNORECASE)
+DOC_PATH = re.compile(r"(?<![\w.])(?:\.{1,2}/)*(?:[\w.\-]+/)*[\w.\-]+\.md\b")
+MARKDOWN_LINK = re.compile(r"\]\(\s*<?([^\s)>]+\.md(?:#[^\s)>]*)?)>?(?:\s+[^)]*)?\)")
+BACKTICK = re.compile(r"`([^`]+)`")
+INLINE_SPAN = re.compile(r'(`+).*?\1|"[^"]*"')
+NEGATED_CLAIM = re.compile(r"\bno longer says?\b[^.;]*", re.IGNORECASE)
 CODEX_CAP = 32768
 GROK_CAP = 10000
+DOC_TARGET = 16384
+HOOK_CLOSING = "normalize-agents-md: a doc states what must stay true; put what a change did in its commit or PR, replace a sentence the change made false instead of appending, and settle a file past its target before adding."
 
 
 def parse_args(args):
@@ -108,7 +122,7 @@ def import_count(text):
     return count
 
 
-def unit_metrics(text):
+def units_for(text):
     found, current, fenced, fence = [], [], [], None
 
     def add(lines):
@@ -147,8 +161,12 @@ def unit_metrics(text):
         add(current)
     if fenced:
         add(fenced)
-    lengths = [len(value) for value in found]
-    return len(found), max(lengths, default=0), sum(length > 600 for length in lengths)
+    return found
+
+
+def unit_metrics(text):
+    lengths = [len(value) for value in units_for(text)]
+    return len(lengths), max(lengths, default=0), sum(length > 600 for length in lengths)
 
 
 def managed_blocks(text):
@@ -167,6 +185,19 @@ def without_managed_blocks(text):
     return text
 
 
+def prose_lines(text):
+    fence = None
+    for number, line in enumerate(text.splitlines(), 1):
+        match = FENCE.match(line)
+        if fence:
+            if match and match.group(1)[0] == fence[0] and len(match.group(1)) >= len(fence):
+                fence = None
+        elif match:
+            fence = match.group(1)
+        else:
+            yield number, line, NEGATED_CLAIM.sub("", INLINE_SPAN.sub("", line))
+
+
 def record_for(path, root):
     data = path.read_bytes()
     text = data.decode("utf-8", errors="replace")
@@ -175,7 +206,19 @@ def record_for(path, root):
     flags = ["generated-only"] if not without_managed_blocks(text).strip() else []
     if "generated-only" not in flags and PLACEHOLDER.search(without_managed_blocks(text)):
         flags.append("placeholder")
-    return {"path": relative_path(path, root), "bytes": len(data), "chars": len(text), "lines": len(text.splitlines()), "symlink_target": os.readlink(path) if path.is_symlink() else None, "managed_blocks": managed, "imports": import_count(text), "stub": text.strip() == "@AGENTS.md", "units": count, "longest_unit": longest, "units_over_600": over_600, "dated_references": len(DATED_REFERENCE.findall(text)), "history_phrases": sum(text.lower().count(phrase) for phrase in HISTORY_PHRASES), "flags": flags}
+    return {"path": relative_path(path, root), "bytes": len(data), "chars": len(text), "lines": len(text.splitlines()), "symlink_target": os.readlink(path) if path.is_symlink() else None, "managed_blocks": managed, "imports": import_count(text), "stub": text.strip() == "@AGENTS.md", "units": count, "longest_unit": longest, "units_over_600": over_600, "dated_references": len(DATED_REFERENCE.findall(text)), "history_phrases": sum(line.lower().count(phrase) for _, _, line in prose_lines(text) for phrase in HISTORY_PHRASES), "accretion_orders": accretion_lines(text), "status_lines": status_count(text), "flags": flags}
+
+
+def accretion_lines(text):
+    return [number for number, _, line in prose_lines(text) if is_accretion_order(line)]
+
+
+def is_accretion_order(line):
+    return any(ACCRETION.search(sentence) and DOC_MENTION.search(sentence) for sentence in re.split(r"[.!?]\s+", line))
+
+
+def status_count(text):
+    return sum(bool(STATUS_LINE.search(line)) for _, _, line in prose_lines(text))
 
 
 def chain_for(directory, root):
@@ -221,6 +264,98 @@ def discover(scope, root, in_repository):
     return records, actual_paths, [path for path in generators if not inside_ignored_directory(path, root, ignored)], [path for path in readmes if not inside_ignored_directory(path, root, ignored)]
 
 
+def referenced_docs(line, source, root):
+    values = [match.group(1) for match in MARKDOWN_LINK.finditer(line)]
+    values.extend(match.group(1) for match in BACKTICK.finditer(line))
+    values.extend(match.group() for match in DOC_PATH.finditer(line))
+    found = set()
+    for value in values:
+        value = value.split("#", 1)[0]
+        if not value.endswith(".md"):
+            continue
+        for base in (source.parent, root):
+            path = (base / value).resolve()
+            if eligible_doc(path, root):
+                found.add(path)
+                break
+    return found
+
+
+def eligible_doc(path, root):
+    try:
+        resolved = path.resolve()
+        parts = resolved.relative_to(root).parts
+    except ValueError:
+        return False
+    return (resolved.suffix == ".md" and resolved.is_file()
+            and not any(part in SKIPPED_DIRECTORIES for part in parts[:-1])
+            and not is_instruction_file(resolved, root))
+
+
+def markdown_candidates(scope, root, in_repository):
+    if in_repository:
+        result = subprocess.run(["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard", "--", "*.md"], cwd=root, capture_output=True, check=False)
+        paths = (root / os.fsdecode(name) for name in result.stdout.split(b"\0") if name) if result.returncode == 0 else ()
+    else:
+        def walked():
+            for base, names, files in os.walk(scope, topdown=True, followlinks=False):
+                names[:] = [name for name in names if name not in SKIPPED_DIRECTORIES]
+                yield from (Path(base) / name for name in files if name.endswith(".md"))
+
+        paths = walked()
+    candidates = set()
+    for path in paths:
+        resolved = path.resolve()
+        try:
+            resolved.relative_to(scope)
+        except ValueError:
+            continue
+        if resolved.is_file():
+            candidates.add(resolved)
+    return candidates
+
+
+def doc_record(path, root, required, pointed_by):
+    record = record_for(path, root)
+    record["flags"] = []
+    record["required"] = required
+    record["pointed_by"] = sorted(pointed_by)
+    if required and record["bytes"] > DOC_TARGET:
+        record["flags"].append("over-target")
+    return record
+
+
+def discover_docs(scope, root, instruction_paths, in_repository):
+    docs = {}
+    candidates = {path for path in markdown_candidates(scope, root, in_repository) if eligible_doc(path, root)}
+    for path in instruction_paths:
+        try:
+            text = path.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        for number, raw, line in prose_lines(text):
+            for target in referenced_docs(raw, path, root):
+                if target not in candidates:
+                    continue
+                entry = docs.setdefault(target, {"required": False, "pointed_by": set()})
+                entry["required"] |= bool(READ_ORDER.search(line))
+                entry["pointed_by"].add("{}:{}".format(relative_path(path, root), number))
+    for path in candidates:
+        try:
+            text = path.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        if any(PRECEDENCE.search(line) for _, _, line in prose_lines(text)):
+            docs.setdefault(path, {"required": False, "pointed_by": set()})["required"] = True
+    records = []
+    for path, entry in docs.items():
+        try:
+            records.append(doc_record(path, root, entry["required"], entry["pointed_by"]))
+        except OSError:
+            continue
+    return sorted(records, key=lambda record: record["path"])
+
+
 def discover_readmes(paths, root):
     readmes = []
     for path in paths:
@@ -238,6 +373,22 @@ def readme_lines(readmes):
     lines = ["", "| readme | bytes | agent-facing lines |", "| --- | ---: | ---: |"]
     lines.extend("| {path} | {bytes} | {agent_lines} |".format(**readme) for readme in readmes)
     return lines
+
+
+def doc_lines(docs):
+    lines = ["", "| doc | required | pointed by | bytes | longest unit | units over 600 | accretion orders | status lines | flags |", "| --- | --- | --- | ---: | ---: | ---: | --- | ---: | --- |"]
+    for doc in docs:
+        lines.append("| {path} | {required} | {pointed} | {bytes} | {longest} | {over} | {orders} | {status} | {flags} |".format(
+            path=doc["path"].replace("|", "\\|"), required=str(doc["required"]).lower(),
+            pointed=", ".join(doc["pointed_by"]) or "none", bytes=doc["bytes"],
+            longest=doc["longest_unit"], over=doc["units_over_600"],
+            orders=", ".join(map(str, doc["accretion_orders"])) or "none",
+            status=doc["status_lines"], flags=", ".join(doc["flags"]) or "none"))
+    return lines
+
+
+def docs_summary(summary):
+    return " {read_path_docs} read-path docs, {required_docs} required, {docs_over_target} over target, {accretion_orders} accretion orders.".format(**summary)
 
 
 def apply_flags(records, actual_paths, chains, root):
@@ -290,7 +441,7 @@ def discover_generators(paths, root, records):
     return sorted(generators, key=lambda generator: generator["directory"])
 
 
-def markdown(records, chains, generators, readmes, summary):
+def markdown(records, chains, generators, readmes, docs, summary):
     lines = ["| file | bytes | lines | chars | longest unit | units over 600 | dated | history | flags |", "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |"]
     for record in records:
         values = {"path": record["path"].replace("|", "\\|"), "bytes": record["bytes"], "lines": record["lines"], "chars": record["chars"], "longest": record["longest_unit"], "over": record["units_over_600"], "dated": record["dated_references"], "history": record["history_phrases"], "flags": ", ".join(record["flags"]) or "none"}
@@ -307,15 +458,174 @@ def markdown(records, chains, generators, readmes, summary):
             lines.append("| {directory} | {state} | {block} | {template} |".format(directory=generator["directory"], state=generator["state"], block=generator["block"], template=str(generator["template"]).lower()))
     if readmes:
         lines.extend(readme_lines(readmes))
+    if docs:
+        lines.extend(doc_lines(docs))
     lines.extend(["", "{instruction_files} instruction files, {over_hard_cap} over a hard cap, {over_target} over target, {claude_md} CLAUDE files keeping Claude Code off AGENTS.md.".format(**summary)])
     if generators:
         lines[-1] += " {count} generators, {on} on, {blocks} with a block.".format(count=len(generators), on=sum(generator["state"] == "on" for generator in generators), blocks=sum(generator["block"] != "none" for generator in generators))
     if readmes:
         lines[-1] += " {count} READMEs carry agent-facing lines.".format(count=len(readmes))
+    lines[-1] += docs_summary(summary)
     return "\n".join(lines)
 
 
+def added_lines(lines, original):
+    remaining = {}
+    for line in original.splitlines():
+        remaining[line] = remaining.get(line, 0) + 1
+    added = []
+    for number, line in enumerate(lines, 1):
+        if remaining.get(line, 0):
+            remaining[line] -= 1
+        else:
+            added.append((number, line))
+    return added
+
+
+def added_edit_lines(lines, old_string, new_string):
+    new_lines = new_string.splitlines()
+    old_remaining = {}
+    for line in old_string.splitlines():
+        old_remaining[line] = old_remaining.get(line, 0) + 1
+    wanted = []
+    for line in new_lines:
+        if old_remaining.get(line, 0):
+            old_remaining[line] -= 1
+        else:
+            wanted.append(line)
+    if new_lines:
+        starts = [number for number in range(len(lines) - len(new_lines) + 1) if lines[number:number + len(new_lines)] == new_lines]
+        if len(starts) == 1:
+            remaining = {}
+            for line in wanted:
+                remaining[line] = remaining.get(line, 0) + 1
+            added = []
+            for number, line in enumerate(new_lines, starts[0] + 1):
+                if remaining.get(line, 0):
+                    remaining[line] -= 1
+                    added.append((number, line))
+            return added
+    remaining = {}
+    for line in wanted:
+        remaining[line] = remaining.get(line, 0) + 1
+    added = []
+    for number, line in enumerate(lines, 1):
+        if remaining.get(line, 0):
+            remaining[line] -= 1
+            added.append((number, line))
+    return added
+
+
+def is_store_file(path):
+    parent = path.parent
+    return (path.suffix == ".md" and parent.name == "memory"
+            and parent.parent.parent.name == "projects"
+            and parent.parent.parent.parent.name == ".claude")
+
+
+def hook_class(path, root, text):
+    ignored = subprocess.run(["git", "check-ignore", "-q", "--", relative_path(path, root)], cwd=root, check=False)
+    if ignored.returncode == 0:
+        return None
+    if is_instruction_file(path, root):
+        return "instruction"
+    if any(PRECEDENCE.search(line) for _, _, line in prose_lines(text)):
+        return "required"
+    pointed = False
+    directory = path.parent
+    while True:
+        for name in ("AGENTS.md", "AGENTS.override.md", "CLAUDE.md"):
+            source = directory / name
+            if not source.is_file():
+                continue
+            for _, raw, line in prose_lines(source.read_text(encoding="utf-8", errors="replace")):
+                if path in referenced_docs(raw, source, root):
+                    if READ_ORDER.search(line):
+                        return "required"
+                    pointed = True
+        if directory == root:
+            break
+        directory = directory.parent
+    return "pointed" if pointed else None
+
+
+def hook_findings(path, root, text, data, original, added, kind):
+    findings = []
+    prose = {number: line for number, _, line in prose_lines(text)}
+    for number, _ in added:
+        if number not in prose:
+            continue
+        line = prose[number]
+        if STATUS_LINE.search(line):
+            findings.append((number, "status-line", "added status line"))
+        if is_accretion_order(line):
+            findings.append((number, "accretion-order", "added accretion order"))
+        if kind == "instruction" or kind == "required" and path.name not in README_NAMES:
+            if any(phrase in line.lower() for phrase in HISTORY_PHRASES):
+                findings.append((number, "history", "added history phrase"))
+    if kind in {"instruction", "required"} and original is not None:
+        target = (8192 if path.parent == root else 5120) if kind == "instruction" else DOC_TARGET
+        if len(data) > target and len(data) > len(original.encode("utf-8")):
+            findings.append((0, "over-target", "{} bytes (target {})".format(len(data), target)))
+    if original is not None and (kind == "instruction" or kind == "required" and path.name not in README_NAMES):
+        for unit in units_for(text):
+            if len(unit) > 600 and unit not in original:
+                number = text[:text.find(unit)].count("\n") + 1
+                findings.append((number, "long-unit", "{} characters (limit 600)".format(len(unit))))
+    return findings
+
+
+def check_hook():
+    try:
+        payload = json.load(sys.stdin)
+        tool_name = payload["tool_name"]
+        tool_input = payload["tool_input"]
+        response = payload["tool_response"]
+        input_path = tool_input["file_path"]
+        response_path = response["filePath"]
+        original = response["originalFile"]
+        if tool_name not in {"Edit", "Write"} or not isinstance(input_path, str) or not isinstance(response_path, str) or not isinstance(original, (str, type(None))):
+            return 0
+        path = Path(response_path).expanduser().resolve()
+        if path.suffix != ".md" or is_store_file(path) or not path.is_file():
+            return 0
+        root, in_repository = repository_root(path.parent)
+        if not in_repository:
+            return 0
+        if any(part in SKIPPED_DIRECTORIES for part in path.relative_to(root).parts[:-1]):
+            return 0
+        data = path.read_bytes()
+        text = data.decode("utf-8", errors="replace")
+        lines = text.splitlines()
+        kind = hook_class(path, root, text)
+        if kind is None:
+            return 0
+        if original is not None:
+            added = added_lines(lines, original)
+        elif tool_name == "Write":
+            added = list(enumerate(lines, 1))
+            original = ""
+        else:
+            old_string = tool_input.get("old_string")
+            new_string = tool_input.get("new_string")
+            if not isinstance(old_string, str) or not isinstance(new_string, str):
+                return 0
+            added = added_edit_lines(lines, old_string, new_string)
+            original = text.replace(new_string, old_string, 1) if text.count(new_string) == 1 else None
+        findings = hook_findings(path, root, text, data, original, added, kind)
+        for number, rule, detail in findings:
+            print("{}:{}: {}: {}".format(relative_path(path, root), number, rule, detail), file=sys.stderr)
+        if findings:
+            print(HOOK_CLOSING, file=sys.stderr)
+            return 2
+    except Exception:
+        return 0
+    return 0
+
+
 def main():
+    if sys.argv[1:] == ["--hook"]:
+        return check_hook()
     try:
         scope, json_output, strict = parse_args(sys.argv[1:])
     except ValueError as error:
@@ -326,15 +636,16 @@ def main():
         return 2
     root, in_repository = repository_root(scope)
     records, paths, generator_paths, readme_paths = discover(scope, root, in_repository)
+    docs = discover_docs(scope, root, paths.values(), in_repository)
     directories = {path.parent for path in paths.values() if path.name in {"AGENTS.md", "AGENTS.override.md"}}
     chains = sorted((chain_for(directory, root) for directory in directories), key=lambda chain: chain["directory"])
     apply_flags(records, paths, chains, root)
     generators = discover_generators(generator_paths, root, records)
     readmes = discover_readmes(readme_paths, root)
     records.sort(key=lambda record: (-record["bytes"], record["path"]))
-    summary = {"instruction_files": len(records), "over_hard_cap": sum("grok-cap" in record["flags"] or "codex-chain" in record["flags"] for record in records), "over_target": sum("over-target" in record["flags"] for record in records), "claude_md": sum("claude-md" in record["flags"] for record in records)}
+    summary = {"instruction_files": len(records), "over_hard_cap": sum("grok-cap" in record["flags"] or "codex-chain" in record["flags"] for record in records), "over_target": sum("over-target" in record["flags"] for record in records), "claude_md": sum("claude-md" in record["flags"] for record in records), "read_path_docs": len(docs), "required_docs": sum(doc["required"] for doc in docs), "docs_over_target": sum("over-target" in doc["flags"] for doc in docs), "accretion_orders": sum(len(record["accretion_orders"]) for record in records + docs)}
     if json_output:
-        print(json.dumps({"root": str(root), "scope": str(scope), "files": records, "chains": chains, "generators": generators, "readmes": readmes, "summary": summary}, ensure_ascii=False))
+        print(json.dumps({"root": str(root), "scope": str(scope), "files": records, "chains": chains, "generators": generators, "readmes": readmes, "docs": docs, "summary": summary}, ensure_ascii=False))
     elif not records:
         print("No instruction files found under " + str(scope) + ".")
         if generators:
@@ -345,8 +656,11 @@ def main():
         if readmes:
             print("\n".join(readme_lines(readmes)))
             print("\n{count} READMEs carry agent-facing lines.".format(count=len(readmes)))
+        if any(doc["required"] for doc in docs):
+            print("\n".join(doc_lines(docs)))
+            print("\n" + docs_summary(summary).strip())
     else:
-        print(markdown(records, chains, generators, readmes, summary))
+        print(markdown(records, chains, generators, readmes, docs, summary))
     return 1 if strict and summary["over_hard_cap"] else 0
 
 
