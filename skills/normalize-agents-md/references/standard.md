@@ -18,7 +18,7 @@ A read-path doc is one an instruction file orders agents to read before a class 
 
 A read-path doc states what must stay true, never what currently is. What a surface, route, or command does today is the code's record; restating it turns every code change into a doc change, so the doc grows with the code instead of with its rules (seen: a `DESIGN.md` that ordered each new component added "to this file in the same change" grew from 24 KB to 232 KB in 18 days, about 70 percent of it per-surface description, and was read 251 times in 40 sessions). It keeps the rules every surface follows: tokens, type and spacing scales, component grammar, interaction principles, and the never-rules. A precedence claim survives for those rules only: where the code breaks one, the code is fixed, and no description is written down to win.
 
-A doc off the read path, such as a decision record, an archive, a user guide, or a changelog, is a record or human documentation and is left as found; only a pointer that makes it required reading is rewritten to name the section and the change that needs it.
+Only the parts agents act on are held to this standard: what a person reads the doc for, such as a guide's steps, setup, operation, configuration, a changelog entry, or a decision's rationale, stays as found, the way README content sorts by reader below. A doc off the read path, such as a decision record, an archive, a user guide, or a changelog, is a record or human documentation and is left as found; only a pointer that makes it required reading is rewritten to name the section and the change that needs it.
 
 ## Caps and targets
 
