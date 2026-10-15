@@ -2,8 +2,8 @@
 description: normalize-agents-md rewrites a design doc that AGENTS.md orders agents to read into rules only, dropping the as-built description, the drift log, and the orders to update the doc alongside code.
 tags: [quality, normalize-agents-md]
 runs: 2
-max_turns: 8
-timeout_seconds: 240
+max_turns: 12
+timeout_seconds: 480
 allowed_tools: [Skill, Read, Bash]
 ---
 
