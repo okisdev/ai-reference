@@ -7,7 +7,7 @@ A dashboard is drawn in a written contract, and the contract belongs to the repo
 Read in order. The first rung that answers a dimension wins; lower rungs fill the gaps, and every value taken from the last rung is written into the repository's own contract in the same pass so the next session finds it on rung 1.
 
 1. The app's own instruction file: a design contract section in `AGENTS.md` or `CLAUDE.md` (search for `design contract`, `type sizes`, `line budget`, `radius`). A test or lint that asserts a rule outranks the prose; a kit precedent that disagrees with the prose is reported as a defect and not followed.
-2. The organization's published law: a machine-readable design document the brand serves (for example a `design.md` in the tree, a `/design.md` route, or a served design skill). When one exists, follow it for register, palette, type roles, motion, and the closed token and component API.
+2. The organization's published law: a machine-readable design document the brand serves (for example a `design.md` in the tree, a `/design.md` route, or a served design skill). When one exists, follow it for register, palette, type roles, motion, and the closed token and component API. It is law to read, not a file to extend while building; a page, component, or token added under it stays in the code.
 3. The organization's own prior blueprints and design artifacts, and a chart or UI library it built but has not wired in, read before any external reference.
 4. A sibling app on the same stack whose contract is proven in production. The same framework, CSS engine, component library, table library, and chart library justify a direct port of tokens and kit; anything less is a rebuild in this app's primitives.
 5. The brand's own surfaces (marketing site, docs) read through `mirror-reference` for what they do with radius, elevation, rules, type, and hue, then translated to application density.
@@ -38,7 +38,7 @@ Read in order. The first rung that answers a dimension wins; lower rungs fill th
 
 ## Writing it
 
-The contract lands under a `## Design contract` heading in the app's AGENTS.md: a precedence line first, then one bullet per row of the table above in table order, each naming the kit file or test that proves it, then the chart grammar bullets `plan-charts` produced. Run `python3 "$HOME/.agents/skills/normalize-agents-md/scripts/measure.py" <app-path> --strict` afterwards and cut prose, never a rule, to fit the caps.
+The contract lands under a `## Design contract` heading in the app's AGENTS.md: a precedence line first, then one bullet per row of the table above in table order, each naming the kit file or test that proves it, then the chart grammar bullets `plan-charts` produced. It states rules, never the surfaces built under them: a page, component, or token inventory stays in the code and the kit, because a contract that lists surfaces grows with every page and makes every page change a contract change. Run `python3 "$HOME/.agents/skills/normalize-agents-md/scripts/measure.py" <app-path> --strict` afterwards and cut prose, never a rule, to fit the caps.
 
 ## Precedence
 
