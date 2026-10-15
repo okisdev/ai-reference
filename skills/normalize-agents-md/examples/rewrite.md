@@ -39,7 +39,7 @@ Before, `apps/worker/AGENTS.md`, with its Commands section uncommitted (the comm
 - `pnpm --filter worker dev`: run the worker against local Redis.
 ````
 
-After, `AGENTS.md` (excerpt; the file also ends with the standard's `Editing this file` section, copied verbatim):
+After, `AGENTS.md` (excerpt; the file also ends with the standard's `Editing docs` section, copied verbatim):
 
 ````md
 # relay
