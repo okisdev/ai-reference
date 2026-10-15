@@ -23,11 +23,11 @@ DATED_REFERENCE = re.compile(r"20\d\d-\d\d-\d\d|#\d{2,}|\b\d+(?:\.\d+)?\s*(?:sec
 NEXT_AGENT_RULES_OFF = re.compile(r"agentRules\s*:\s*false")
 PLACEHOLDER = re.compile(r"^#\s+(?:AGENTS|AGENT|CLAUDE|GEMINI)\.md\b|This file provides guidance to|guidance for (?:Claude Code|coding agents|AI coding agents)|^\s*(?:[-*]\s*)?(?:(?-i:TODO)\b|fill (?:me )?in\b)", re.IGNORECASE | re.MULTILINE)
 HISTORY_PHRASES = ("used to", "once hid", "previously", "no longer", "formerly", "the failure this rule names")
-READ_ORDER = re.compile(r"\bread\b[^\n]{0,120}\b(?:before|first)\b|\bbefore (?:any|every|changing|editing|adding|touching)\b|\bwins\b|\bsource of truth\b", re.IGNORECASE)
+READ_ORDER = re.compile(r"\bread\b[^\n]{0,120}\b(?:before|first)\b|\bbefore (?:any|every|changing|editing|adding|touching)\b", re.IGNORECASE)
 PRECEDENCE = re.compile(r"this file wins|where the two disagree|this file is the source of truth|\bchange to this file\b[^.\n]{0,80}\bfirst\b", re.IGNORECASE)
 ACCRETION = re.compile(r"\bin the same change\b|\bchange to this file\b[^.\n]{0,80}\bfirst\b|\b(?:goes|go|added|add)\b[^\n]{0,80}\bfirst\b|\bkeep\b[^.\n]{0,80}\bin sync\b|\b(?:always|also) update\b", re.IGNORECASE)
 DOC_MENTION = re.compile(r"this file|those files|README|DESIGN|\.mdx?\b|\bthe docs\b|\bdocs/", re.IGNORECASE)
-STATUS_LINE = re.compile(r"Last updated|20\d\d-\d\d-\d\d", re.IGNORECASE)
+STATUS_LINE = re.compile(r"\bLast updated\b|\bStatus\s*:|\b(?:as of|updated(?: on)?|on)\s+20\d\d-\d\d-\d\d\b|\(\s*20\d\d-\d\d-\d\d\s*\)|^\s*#{1,6}\s+.*20\d\d-\d\d-\d\d\b", re.IGNORECASE)
 DOC_PATH = re.compile(r"(?<![\w.])(?:\.{1,2}/)*(?:[\w.\-]+/)*[\w.\-]+\.md\b")
 MARKDOWN_LINK = re.compile(r"\]\(\s*<?([^\s)>]+\.md(?:#[^\s)>]*)?)>?(?:\s+[^)]*)?\)")
 BACKTICK = re.compile(r"`([^`]+)`")
@@ -281,6 +281,12 @@ def referenced_docs(line, source, root):
     return found
 
 
+def required_referenced_docs(line, source, root):
+    return {target for sentence in re.split(r"[.!?]\s+", line)
+            if READ_ORDER.search(NEGATED_CLAIM.sub("", INLINE_SPAN.sub("", sentence)))
+            for target in referenced_docs(sentence, source, root)}
+
+
 def eligible_doc(path, root):
     try:
         resolved = path.resolve()
@@ -333,12 +339,13 @@ def discover_docs(scope, root, instruction_paths, in_repository):
             text = path.read_text(encoding="utf-8", errors="replace")
         except OSError:
             continue
-        for number, raw, line in prose_lines(text):
+        for number, raw, _ in prose_lines(text):
+            required = required_referenced_docs(raw, path, root)
             for target in referenced_docs(raw, path, root):
                 if target not in candidates:
                     continue
                 entry = docs.setdefault(target, {"required": False, "pointed_by": set()})
-                entry["required"] |= bool(READ_ORDER.search(line))
+                entry["required"] |= target in required
                 entry["pointed_by"].add("{}:{}".format(relative_path(path, root), number))
     for path in candidates:
         try:
@@ -538,9 +545,9 @@ def hook_class(path, root, text):
             source = directory / name
             if not source.is_file():
                 continue
-            for _, raw, line in prose_lines(source.read_text(encoding="utf-8", errors="replace")):
+            for _, raw, _ in prose_lines(source.read_text(encoding="utf-8", errors="replace")):
                 if path in referenced_docs(raw, source, root):
-                    if READ_ORDER.search(line):
+                    if path in required_referenced_docs(raw, source, root):
                         return "required"
                     pointed = True
         if directory == root:

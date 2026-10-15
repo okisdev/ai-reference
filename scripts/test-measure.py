@@ -59,6 +59,21 @@ class MeasureTests(unittest.TestCase):
         docs = self.report()["docs"]
         self.assertEqual([(doc["path"], doc["required"]) for doc in docs], [("docs/DESIGN.md", True)])
 
+    def test_read_order_requires_same_sentence_as_reference(self):
+        self.write("AGENTS.md", "If `NOTES.md` and the code disagree, the test wins.\nSee `CONTRIBUTING.md`. Read the release notes before tagging.\nRead `apps/desktop/DESIGN.md` before any UI change.\n")
+        for name in ("NOTES.md", "CONTRIBUTING.md", "apps/desktop/DESIGN.md"):
+            self.write(name, "# Document\n")
+        docs = {doc["path"]: doc for doc in self.report()["docs"]}
+        self.assertEqual([(docs[name]["required"], docs[name]["pointed_by"]) for name in ("NOTES.md", "CONTRIBUTING.md", "apps/desktop/DESIGN.md")],
+                         [(False, ["AGENTS.md:1"]), (False, ["AGENTS.md:2"]), (True, ["AGENTS.md:3"])])
+        for name in ("NOTES.md", "CONTRIBUTING.md"):
+            with self.subTest(name=name):
+                result = self.hook(self.root / name, "# Document\n" + "x" * 601 + "\n", original="# Document\n")
+                self.assertEqual((result.returncode, result.stderr), (0, ""))
+        result = self.hook(self.root / "apps/desktop/DESIGN.md", "# Document\n" + "x" * 601 + "\n", original="# Document\n")
+        self.assertEqual(result.returncode, 2, result.stderr)
+        self.assertIn("long-unit", result.stderr)
+
     def test_unpointed_precedence_doc_and_no_instruction_output(self):
         self.write("docs/DESIGN.md", "Where the two disagree, this file wins.\n")
         result = self.report()
@@ -212,6 +227,38 @@ class MeasureTests(unittest.TestCase):
         result = self.hook(agent, "Read `DESIGN.md` before editing.\n" + added, original="Read `DESIGN.md` before editing.\n")
         self.assertEqual(result.returncode, 2)
         self.assertIn("accretion-order", result.stderr)
+
+    def test_status_lines_match_journal_shapes(self):
+        self.write("AGENTS.md", "Read `DESIGN.md` before editing.\n")
+        path = self.write("DESIGN.md", "# Design\n")
+        old = "# Design\n"
+        statuses = [
+            "Last updated: 2026-10-10.",
+            "Status: in progress.",
+            "Figures as of 2026-09-25.",
+            "Figures updated 2026-09-25.",
+            "Figures updated on 2026-09-25.",
+            "Figures on 2026-09-25.",
+            "- **D25, loading** (2026-09-30): Usage drew its figures at once.",
+            "## Drift found on 2026-09-25",
+            "## Drift found 2026-09-25",
+        ]
+        for line in statuses:
+            with self.subTest(line=line):
+                result = self.hook(path, old + line + "\n", original=old)
+                self.assertEqual(result.returncode, 2, result.stderr)
+                self.assertIn("DESIGN.md:2: status-line:", result.stderr)
+        self.write("DESIGN.md", old + "\n".join(statuses) + "\n")
+        self.assertEqual(self.report()["docs"][0]["status_lines"], len(statuses))
+
+    def test_rule_date_is_not_status_line(self):
+        self.write("AGENTS.md", "Read `DESIGN.md` before editing.\n")
+        path = self.write("DESIGN.md", "# Design\n")
+        old = "# Design\n"
+        rule = "- Reject tokens issued before 2024-06-01.\n"
+        result = self.hook(path, old + rule, original=old, old_string="", new_string=rule)
+        self.assertEqual((result.returncode, result.stderr), (0, ""))
+        self.assertEqual(self.report()["docs"][0]["status_lines"], 0)
 
     def test_hook_skips_fenced_and_quoted_examples(self):
         self.write("AGENTS.md", "Read `DESIGN.md` before editing.\n")
