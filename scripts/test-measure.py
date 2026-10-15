@@ -53,6 +53,31 @@ class MeasureTests(unittest.TestCase):
         self.assertEqual(docs["services/relay/README.md"]["pointed_by"], ["services/relay/AGENTS.md:1"])
         self.assertIn(TABLE_HEADER, self.measure().stdout)
 
+    def test_before_read_order_in_report_and_hook(self):
+        lines = [
+            "`apps/mobile/DESIGN.md` is the app's design law; before a UI change, read its Principles.",
+            "- Before a UI change read `DESIGN.md`'s Principles and the section for what you change.",
+            "Read `docs/x.md` before a UI change.",
+            "`README.md` describes its routes.",
+            "Before shipping, run `make test`; see `NOTES.md`.",
+        ]
+        self.write("AGENTS.md", "\n".join(lines) + "\n")
+        paths = ("apps/mobile/DESIGN.md", "DESIGN.md", "docs/x.md", "README.md", "NOTES.md")
+        for name in paths:
+            self.write(name, "# Document\n")
+        docs = {doc["path"]: doc for doc in self.report()["docs"]}
+        self.assertEqual([(docs[name]["required"], docs[name]["pointed_by"]) for name in paths],
+                         [(True, ["AGENTS.md:1"]), (True, ["AGENTS.md:2"]), (True, ["AGENTS.md:3"]),
+                          (False, ["AGENTS.md:4"]), (False, ["AGENTS.md:5"])])
+        for name in paths[:3] + paths[4:]:
+            with self.subTest(name=name):
+                result = self.hook(self.root / name, "# Document\n" + "x" * 601 + "\n", original="# Document\n")
+                self.assertEqual(result.returncode, 0 if name == "NOTES.md" else 2, result.stderr)
+                if name != "NOTES.md":
+                    self.assertIn("long-unit", result.stderr)
+        result = self.hook(self.root / "README.md", "# Document\n" + "x" * 17000 + "\n", original="# Document\n")
+        self.assertEqual((result.returncode, result.stderr), (0, ""))
+
     def test_root_fallback_and_anchor(self):
         self.write("services/relay/AGENTS.md", "Read [design](docs/DESIGN.md#colors) first.\n")
         self.write("docs/DESIGN.md", "# Design\n")
