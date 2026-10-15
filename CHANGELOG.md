@@ -2,6 +2,20 @@
 
 All notable changes to this collection. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions match `.claude-plugin/plugin.json`. Changes before 0.0.41 live in the merged pull requests.
 
+## [0.0.44] (2026-10-15)
+
+### Added
+
+- normalize-agents-md holds the docs an instruction file orders agents to read, such as a `DESIGN.md` every UI change reads first or a README named as the route registry, to its standard: they keep the rules every surface follows, lose as-built descriptions, orders to update them alongside code, and status lines, get a 16 KB target, and each pointer to them names the section a change needs. A new example shows the bar for such a rewrite.
+- `measure.py` lists read-path docs with the line that points at each, and the accretion orders and status lines in every file, and gains `--hook`, a Claude Code PostToolUse check that flags what one write adds to an instruction file or read-path doc: a status line, an order to update a doc alongside code, history, a unit past 600 characters, or growth past a target.
+- `scripts/test-measure.py`, run in CI, and two eval cases: a routing case for a design doc grown into a running log, and a quality case for its rewrite.
+
+### Changed
+
+- The root template's `Editing this file` contract becomes `Editing docs`: docs state what must stay true, a change replaces a sentence it made false instead of appending, a rule enters when the owner decides it, a mistake repeats, or a review catches it, and an amendment that would pass a target settles the file first.
+- optimize-repo's doc sync replaces what a change made false and never appends an account of it; design-dashboard's contract states rules, never the surfaces built under them; use-project-memory routes descriptions of what the code does nowhere.
+- normalize-agents-md never takes user-level instruction files into scope, even from the home directory.
+
 ## [0.0.43] (2026-10-12)
 
 ### Added
