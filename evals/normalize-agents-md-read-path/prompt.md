@@ -3,13 +3,13 @@ description: normalize-agents-md rewrites a design doc that AGENTS.md orders age
 tags: [quality, normalize-agents-md]
 runs: 2
 max_turns: 12
-timeout_seconds: 480
+timeout_seconds: 540
 allowed_tools: [Skill, Read, Bash]
 ---
 
 Use the normalize-agents-md skill: 这个 DESIGN.md 越写越长，像流水账，帮我收敛成规章。
 
-Everything you need is below; do not run commands or write any file. Repository: acme/ledger, an Electron app. `apps/desktop/AGENTS.md` line 6 says: "Read `DESIGN.md` before any UI change." `apps/desktop/DESIGN.md` (excerpt):
+Everything you need is below; do not run commands, dispatch subagents, or write any file. This run covers the ledger and the rewrite only, so skip the loss check and measure.py. Repository: acme/ledger, an Electron app. `apps/desktop/AGENTS.md` line 6 says: "Read `DESIGN.md` before any UI change." `apps/desktop/DESIGN.md` (excerpt):
 
 ```md
 # Design
