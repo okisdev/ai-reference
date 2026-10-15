@@ -2,6 +2,12 @@
 
 All notable changes to this collection. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions match `.claude-plugin/plugin.json`. Changes before 0.0.41 live in the merged pull requests.
 
+## [0.0.45] (2026-10-15)
+
+### Fixed
+
+- `measure.py` counts a read order written with "before" first ("Before a UI change, read …") as one, so the doc it names is required and its target applies.
+
 ## [0.0.44] (2026-10-15)
 
 ### Added
