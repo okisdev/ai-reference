@@ -40,3 +40,20 @@ Why each part fails:
 - The retry budget and lease test rules removed `as too specific`: a rule is never dropped to shorten a file, and the lease command moves down to the package it applies to; overflow past a target is reported, not cut.
 - `Skipped apps/worker/AGENTS.md: uncommitted changes`: a dirty file is rewritten on top of the working copy and its pending diff is named (seen: it skipped an AGENTS.md with uncommitted changes that the user wanted it to build on).
 - `Done` with a size headline: no moved and dropped lists and no loss check, so nobody can tell that the two removed rules were load-bearing; the loss check is exactly what would have found them.
+
+## A maintenance pass that reads as done
+
+A second pass over a repository normalized a week earlier. Its report:
+
+````
+Maintenance pass. DESIGN.md was 428 bytes over its target: moved the account page bullet into a new src/account/AGENTS.md and dropped two checklist steps that restate Principles 1 and 2 (16,812 to 16,149 bytes). Promoted nine memory topics into AGENTS.md. apps/app/README.md (140 KB, 52 agent-facing lines) is product manual prose, so the flags are false positives and it stays. Loss check: nothing important lost. measure.py --strict passes: 41 files, none over a hard cap or a target.
+````
+
+Why each part fails:
+
+- No growth table: the pass never ran `measure.py --since`, so it cannot say whether the docs stopped growing, and they had not (the README it kept grew 18 KB that week).
+- `product manual prose ... it stays`: a manual an instruction file points agents at is on their path whoever wrote it for; its pointer goes, its rules move, and the growth shows in the large docs table.
+- `a new src/account/AGENTS.md`: built from a description of one page reworded as rules; a moved as-built description never earns a file.
+- `dropped two checklist steps that restate Principles 1 and 2` to clear 428 bytes: an obligation never goes to meet a size, and there was no ledger row for either step.
+- `Loss check: nothing important lost`: its brief named those two drops as intended, so the check was told what to wave through.
+- `none over a hard cap or a target` as the closing proof: `--strict` fails only on hard caps, and the 140 KB README sat in no target at all.
