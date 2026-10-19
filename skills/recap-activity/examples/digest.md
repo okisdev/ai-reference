@@ -1,13 +1,13 @@
 # Digest (a week in an org)
 
-The bar for a digest: the heading prints the absolute window with its offset, the answer comes first in one paragraph, the counts table holds numbers only and each one was computed from deduplicated records, themes are clustered by what the records share with their latest links, what is still open follows, and the coverage list says what was probed, which caps were met, where an aggregate disagrees, and what could not be reached. Condensed from a real run: three of nine theme lines are shown, and private repositories and projects are left out. The report's language follows the user; this structure and density do not change.
+The bar for a digest: the heading prints the absolute window with its offset, the answer comes first and says what was produced before it counts anything, the counts table holds numbers only and each one was computed from deduplicated records, themes are clustered by what the records share with their latest links, what is still open follows, and the coverage list says what was probed, which caps were met, where an aggregate disagrees, and what could not be reached. Condensed from a real run: three of nine theme lines are shown, and private repositories and projects are left out. The report's language follows the user; this structure and density do not change.
 
 ---
 
 ````
 ## me in acme, digest, 2026-10-05 00:00 to 2026-10-11 23:59 (+08:00)
 
-Last week in the acme org you opened 171 PRs and merged 165 (Tue 49, Fri 60, Sun 36), reviewed 175 PRs (797 reviews), opened 108 issues, and commented on 54 issues and PRs. The 165 default branch commits are those same 165 merges, since every subject ends in `(#N)`, so nothing bypassed a PR. 97 of the PRs trace to a Claude session.
+Last week in the acme org you moved generative UI into its own package and gave it spec mode rendering and state for Vue and React Native; fixed the runtime's thread list, adapter switching, and seeded thread races and its stream chunk order; shared one logic layer across the UI flavors with React 18 and IME fixes; and made markdown rendering faster. Underneath that you opened 171 PRs and merged 165 (Tue 49, Fri 60, Sun 36), reviewed 175 PRs (797 reviews), opened 108 issues, and commented on 54 issues and PRs. The 165 default branch commits are those same 165 merges, since every subject ends in `(#N)`, so nothing bypassed a PR. 97 of the PRs trace to a Claude session.
 
 | Metric | Count |
 |---|---|
