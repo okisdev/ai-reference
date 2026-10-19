@@ -63,11 +63,13 @@ Short is not the goal; lean is. Do not cut into the do-not-cut floor: verificati
 
 ## Evals
 
-Every skill has a routing case in the user's own words, and a skill whose output a person reads has a quality case for its one rule: `evals/<skill>-<case>/prompt.md` plus `graders/*.md`, in the format `claude plugin eval init --bare` writes. A case puts the whole scenario in its prompt, because an eval run has no network, a redirected home, and an empty working directory, and it allows `[Skill, Read, Bash]` so the skill's probes can run. Routing graders are `tool_used` on `Skill` with `arm: both`; quality graders are `llm` judges with a concrete criterion, or `regex` with the pattern in frontmatter. A case passes with the skill, and the delta against the no-plugin arm says what the skill adds.
+Every skill has a routing case in the user's own words, and a skill whose output a person reads has a quality case for its one rule: `evals/<skill>-<case>/prompt.md` plus `graders/*.md`, in the format `claude plugin eval init --bare` writes. A case puts the whole scenario in its prompt, because an eval run has no network, a redirected home, and an empty working directory, and it allows `[Skill, Read, Bash]` so the skill's probes can run. Routing graders are `tool_used` on `Skill` with `arm: both`; quality graders are `llm` judges with a concrete criterion, or `regex` with the pattern in frontmatter. A quality criterion states the outcome the user asked for, so that the skill's own success check cannot satisfy it alone (a digest whose counts are right but which never says what was produced fails). A case passes with the skill, and the delta against the no-plugin arm says what the skill adds.
 
 ## How a skill improves
 
 Watch it run on a real ask, name what is wrong in one sentence, turn that sentence into the rule with its `(seen: ...)`, add an eval case that fails without the fix, fix it, and look again. The usage records (`distill-session`) say where to look first: rules the agent ignored, verdicts the user overturned, and asks that never routed.
+
+A skill whose goal must hold after it runs (docs that stay rules, a memory store that stays small, a contract the next session keeps) is judged on the tree a week after its first real runs, never on its own checks passing: it names the measurement that shows the property held (`measure.py --since`, `check.py --dir`), and `distill-session` takes that measurement. A guard that holds such a property runs as a PostToolUse hook in every harness that edits here (Claude Code, Codex, Grok) and parses each one's payload, because a Claude-only hook misses most writes (seen: a normalizer whose every run passed its checks while the README it exempted grew 18 KB in four days, and a Claude-only hook that never saw Codex's edits).
 
 ## Before you ship
 
