@@ -16,9 +16,12 @@ FM = "---\nname: {name}\ndescription: \"{name} fact\"\nmetadata:\n  node_type: m
 HOOK_80 = "OPEN 边界" + "x" * 73
 HOOK_81 = "OPEN " + "y" * 76
 failures = []
+assertions = 0
 
 
 def expect(condition, label):
+    global assertions
+    assertions += 1
     if not condition:
         failures.append(label)
 
@@ -232,6 +235,130 @@ with tempfile.TemporaryDirectory() as temporary:
     result = hook("not json")
     expect(result.returncode == 0, "hook exits 0 on a payload it cannot parse")
 
+    dated_store = base / ".claude" / "projects" / "-x" / "memory"
+    dated_store.mkdir(parents=True)
+    dated_index = dated_store / "MEMORY.md"
+    dated_topic = dated_store / "topic.md"
+    write(dated_topic.parent, "topic.md", FM.format(name="topic", type="project", body="A current fact."))
+    before = "- [Topic](topic.md) — OPEN current fact\n"
+    dated_line = "- [Accounts](topic.md) — accounts prod is PlanetScale since 2026-10-19"
+    write(dated_store, "MEMORY.md", before + dated_line + "\n")
+    patch = "*** Begin Patch\n*** Update File: .claude/projects/-x/memory/MEMORY.md\n@@\n+{}\n*** End Patch".format(dated_line)
+    result = hook({"tool_name": "apply_patch", "tool_input": {"command": patch}, "tool_response": "Success", "cwd": str(base)})
+    expect(result.returncode == 2 and "MEMORY.md:2: dated-status" in result.stderr, "Codex index patch catches a dated hook: " + result.stderr[:300])
+    expect("rewrite what this write added" in result.stderr, "Codex hook keeps the closing line")
+
+    duplicate = "- [Topic](topic.md) — since 2026-10-15"
+    write(dated_store, "MEMORY.md", "# Index\n" + duplicate + "\n" + duplicate + "\n")
+    patch = "*** Begin Patch\n*** Update File: MEMORY.md\n@@\n # Index\n+{}\n*** End Patch".format(duplicate)
+    result = hook({"tool_name": "apply_patch", "tool_input": {"command": patch}, "tool_response": "Success", "cwd": str(dated_store)})
+    expect(result.returncode == 2 and "MEMORY.md:2: dated-status" in result.stderr and "MEMORY.md:3: dated-status" not in result.stderr, "Codex patch attributes a duplicate dated line to its actual insertion: " + result.stderr[:300])
+
+    topic_status = "fixed on 2026-10-15"
+    write(dated_store, "topic.md", FM.format(name="topic", type="project", body=topic_status))
+    for label, ending in [("no header", ""), ("end of file", "*** End of File\n")]:
+        patch = "*** Begin Patch\n*** Update File: topic.md\n+{}\n{}*** End Patch".format(topic_status, ending)
+        result = hook({"tool_name": "apply_patch", "tool_input": {"command": patch}, "tool_response": "Success", "cwd": str(dated_store)})
+        expect(result.returncode == 2 and "topic.md:9: dated-status" in result.stderr, "Codex topic patch with {} catches a dated status: {}".format(label, result.stderr[:300]))
+
+    for label, middle in [("blank context", "\n\n+{}\n*** End Patch"), ("end marker blanks", "\n+{}\n*** End of File\n\n\n*** End Patch"), ("pre-end blanks", "\n+{}\n\n\n*** End Patch")]:
+        patch = "*** Begin Patch\n*** Update File: topic.md\n@@" + middle.format(topic_status)
+        result = hook({"tool_name": "apply_patch", "tool_input": {"command": patch}, "tool_response": "Success", "cwd": str(dated_store)})
+        expect(result.returncode == 2 and "topic.md:9: dated-status" in result.stderr, "Codex {} accepts the patch and catches a dated status: {}".format(label, result.stderr[:300]))
+
+    original_topic = FM.format(name="topic", type="project", body="Current fact.")
+    write(dated_store, "topic.md", original_topic.replace('description: "topic fact"\n', ""))
+    patch = "*** Begin Patch\n*** Update File: topic.md\n@@\n name: topic\n-description: Current facts\n metadata:\n*** End Patch"
+    result = hook({"tool_name": "apply_patch", "tool_input": {"command": patch}, "tool_response": "Success", "cwd": str(dated_store)})
+    expect(result.returncode == 2 and "frontmatter: missing description" in result.stderr, "Codex deletion reconstructs the prior description and catches missing-description: " + result.stderr[:300])
+
+    patch = "*** Begin Patch\n*** Update File: topic.md\n@@\n-description: Current facts\n*** End Patch"
+    result = hook({"tool_name": "apply_patch", "tool_input": {"command": patch}, "tool_response": "Success", "cwd": str(dated_store)})
+    expect(result.returncode == 2 and "frontmatter: missing description" in result.stderr, "Codex deletion without context catches missing-description: " + result.stderr[:300])
+
+    write(dated_store, "topic.md", original_topic.replace('description: "topic fact"\n', "").replace("Current fact.", "deployed 2026-10-15"))
+    patch = ("*** Begin Patch\n*** Update File: topic.md\n@@\n+deployed 2026-10-15\n"
+             "@@\n name: topic\n-description: Current facts\n metadata:\n*** End Patch")
+    result = hook({"tool_name": "apply_patch", "tool_input": {"command": patch}, "tool_response": "Success", "cwd": str(dated_store)})
+    expect(result.returncode == 2 and "frontmatter: missing description" in result.stderr and "topic.md:8: dated-status" in result.stderr, "Codex falls back to an earlier match for a later chunk: " + result.stderr[:300])
+
+    patch = "*** Begin Patch\n*** Update File: topic.md\n@@\n+line absent from file\n*** End Patch"
+    result = hook({"tool_name": "apply_patch", "tool_input": {"command": patch}, "tool_response": "Success", "cwd": str(dated_store)})
+    expect(result.returncode == 0 and not result.stderr.strip(), "Codex silently skips a file whose new chunk cannot be found")
+
+    old_body = "x" * 4300
+    new_body = "x" * 4200
+    write(dated_store, "topic.md", FM.format(name="topic", type="project", body="start\nadded\n{}\nend".format(new_body)))
+    patch = ("*** Begin Patch\n*** Update File: topic.md\n@@\n start\n+added\n"
+             "*** Update File: topic.md\n@@\n-{}\n+{}\n end\n*** End Patch".format(old_body, new_body))
+    result = hook({"tool_name": "apply_patch", "tool_input": {"command": patch}, "tool_response": "Success", "cwd": str(dated_store)})
+    expect(result.returncode == 0 and not result.stderr.strip(), "Codex groups sections by destination and passes a topic that shrinks overall: " + result.stderr[:300])
+
+    before_topic = FM.format(name="topic", type="project", body="x" * 3950)
+    growth = "y" * 220
+    write(dated_store, "topic.md", before_topic + growth + "\n")
+    patch = "*** Begin Patch\n*** Update File: .claude/projects/-x/memory/topic.md\n@@\n+{}\n*** End Patch".format(growth)
+    result = hook({"tool_name": "apply_patch", "tool_input": {"command": patch}, "tool_response": "Success", "cwd": str(base)})
+    expect(len(before_topic.encode("utf-8")) <= 4096 and result.returncode == 2 and "topic-size" in result.stderr, "Codex patch detects topic growth past 4096 bytes")
+
+    outside = repo / "notes.md"
+    write(repo, "notes.md", "Status: done\n")
+    patch = "*** Begin Patch\n*** Add File: notes.md\n+Status: done\n*** End Patch"
+    result = hook({"tool_name": "apply_patch", "tool_input": {"command": patch}, "tool_response": "Success", "cwd": str(repo)})
+    expect(result.returncode == 0 and not result.stderr.strip(), "Codex patch outside a store is ignored")
+    result = hook({"tool_name": "apply_patch", "tool_input": {"command": "*** Update File: MEMORY.md\n+{}\n*** End Patch".format(dated_line)}, "tool_response": "Success", "cwd": str(dated_store)})
+    expect(result.returncode == 0 and not result.stderr.strip(), "Codex patch without Begin Patch exits silently")
+    result = hook({"tool_name": "apply_patch", "tool_input": {"command": 42}, "tool_response": "Success", "cwd": str(dated_store)})
+    expect(result.returncode == 0 and not result.stderr.strip(), "Codex patch with a non-string command exits silently")
+
+    for label, payload in [
+        ("snake_case", {"tool_name": "search_replace", "tool_input": {"file_path": str(dated_topic), "old_string": "A current fact.", "new_string": "deployed 2026-10-15"}, "tool_response": "Success"}),
+        ("camelCase", {"toolName": "hashline_edit", "toolInput": {"target_file": "topic.md", "find": "A current fact.", "replace": "deployed 2026-10-15"}, "toolResult": "Success", "workspaceRoot": str(dated_store)}),
+    ]:
+        write(dated_store, "topic.md", FM.format(name="topic", type="project", body="deployed 2026-10-15"))
+        result = hook(payload)
+        expect(result.returncode == 2 and "topic.md:9: dated-status" in result.stderr, "Grok {} edit catches a dated status: {}".format(label, result.stderr[:300]))
+
+    write(dated_store, "topic.md", FM.format(name="topic", type="project", body="Relay deployed 2026-10-15."))
+    result = hook({"toolName": "hashline_edit", "toolInput": {"target_file": "topic.md", "find": "pending", "replace": "deployed 2026-10-15"}, "toolResult": "Success", "workspaceRoot": str(dated_store)})
+    expect(result.returncode == 2 and "topic.md:9: dated-status" in result.stderr, "Grok substring edit checks the changed line: " + result.stderr[:300])
+
+    write(dated_store, "MEMORY.md", "- [Topic](topic.md) — OPEN current\n- [Verified](verified.md) — OPEN verified\n")
+    write(dated_store, "topic.md", FM.format(name="topic", type="project", body="Status: done\n```text\nStatus: dated code\n```"))
+    write(dated_store, "verified.md", "---\nname: verified\ndescription: fact\nverified: 2026-10-12\nmetadata:\n  type: project\n---\n\nCurrent fact.\n")
+    result = run(CHECK, "--dir", dated_store, "--json", "--strict")
+    data = json.loads(result.stdout or "{}")
+    dated = [(item["file"], item["line"]) for item in data.get("violations", []) if item["rule"] == "dated-status"]
+    expect(result.returncode == 1 and dated == [("topic.md", 9)], "check --dir flags body status but skips fenced status and frontmatter date: {}".format(dated))
+    result = run(CHECK, dated_store / "verified.md", "--json", "--strict")
+    data = json.loads(result.stdout or "{}")
+    expect(result.returncode == 0 and not data.get("violations"), "FILE mode ignores a frontmatter verified date")
+
+    write(dated_store, "MEMORY.md", "- [Topic](topic.md) — Last updated\n- [Verified](verified.md) — OPEN verified\n")
+    result = run(CHECK, dated_store / "MEMORY.md", "--json")
+    data = json.loads(result.stdout or "{}")
+    expect(any(item["rule"] == "dated-status" and item["line"] == 1 for item in data.get("violations", [])), "FILE mode checks dated status in the index")
+
+    moved = dated_store / "moved.md"
+    fresh = dated_store / "fresh.md"
+    write(dated_store, "moved.md", FM.format(name="moved", type="project", body="Status: done"))
+    fresh_text = FM.format(name="fresh", type="project", body="fixed on 2026-10-15")
+    write(dated_store, "fresh.md", fresh_text)
+    patch = ("*** Begin Patch\n*** Delete File: missing.md\n*** Update File: old.md\n*** Move to: moved.md\n+Status: done\n"
+             "*** Add File: fresh.md\n" + "\n".join("+" + line for line in fresh_text.splitlines()) + "\n*** End Patch")
+    result = hook({"tool_name": "apply_patch", "tool_input": {"command": patch}, "tool_response": "Success", "cwd": str(dated_store)})
+    expect(result.returncode == 2 and "moved.md:9: dated-status" in result.stderr and "fresh.md:9: dated-status" in result.stderr, "Codex checks every existing file in a patch, including move and add targets: " + result.stderr[:300])
+
+    result = hook({"toolName": "Write", "toolInput": {"path": str(fresh), "contents": fresh_text}, "toolResult": "Success"})
+    expect(result.returncode == 2 and "fresh.md:9: dated-status" in result.stderr, "Grok whole-file contents checks every body line")
+
+    dated_examples = ["Last updated", "Status: done", "as of 2026-10-19", "updated 2026-10-19", "updated on 2026-10-19", "on 2026-10-19", "since 2026-10-19", "(2026-10-19)", "## Milestone 2026-10-19"]
+    dated_examples.extend("{} on 2026-10-19".format(verb) for verb in ("shipped", "deployed", "implemented", "merged", "released", "landed", "fixed"))
+    write(dated_store, "fresh.md", FM.format(name="fresh", type="project", body="\n".join(dated_examples)))
+    result = run(CHECK, fresh, "--json")
+    data = json.loads(result.stdout or "{}")
+    expect(len([item for item in data.get("violations", []) if item["rule"] == "dated-status"]) == len(dated_examples), "check mode recognizes every dated status form")
+
     result = run(AUDIT, repo, "--memory", bad, "--strict")
     expect(result.returncode == 1, "audit --strict fails on format violations")
     expect("Format problems" in result.stdout and "topic-size" in result.stdout, "audit prints a Format problems section")
@@ -282,4 +409,5 @@ if failures:
     for item in failures:
         print(" - " + item)
     raise SystemExit(1)
+print("{} assertions".format(assertions))
 print("PASS all memory check contract assertions")

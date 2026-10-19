@@ -10,7 +10,7 @@ Verified layouts as of 2026-08. When a path does not exist, skip that harness si
 | Codex | `~/.codex/sessions/YYYY/MM/DD/rollout-<timestamp>-<uuid>.jsonl` | Date-partitioned; resolve the window by directory date, not mtime alone. |
 | Grok | `~/.grok/sessions/<url-encoded-cwd>/<session-uuid>/chat_history.jsonl` | The cwd directory is URL-encoded (`%2F` for `/`). `events.jsonl` in the same dir is tool traffic; `chat_history.jsonl` is the conversation. |
 
-A window like `7d` filters by file mtime (`find <store> -name '*.jsonl' -mtime -7`) plus, for Codex, the date directories inside the window. Order by real mtime (`ls -t`), never by UUID-shaped names. Exclude the session currently running (it is still being written and contains this run), subagent and task output transcripts, and eval or test sessions; another project's store is out of scope unless the user asked for it.
+A window like `7d` filters by file mtime (`find <store> -name '*.jsonl' -mtime -7`) plus, for Codex, the date directories inside the window. Order by real mtime (`ls -t`), never by UUID-shaped names. Exclude the session currently running (it is still being written and contains this run), subagent and task output transcripts, and eval or test sessions; another project's store is out of scope unless the user asked for it or the ask is how the skills are used, which every project's store records.
 
 ## Reader subagent brief
 

@@ -19,5 +19,5 @@ Why each line fails:
 - Two pushes in a row: each push cancels and restarts every run and review on the head; commit locally and push once the head settles.
 - `bots are optional, so skipping it`: a pending review bot is not skippable because it is a bot (seen: merges that went in while a review bot was still running).
 - `they finished yesterday`: a green that completed more than an hour before the base moved is stale; refresh the head and wait for the fresh run (seen: an old green let a logically conflicting merge land red on the default branch).
-- `--admin` on a PR the user did not author: `--admin` is only for your own PR's review requirement (seen: `--admin` merged another author's PR past its review requirement).
+- `Merging with --admin` when the user never passed it: `--admin` is the user's call for this request, and on another author's PR it comes only after the approval path, for what an approval cannot clear (seen: `--admin` merged another author's PR past its review requirement when nobody had asked for it).
 - `The merge failed.`: `--delete-branch` can fail after the merge succeeded; confirm the outcome from `gh pr view <n> --json state,mergedAt`.

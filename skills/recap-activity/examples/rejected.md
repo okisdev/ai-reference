@@ -15,6 +15,7 @@ Vercel's team API needed a login, so there is nothing there.
 Why each part fails:
 
 - No heading, no absolute window: `last week` and `yesterday` are never turned into a start and end with the offset of the `Now` probe, so nobody can tell which days the numbers cover.
+- `You opened around 170 PRs` as the whole answer: a digest says what was produced (what shipped, changed, or was decided, per theme) before any count, because counts alone do not tell the user what the week made (seen: "你也需要总结一下产出,而不只是数量").
 - `around 170`, `about 170`, `most of them`: estimated numbers; every count is computed from collected records and carries its figure, with no claim without a record link, id, or file behind it.
 - `90 failed deployments`: a `state=ERROR` query also returns BLOCKED deployments, which never built; split by `state` and report them apart (seen: 56 of the 90 rows were BLOCKED, leaving 34 failures).
 - `canceled because a newer one superseded them`: assumed instead of read; group CANCELED by the reason on the record (seen: 58 of 69 CANCELED records were monorepo skips, not superseded builds).

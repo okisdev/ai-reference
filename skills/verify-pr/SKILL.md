@@ -67,7 +67,7 @@ Verify the PR multi-dimensionally (claim-driven and necessity-driven, not opinio
      | Test quality | OK / minor / fail | |
      | Conventions / paradigm | OK / minor / fail | deviation must cite the in-repo pattern it breaks |
      | Side effects | OK / minor / fail | |
-     | CI | green / failing / pending | pending = checks still running; report it, never wait |
+     | CI | green / failing / pending | read from `statusCheckRollup` on the Verified head, never from a local run, which is Correctness evidence (seen: a CI row of "green" filled from a local test run while the checks were still pending); pending = checks still running; report it, never wait |
 
    - **Findings**, one subsection per non-OK dimension, with `file:line` (or PR, issue, repo) evidence and a concrete suggested fix, pushback, or redirect. Label each Blocking, Polish, or Pre-existing.
    - **Final recommendation**, exactly one of:

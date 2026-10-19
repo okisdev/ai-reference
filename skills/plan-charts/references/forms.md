@@ -43,6 +43,7 @@ The question picks the form; the data's shape never does. A table answers "what 
 - A node graph for a strict hierarchy at scale.
 - A percentile band drawn from three static percentiles with no time series.
 - A chart column repeating a value the page is already scoped to.
+- A share, ratio, or progress form when most entities sit within a few percent of one end of its scale: it draws nothing a person can read; check the real distribution first and draw the absolute quantity, a zoomed or log scale, or a rank instead (seen: allowance shares drawn as thin bars, where almost every account used 0 to 2 percent, drew "那些线条并不是我们想要的内容").
 
 ## Expanding the vocabulary
 

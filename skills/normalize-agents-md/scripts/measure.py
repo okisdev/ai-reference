@@ -7,6 +7,8 @@ import os
 import re
 import subprocess
 import sys
+from datetime import datetime
+from difflib import SequenceMatcher
 from pathlib import Path
 
 SKIPPED_DIRECTORIES = {"node_modules", ".git", "dist", "build", ".next", ".turbo", "vendor"}
@@ -15,7 +17,7 @@ MANAGED_BLOCKS = (("nextjs-agent-rules", "<!-- BEGIN:nextjs-agent-rules -->", "<
 NEXT_CONFIG_NAMES = {"next.config.js", "next.config.mjs", "next.config.cjs", "next.config.ts", "next.config.mts"}
 README_NAMES = {"README.md", "Readme.md", "readme.md"}
 MANIFEST_NAMES = {"package.json", "pyproject.toml", "Cargo.toml", "go.mod", "Package.swift"}
-AGENT_SIGNAL = re.compile(r"AGENTS\.md|CLAUDE\.md|\bClaude\b|\bCodex\b|\bCursor\b|\bCopilot\b|coding agents?|AI agents?|^#{1,6} .*\b(?:agents?|conventions?|rules|gotchas?|guidelines?)\b", re.IGNORECASE)
+AGENT_SIGNAL = re.compile(r"AGENTS\.md|CLAUDE\.md|\.cursorrules|copilot-instructions|^\s*#{1,6}\s+.*\b(?:for agents|for (?:ai |coding )+agents?|instructions for agents|instructions for (?:ai |coding )+agents?|agent instructions|for claude|for codex|for cursor|for copilot|conventions?|rules|gotchas?|guidelines?|contributing)\b|^\s*(?:[-*+]\s+|\d+[.)]\s+)?(?:Never|Always|Do not|Don't|Must|You must)\b", re.IGNORECASE)
 FENCE = re.compile(r"^\s*(`{3,}|~{3,})")
 LIST_ITEM = re.compile(r"^\s*(?:[-*]\s+|\d+\.\s+)")
 TABLE_ROW = re.compile(r"^\s*\|")
@@ -27,32 +29,41 @@ READ_ORDER = re.compile(r"\bread\b[^\n]{0,120}\b(?:before|first)\b|\bbefore\b[^\
 PRECEDENCE = re.compile(r"this file wins|where the two disagree|this file is the source of truth|\bchange to this file\b[^.\n]{0,80}\bfirst\b", re.IGNORECASE)
 ACCRETION = re.compile(r"\bin the same change\b|\bchange to this file\b[^.\n]{0,80}\bfirst\b|\b(?:goes|go|added|add)\b[^\n]{0,80}\bfirst\b|\bkeep\b[^.\n]{0,80}\bin sync\b|\b(?:always|also) update\b", re.IGNORECASE)
 DOC_MENTION = re.compile(r"this file|those files|README|DESIGN|\.mdx?\b|\bthe docs\b|\bdocs/", re.IGNORECASE)
-STATUS_LINE = re.compile(r"\bLast updated\b|\bStatus\s*:|\b(?:as of|updated(?: on)?|on)\s+20\d\d-\d\d-\d\d\b|\(\s*20\d\d-\d\d-\d\d\s*\)|^\s*#{1,6}\s+.*20\d\d-\d\d-\d\d\b", re.IGNORECASE)
+STATUS_LINE = re.compile(r"\bLast updated\b|\bStatus\s*:|\b(?:as of|since|updated(?: on)?|on|(?:shipped|deployed|implemented|merged|released|landed|fixed)(?: on)?)\s+20\d\d-\d\d-\d\d\b|\(\s*20\d\d-\d\d-\d\d\s*\)|^\s*#{1,6}\s+.*20\d\d-\d\d-\d\d\b", re.IGNORECASE)
 DOC_PATH = re.compile(r"(?<![\w.])(?:\.{1,2}/)*(?:[\w.\-]+/)*[\w.\-]+\.md\b")
 MARKDOWN_LINK = re.compile(r"\]\(\s*<?([^\s)>]+\.md(?:#[^\s)>]*)?)>?(?:\s+[^)]*)?\)")
 BACKTICK = re.compile(r"`([^`]+)`")
 INLINE_SPAN = re.compile(r'(`+).*?\1|"[^"]*"')
 NEGATED_CLAIM = re.compile(r"\bno longer says?\b[^.;]*", re.IGNORECASE)
+SINCE_DATE = re.compile(r"(?:[0-9]{4}-[0-9]{2}-[0-9]{2}(?:[ T][0-9]{2}:[0-9]{2}(?::[0-9]{2})?)?|[0-9]+([ .])(?:seconds?|minutes?|hours?|days?|weeks?|months?|years?)\1ago)")
 CODEX_CAP = 32768
 GROK_CAP = 10000
 DOC_TARGET = 16384
-HOOK_CLOSING = "normalize-agents-md: a doc states what must stay true; put what a change did in its commit or PR, replace a sentence the change made false instead of appending, and settle a file past its target before adding."
+HOOK_CLOSING = "normalize-agents-md: docs state what must stay true and change when the owner decides; put what a change did in its commit or PR, replace a sentence the change made false instead of appending, and settle a file past its target before adding."
 
 
 def parse_args(args):
-    scope, json_output, strict = None, False, False
-    for arg in args:
+    scope, json_output, strict, since = None, False, False, None
+    position = 0
+    while position < len(args):
+        arg = args[position]
         if arg == "--json":
             json_output = True
         elif arg == "--strict":
             strict = True
+        elif arg == "--since":
+            position += 1
+            if position == len(args) or args[position].startswith("--"):
+                raise ValueError("--since requires a value.")
+            since = args[position]
         elif arg.startswith("-"):
             raise ValueError("Unknown option: " + arg)
         elif scope is None:
             scope = arg
         else:
             raise ValueError("Only one scope may be supplied.")
-    return Path(scope).expanduser().resolve() if scope else Path.cwd().resolve(), json_output, strict
+        position += 1
+    return Path(scope).expanduser().resolve() if scope else Path.cwd().resolve(), json_output, strict, since
 
 
 def repository_root(scope):
@@ -326,8 +337,11 @@ def doc_record(path, root, required, pointed_by):
     record["flags"] = []
     record["required"] = required
     record["pointed_by"] = sorted(pointed_by)
-    if required and record["bytes"] > DOC_TARGET:
-        record["flags"].append("over-target")
+    if record["bytes"] > DOC_TARGET:
+        if required:
+            record["flags"].append("over-target")
+        elif pointed_by:
+            record["flags"].append("pointed-over-target")
     return record
 
 
@@ -394,8 +408,14 @@ def doc_lines(docs):
     return lines
 
 
+def large_doc_lines(large_docs):
+    lines = ["", "| large doc off the agent path | bytes |", "| --- | ---: |"]
+    lines.extend("| {} | {} |".format(doc["path"].replace("|", "\\|"), doc["bytes"]) for doc in large_docs)
+    return lines
+
+
 def docs_summary(summary):
-    return " {read_path_docs} read-path docs, {required_docs} required, {docs_over_target} over target, {accretion_orders} accretion orders.".format(**summary)
+    return " {read_path_docs} read-path docs, {required_docs} required, {docs_over_target} over target, {pointed_over_target} pointed over target, {accretion_orders} accretion orders.".format(**summary)
 
 
 def apply_flags(records, actual_paths, chains, root):
@@ -448,7 +468,7 @@ def discover_generators(paths, root, records):
     return sorted(generators, key=lambda generator: generator["directory"])
 
 
-def markdown(records, chains, generators, readmes, docs, summary):
+def markdown(records, chains, generators, readmes, docs, large_docs, summary):
     lines = ["| file | bytes | lines | chars | longest unit | units over 600 | dated | history | flags |", "| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |"]
     for record in records:
         values = {"path": record["path"].replace("|", "\\|"), "bytes": record["bytes"], "lines": record["lines"], "chars": record["chars"], "longest": record["longest_unit"], "over": record["units_over_600"], "dated": record["dated_references"], "history": record["history_phrases"], "flags": ", ".join(record["flags"]) or "none"}
@@ -467,26 +487,124 @@ def markdown(records, chains, generators, readmes, docs, summary):
         lines.extend(readme_lines(readmes))
     if docs:
         lines.extend(doc_lines(docs))
+    if large_docs:
+        lines.extend(large_doc_lines(large_docs))
     lines.extend(["", "{instruction_files} instruction files, {over_hard_cap} over a hard cap, {over_target} over target, {claude_md} CLAUDE files keeping Claude Code off AGENTS.md.".format(**summary)])
     if generators:
         lines[-1] += " {count} generators, {on} on, {blocks} with a block.".format(count=len(generators), on=sum(generator["state"] == "on" for generator in generators), blocks=sum(generator["block"] != "none" for generator in generators))
     if readmes:
         lines[-1] += " {count} READMEs carry agent-facing lines.".format(count=len(readmes))
     lines[-1] += docs_summary(summary)
+    lines[-1] += " {large_docs} large docs off the agent path.".format(**summary)
     return "\n".join(lines)
 
 
+def resolve_since(value, root, in_repository):
+    if not in_repository:
+        raise ValueError("Cannot resolve --since: " + value)
+    if SINCE_DATE.fullmatch(value) and value[4:5] == "-":
+        try:
+            datetime.fromisoformat(value)
+        except ValueError:
+            raise ValueError("Cannot resolve --since: " + value)
+    try:
+        result = subprocess.run(["git", "rev-parse", "--verify", "--quiet", value + "^{commit}"], cwd=root, capture_output=True, text=True, check=False)
+        ref = result.stdout.strip() if result.returncode == 0 else ""
+        if not ref and SINCE_DATE.fullmatch(value):
+            result = subprocess.run(["git", "rev-list", "-1", "--before=" + value, "HEAD"], cwd=root, capture_output=True, text=True, check=False)
+            ref = result.stdout.strip() if result.returncode == 0 else ""
+        if not ref:
+            raise ValueError("Cannot resolve --since: " + value)
+        date = subprocess.run(["git", "show", "-s", "--format=%cs", ref], cwd=root, capture_output=True, text=True, check=True).stdout.strip()
+    except (OSError, subprocess.CalledProcessError):
+        raise ValueError("Cannot resolve --since: " + value)
+    return ref, date
+
+
+def growth_report(scope, root, ref, date, records, docs, large_docs, in_repository):
+    instruction_paths = {record["path"] for record in records}
+    paths = instruction_paths | {doc["path"] for doc in docs + large_docs}
+    paths.update(relative_path(path, root) for path in markdown_candidates(scope, root, in_repository)
+                 if eligible_doc(path, root) and path.name in {"README.md", "DESIGN.md", "ARCHITECTURE.md"})
+    result = subprocess.run(["git", "ls-tree", "-r", "-l", "-z", ref], cwd=root, capture_output=True, check=True)
+    historic = set()
+    for entry in result.stdout.split(b"\0"):
+        if not entry:
+            continue
+        header, name = entry.split(b"\t", 1)
+        mode, kind, _, size = header.split()
+        if kind != b"blob":
+            continue
+        path = root / os.fsdecode(name)
+        try:
+            path.relative_to(scope)
+        except ValueError:
+            continue
+        if any(part in SKIPPED_DIRECTORIES for part in path.relative_to(root).parts[:-1]):
+            continue
+        historic.add(relative_path(path, root))
+        if is_instruction_file(path, root):
+            instruction_paths.add(relative_path(path, root))
+            paths.add(relative_path(path, root))
+        elif path.suffix == ".md" and (path.name in {"README.md", "DESIGN.md", "ARCHITECTURE.md"} or size != b"-" and int(size) > DOC_TARGET):
+            paths.add(relative_path(path, root))
+    for name in instruction_paths & historic:
+        result = subprocess.run(["git", "show", "{}:{}".format(ref, name)], cwd=root, capture_output=True, check=False)
+        if result.returncode:
+            continue
+        source = root / name
+        for _, line, _ in prose_lines(result.stdout.decode("utf-8", errors="replace")):
+            values = [match.group(1) for match in MARKDOWN_LINK.finditer(line)]
+            values.extend(match.group(1) for match in BACKTICK.finditer(line))
+            values.extend(match.group() for match in DOC_PATH.finditer(line))
+            for value in values:
+                value = value.split("#", 1)[0]
+                if not value.endswith(".md"):
+                    continue
+                for base in (source.parent, root):
+                    target = (base / value).resolve()
+                    try:
+                        target.relative_to(scope)
+                    except ValueError:
+                        continue
+                    candidate = relative_path(target, root)
+                    if candidate in historic and not is_instruction_file(target, root):
+                        paths.add(candidate)
+                        break
+    rows = []
+    for name in paths:
+        path = root / name
+        now = path.lstat().st_size if path.is_file() or path.is_symlink() else 0
+        result = subprocess.run(["git", "cat-file", "-s", "{}:{}".format(ref, name)], cwd=root, capture_output=True, text=True, check=False)
+        then = int(result.stdout.strip()) if result.returncode == 0 else 0
+        rows.append({"path": name, "then": then, "now": now, "change": now - then})
+    rows.sort(key=lambda row: (-abs(row["change"]), row["path"]))
+    return {"ref": ref, "date": date, "rows": rows,
+            "instruction_change": sum(row["change"] for row in rows if row["path"] in instruction_paths),
+            "doc_change": sum(row["change"] for row in rows if row["path"] not in instruction_paths)}
+
+
+def growth_lines(since):
+    lines = ["", "| file | bytes then | bytes now | change |", "| --- | ---: | ---: | ---: |"]
+    lines.extend("| {} | {} | {} | {:+d} |".format(row["path"].replace("|", "\\|"), row["then"], row["now"], row["change"]) for row in since["rows"][:25])
+    lines.append("")
+    lines.append("Since {} ({}): instruction files {:+d} bytes, docs {:+d} bytes, {} files changed.".format(since["ref"][:7], since["date"], since["instruction_change"], since["doc_change"], sum(row["change"] != 0 for row in since["rows"])))
+    return lines
+
+
 def added_lines(lines, original):
-    remaining = {}
-    for line in original.splitlines():
-        remaining[line] = remaining.get(line, 0) + 1
-    added = []
-    for number, line in enumerate(lines, 1):
-        if remaining.get(line, 0):
-            remaining[line] -= 1
-        else:
-            added.append((number, line))
-    return added
+    before = original.splitlines()
+    prefix = 0
+    while prefix < min(len(before), len(lines)) and before[prefix] == lines[prefix]:
+        prefix += 1
+    suffix = 0
+    while suffix < min(len(before), len(lines)) - prefix and before[-suffix - 1] == lines[-suffix - 1]:
+        suffix += 1
+    old_end = len(before) - suffix
+    new_end = len(lines) - suffix
+    matcher = SequenceMatcher(None, before[prefix:old_end], lines[prefix:new_end], autojunk=False)
+    return [(prefix + number + 1, lines[prefix + number]) for tag, _, _, start, end in matcher.get_opcodes()
+            if tag in {"insert", "replace"} for number in range(start, end)]
 
 
 def added_edit_lines(lines, old_string, new_string):
@@ -523,6 +641,78 @@ def added_edit_lines(lines, old_string, new_string):
     return added
 
 
+def patch_files(command):
+    if not isinstance(command, str):
+        return None
+    lines = command.splitlines()
+    if len(lines) < 3 or lines[0] != "*** Begin Patch" or lines[-1] != "*** End Patch":
+        return None
+    sections = []
+    section = None
+    hunk = False
+    body = lines[1:-1]
+    after_eof = False
+    for position, line in enumerate(body):
+        match = re.fullmatch(r"\*\*\* (Add|Update|Delete) File: (.+)", line)
+        if match:
+            section = {"operation": match.group(1), "path": match.group(2), "source_path": match.group(2), "chunks": []}
+            sections.append(section)
+            hunk = match.group(1) == "Add"
+            after_eof = False
+        elif section is None:
+            return None
+        elif line.startswith("*** Move to: ") and section["operation"] == "Update" and not hunk:
+            section["path"] = line[len("*** Move to: "):]
+        elif line.startswith("@@") and section["operation"] == "Update":
+            section["chunks"].append([])
+            hunk = True
+            after_eof = False
+        elif line == "*** End of File" and section["operation"] == "Update" and hunk:
+            after_eof = True
+        elif line == "" and (after_eof or not any(body[position + 1:])):
+            continue
+        elif section["operation"] == "Add" and line.startswith("+"):
+            if not section["chunks"]:
+                section["chunks"].append([])
+            section["chunks"][-1].append(("+", line[1:]))
+        elif section["operation"] == "Update" and (line[:1] in {"+", "-", " "} or line == ""):
+            if not section["chunks"]:
+                section["chunks"].append([])
+            hunk = True
+            after_eof = False
+            section["chunks"][-1].append((line[:1] if line else " ", line[1:] if line else ""))
+        else:
+            return None
+    if not sections or any(not section["path"].strip() for section in sections):
+        return None
+    return sections
+
+
+def patch_original(text, sections):
+    if any(section["operation"] == "Add" for section in sections):
+        return ""
+    lines = text.splitlines(keepends=True)
+    cursor = 0
+    for section in sections:
+        for chunk in section["chunks"]:
+            new = [value for sign, value in chunk if sign != "-"]
+            old = [value for sign, value in chunk if sign != "+"]
+            plain = [line.rstrip("\r\n") for line in lines]
+            start = next((index for index in range(cursor, len(lines) - len(new) + 1) if plain[index:index + len(new)] == new), None)
+            if start is None:
+                start = next((index for index in range(len(lines) - len(new) + 1) if plain[index:index + len(new)] == new), None)
+            if start is None:
+                return None
+            matched = lines[start:start + len(new)]
+            ending = "\r\n" if any(line.endswith("\r\n") for line in matched) else "\n"
+            replacement = [value + ending for value in old]
+            if matched and not matched[-1].endswith(("\r", "\n")) and replacement:
+                replacement[-1] = old[-1]
+            lines[start:start + len(new)] = replacement
+            cursor = start + len(replacement)
+    return "".join(lines)
+
+
 def is_store_file(path):
     parent = path.parent
     return (path.suffix == ".md" and parent.name == "memory"
@@ -553,10 +743,12 @@ def hook_class(path, root, text):
         if directory == root:
             break
         directory = directory.parent
-    return "pointed" if pointed else None
+    if pointed:
+        return "pointed"
+    return "person" if path.name in README_NAMES | {"DESIGN.md", "ARCHITECTURE.md"} else None
 
 
-def hook_findings(path, root, text, data, original, added, kind):
+def hook_findings(path, root, text, data, original, added, kind, original_size=None):
     findings = []
     prose = {number: line for number, _, line in prose_lines(text)}
     for number, _ in added:
@@ -570,59 +762,127 @@ def hook_findings(path, root, text, data, original, added, kind):
         if kind == "instruction" or kind == "required" and path.name not in README_NAMES:
             if any(phrase in line.lower() for phrase in HISTORY_PHRASES):
                 findings.append((number, "history", "added history phrase"))
-    if kind in {"instruction", "required"} and original is not None:
+    if original_size is None and original is not None:
+        original_size = len(original.encode("utf-8"))
+    if original_size is not None:
         target = (8192 if path.parent == root else 5120) if kind == "instruction" else DOC_TARGET
-        if len(data) > target and len(data) > len(original.encode("utf-8")):
+        if len(data) > target and len(data) > original_size:
             findings.append((0, "over-target", "{} bytes (target {})".format(len(data), target)))
-    if original is not None and (kind == "instruction" or kind == "required" and path.name not in README_NAMES):
+    if kind == "instruction" or kind == "required" and path.name not in README_NAMES:
+        added_numbers = {number for number, _ in added}
         for unit in units_for(text):
-            if len(unit) > 600 and unit not in original:
-                number = text[:text.find(unit)].count("\n") + 1
-                findings.append((number, "long-unit", "{} characters (limit 600)".format(len(unit))))
+            if len(unit) <= 600:
+                continue
+            number = text[:text.find(unit)].count("\n") + 1
+            if original is not None and unit in original:
+                continue
+            if original is None and not any(line in added_numbers for line in range(number, number + unit.count("\n") + 1)):
+                continue
+            findings.append((number, "long-unit", "{} characters (limit 600)".format(len(unit))))
     return findings
 
 
 def check_hook():
     try:
         payload = json.load(sys.stdin)
-        tool_name = payload["tool_name"]
-        tool_input = payload["tool_input"]
-        response = payload["tool_response"]
-        input_path = tool_input["file_path"]
-        response_path = response["filePath"]
-        original = response["originalFile"]
-        if tool_name not in {"Edit", "Write"} or not isinstance(input_path, str) or not isinstance(response_path, str) or not isinstance(original, (str, type(None))):
+        if not isinstance(payload, dict):
             return 0
-        path = Path(response_path).expanduser().resolve()
-        if path.suffix != ".md" or is_store_file(path) or not path.is_file():
+        tool_name = payload.get("tool_name", payload.get("toolName"))
+        tool_input = payload.get("tool_input", payload.get("toolInput"))
+        response = payload.get("tool_response", payload.get("toolResult"))
+        if not isinstance(tool_input, dict) or not ("tool_response" in payload or "toolResult" in payload):
             return 0
-        root, in_repository = repository_root(path.parent)
-        if not in_repository:
-            return 0
-        if any(part in SKIPPED_DIRECTORIES for part in path.relative_to(root).parts[:-1]):
-            return 0
-        data = path.read_bytes()
-        text = data.decode("utf-8", errors="replace")
-        lines = text.splitlines()
-        kind = hook_class(path, root, text)
-        if kind is None:
-            return 0
-        if original is not None:
-            added = added_lines(lines, original)
-        elif tool_name == "Write":
-            added = list(enumerate(lines, 1))
-            original = ""
-        else:
-            old_string = tool_input.get("old_string")
-            new_string = tool_input.get("new_string")
-            if not isinstance(old_string, str) or not isinstance(new_string, str):
+        targets = []
+        if tool_name == "apply_patch":
+            cwd = payload.get("cwd")
+            if not isinstance(response, str) or not isinstance(cwd, str) or not Path(cwd).is_absolute():
                 return 0
-            added = added_edit_lines(lines, old_string, new_string)
-            original = text.replace(new_string, old_string, 1) if text.count(new_string) == 1 else None
-        findings = hook_findings(path, root, text, data, original, added, kind)
-        for number, rule, detail in findings:
-            print("{}:{}: {}: {}".format(relative_path(path, root), number, rule, detail), file=sys.stderr)
-        if findings:
+            sections = patch_files(tool_input.get("command"))
+            if sections is None:
+                return 0
+            grouped = {}
+            for section in sections:
+                path = Path(section["path"])
+                if not path.is_absolute():
+                    path = Path(cwd) / path
+                if section["operation"] != "Delete":
+                    grouped.setdefault(path.resolve(), []).append(section)
+            targets.extend((path, None, "patch", parts) for path, parts in grouped.items())
+        elif tool_name in {"Edit", "Write"} and isinstance(response, dict) and "filePath" in response and "originalFile" in response:
+            input_path = tool_input.get("file_path")
+            response_path = response["filePath"]
+            original = response["originalFile"]
+            if not isinstance(input_path, str) or not isinstance(response_path, str) or not isinstance(original, (str, type(None))):
+                return 0
+            targets.append((Path(response_path).expanduser().resolve(), original, "claude", tool_input))
+        elif tool_name in {"search_replace", "hashline_edit", "Edit", "Write"}:
+            input_path = next((tool_input[key] for key in ("file_path", "target_file", "path") if isinstance(tool_input.get(key), str)), None)
+            if not input_path:
+                return 0
+            path = Path(input_path).expanduser()
+            if not path.is_absolute():
+                base = payload.get("cwd") or payload.get("workspaceRoot")
+                if not isinstance(base, str) or not Path(base).is_absolute():
+                    return 0
+                path = Path(base) / path
+            old = tool_input.get("old_string", tool_input.get("find"))
+            new = tool_input.get("new_string", tool_input.get("replace"))
+            content = tool_input.get("content", tool_input.get("contents"))
+            if isinstance(old, str) and isinstance(new, str):
+                targets.append((path.resolve(), None, "grok_edit", (old, new)))
+            elif isinstance(content, str):
+                targets.append((path.resolve(), None, "grok_write", None))
+            else:
+                return 0
+        else:
+            return 0
+        output = []
+        for path, original, source, details in targets:
+            if path.suffix != ".md" or is_store_file(path) or not path.is_file():
+                continue
+            root, in_repository = repository_root(path.parent)
+            if not in_repository or any(part in SKIPPED_DIRECTORIES for part in path.relative_to(root).parts[:-1]):
+                continue
+            data = path.read_bytes()
+            text = data.decode("utf-8", errors="replace")
+            lines = text.splitlines()
+            kind = hook_class(path, root, text)
+            if kind is None:
+                continue
+            original_size = None
+            if source == "patch":
+                original = patch_original(text, details)
+                if original is None:
+                    continue
+                added = added_lines(lines, original)
+            elif source == "claude":
+                if original is not None:
+                    added = added_lines(lines, original)
+                elif tool_name == "Write":
+                    added = list(enumerate(lines, 1))
+                    original = ""
+                else:
+                    old = details.get("old_string")
+                    new = details.get("new_string")
+                    if not isinstance(old, str) or not isinstance(new, str):
+                        return 0
+                    added = added_edit_lines(lines, old, new)
+                    original = text.replace(new, old, 1) if text.count(new) == 1 else None
+            elif source == "grok_edit":
+                old, new = details
+                if text.count(new) == 1:
+                    original = text.replace(new, old, 1)
+                    added = added_lines(lines, original)
+                else:
+                    added = added_edit_lines(lines, old, new)
+                    original_size = len(data) - len(new.encode("utf-8")) + len(old.encode("utf-8"))
+            else:
+                added = list(enumerate(lines, 1))
+            for number, rule, detail in hook_findings(path, root, text, data, original, added, kind, original_size):
+                output.append("{}:{}: {}: {}".format(relative_path(path, root), number, rule, detail))
+        for line in output:
+            print(line, file=sys.stderr)
+        if output:
             print(HOOK_CLOSING, file=sys.stderr)
             return 2
     except Exception:
@@ -634,7 +894,7 @@ def main():
     if sys.argv[1:] == ["--hook"]:
         return check_hook()
     try:
-        scope, json_output, strict = parse_args(sys.argv[1:])
+        scope, json_output, strict, since_value = parse_args(sys.argv[1:])
     except ValueError as error:
         print("Measure.py: " + str(error), file=sys.stderr)
         return 2
@@ -642,17 +902,31 @@ def main():
         print("Measure.py: Scope is not a directory: " + str(scope), file=sys.stderr)
         return 2
     root, in_repository = repository_root(scope)
+    try:
+        ref, date = resolve_since(since_value, root, in_repository) if since_value is not None else (None, None)
+    except ValueError as error:
+        print("Measure.py: " + str(error), file=sys.stderr)
+        return 2
     records, paths, generator_paths, readme_paths = discover(scope, root, in_repository)
     docs = discover_docs(scope, root, paths.values(), in_repository)
+    read_path_names = {doc["path"] for doc in docs}
+    large_docs = sorted(({"path": relative_path(path, root), "bytes": path.stat().st_size}
+                         for path in markdown_candidates(scope, root, in_repository)
+                         if eligible_doc(path, root) and relative_path(path, root) not in read_path_names and path.stat().st_size > DOC_TARGET),
+                        key=lambda doc: (-doc["bytes"], doc["path"]))
     directories = {path.parent for path in paths.values() if path.name in {"AGENTS.md", "AGENTS.override.md"}}
     chains = sorted((chain_for(directory, root) for directory in directories), key=lambda chain: chain["directory"])
     apply_flags(records, paths, chains, root)
     generators = discover_generators(generator_paths, root, records)
     readmes = discover_readmes(readme_paths, root)
     records.sort(key=lambda record: (-record["bytes"], record["path"]))
-    summary = {"instruction_files": len(records), "over_hard_cap": sum("grok-cap" in record["flags"] or "codex-chain" in record["flags"] for record in records), "over_target": sum("over-target" in record["flags"] for record in records), "claude_md": sum("claude-md" in record["flags"] for record in records), "read_path_docs": len(docs), "required_docs": sum(doc["required"] for doc in docs), "docs_over_target": sum("over-target" in doc["flags"] for doc in docs), "accretion_orders": sum(len(record["accretion_orders"]) for record in records + docs)}
+    summary = {"instruction_files": len(records), "over_hard_cap": sum("grok-cap" in record["flags"] or "codex-chain" in record["flags"] for record in records), "over_target": sum("over-target" in record["flags"] for record in records), "claude_md": sum("claude-md" in record["flags"] for record in records), "read_path_docs": len(docs), "required_docs": sum(doc["required"] for doc in docs), "docs_over_target": sum("over-target" in doc["flags"] for doc in docs), "pointed_over_target": sum("pointed-over-target" in doc["flags"] for doc in docs), "large_docs": len(large_docs), "accretion_orders": sum(len(record["accretion_orders"]) for record in records + docs)}
+    since = growth_report(scope, root, ref, date, records, docs, large_docs, in_repository) if ref else None
     if json_output:
-        print(json.dumps({"root": str(root), "scope": str(scope), "files": records, "chains": chains, "generators": generators, "readmes": readmes, "docs": docs, "summary": summary}, ensure_ascii=False))
+        output = {"root": str(root), "scope": str(scope), "files": records, "chains": chains, "generators": generators, "readmes": readmes, "docs": docs, "large_docs": large_docs, "summary": summary}
+        if since:
+            output["since"] = since
+        print(json.dumps(output, ensure_ascii=False))
     elif not records:
         print("No instruction files found under " + str(scope) + ".")
         if generators:
@@ -663,11 +937,16 @@ def main():
         if readmes:
             print("\n".join(readme_lines(readmes)))
             print("\n{count} READMEs carry agent-facing lines.".format(count=len(readmes)))
-        if any(doc["required"] for doc in docs):
+        if docs:
             print("\n".join(doc_lines(docs)))
-            print("\n" + docs_summary(summary).strip())
+        if large_docs:
+            print("\n".join(large_doc_lines(large_docs)))
+        if docs or large_docs:
+            print("\n" + docs_summary(summary).strip() + " {large_docs} large docs off the agent path.".format(**summary))
     else:
-        print(markdown(records, chains, generators, readmes, docs, summary))
+        print(markdown(records, chains, generators, readmes, docs, large_docs, summary))
+    if since and not json_output:
+        print("\n".join(growth_lines(since)))
     return 1 if strict and summary["over_hard_cap"] else 0
 
 

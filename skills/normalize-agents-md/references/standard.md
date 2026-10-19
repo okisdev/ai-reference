@@ -1,6 +1,6 @@
 # Instruction file standard
 
-An instruction file holds the facts an agent cannot infer from the tree in a minute and the rules it would otherwise break. Everything else costs every session and reaches two of the three harnesses truncated. The same holds for every doc an instruction file orders agents to read.
+An instruction file holds the facts an agent cannot infer from the tree in a minute and the rules it would otherwise break. Everything else costs every session and reaches two of the three harnesses truncated. The same holds for every doc an instruction file points agents at, whoever it was written for.
 
 ## Layout
 
@@ -14,11 +14,11 @@ An instruction file holds the facts an agent cannot infer from the tree in a min
 
 ## Read-path docs
 
-A read-path doc is one an instruction file orders agents to read before a class of change, or one that claims to win over the code: a `DESIGN.md` that every UI change reads first, or a README an AGENTS.md names as the manual or as the registry of routes. Every session that order names reads it, and so does every subagent the work fans out to, so it is held to this standard like an instruction file: the altitude test, the routing table, the ledger, and the loss check apply clause by clause, and it has a target. `measure.py` lists each one with the line that points at it, `required` when that line orders a read or the doc claims precedence, `pointed` otherwise.
+A read-path doc is one an instruction file points agents at: `required` when the pointer orders it read before a class of change or the doc claims to win over the code (a `DESIGN.md` that every UI change reads first), `pointed` when the pointer only names it (a README called the manual or the registry of routes). Agents follow a pointer whether or not it orders a read, and every subagent the work fans out to follows it again, so both kinds are held to this standard like an instruction file: the altitude test, the routing table, the ledger, and the loss check apply clause by clause, and each has the 16 KB target. `measure.py` lists each one with the line that points at it.
 
 A read-path doc states what must stay true, never what currently is. What a surface, route, or command does today is the code's record; restating it turns every code change into a doc change, so the doc grows with the code instead of with its rules (seen: a `DESIGN.md` that ordered each new component added "to this file in the same change" grew from 24 KB to 232 KB in 18 days, about 70 percent of it per-surface description, and was read 251 times in 40 sessions). It keeps the rules every surface follows: tokens, type and spacing scales, component grammar, interaction principles, and the never-rules. A precedence claim survives for those rules only: where the code breaks one, the code is fixed, and no description is written down to win.
 
-Only the parts agents act on are held to this standard: what a person reads the doc for, such as a guide's steps, setup, operation, configuration, a changelog entry, or a decision's rationale, stays as found, the way README content sorts by reader below. A doc off the read path, such as a decision record, an archive, a user guide, or a changelog, is a record or human documentation and is left as found; only a pointer that makes it required reading is rewritten to name the section and the change that needs it.
+The reader decides where content lives, never whether a doc may grow with the code. A manual written for people (setup, operation, configuration, a tour of each feature) leaves the agent's path: the rules inside it move into AGENTS.md or the read-path doc that governs them, the instruction file's pointer to it is deleted, what it tells a person stays, and the editing contract keeps it from growing with every change, because a manual that restates what each surface does grows with the code exactly as a design doc does (seen: after a `DESIGN.md` was cut to its rules, the README its AGENTS.md called "its manual" grew from 122 KB to 140 KB in four days while every check passed, and two passes left it as found because it was written for people). A doc off the path (a decision record, an archive, a user guide, a changelog) is left as found; `measure.py` lists every doc past the target as a large doc, so its growth stays visible to the next pass and to the owner.
 
 ## Caps and targets
 
@@ -29,7 +29,8 @@ Only the parts agents act on are held to this standard: what a person reads the 
 | Claude per file | No cap under 4 MiB; the official target is under 200 lines, and adherence drops with length | code.claude.com/docs/en/memory |
 | Root target | 8 KB and about 100 lines | Leaves room for a managed block and for growth before the next pass |
 | Nested target | 5 KB and about 60 lines | A package file is read on top of the root |
-| Read-path doc | 16 KB, and no unit over 600 characters | Read by every session its pointer names and by every subagent those fan out to; a rules doc past this has turned into a description |
+| Read-path doc, required or pointed | 16 KB, and no unit over 600 characters | Read by every session its pointer names and by every subagent those fan out to; a rules doc past this has turned into a description |
+| Large doc off the agent's path | Listed past 16 KB, never cut to meet it | `measure.py` lists it and `--hook` flags each write that grows it, so growth shows before it becomes the next running record |
 
 `measure.py --strict` fails on a hard cap and reports the targets, the read-path docs, and the accretion orders and status lines in each file.
 
@@ -37,7 +38,7 @@ Only the parts agents act on are held to this standard: what a person reads the 
 
 Apply to one clause. A clause that fails the first question leaves the file; one that fails a later question is rewritten or moved.
 
-1. What would an agent do differently because of this clause? No trigger and no observable action means it is description, history, or rationale.
+1. What would an agent do differently because of this clause? No trigger and no observable action means it is description, history, or rationale. A description reworded as an imperative ("Draw the page as a document in an 820 point column") is still one, because it restates what one surface does instead of a rule several follow.
 2. Could an agent recover it from the tree in under a minute (`ls`, a manifest, the test it names)? Then the tree is the source of truth and the copy will drift.
 3. Would it be false after the next refactor or the next file added? Then it is a census written at the wrong altitude.
 4. Does it apply to most sessions in this directory? A rule for one package belongs in that package's file.
@@ -61,6 +62,7 @@ Apply to one clause. A clause that fails the first question leaves the file; one
 | Command or verification recipe | Non-obvious build, test, lint, typecheck, and their scope | Stays; scripts obvious from the manifest are dropped |
 | Pointer | Names the owning file and the decision that requires reading it; a line that only says what a directory holds is an inventory | Stays |
 | Product description | What the app is, features, user setup, written for a reader | One title line stays; the rest goes to README when README lacks it, else is dropped |
+| Pointer to a manual | An instruction file names a doc written for people as the manual, the guide, or where features are described | Delete the pointer; the manual's rules move here or into the read-path doc that governs them, and the manual stays for people |
 | Agent-facing README section | A README section addressed to agents or stating obligations for code changes | AGENTS.md through this table; README keeps at most one pointer line |
 | Contributor process | PR etiquette addressed to contributors | CONTRIBUTING.md in a public repository, with one pointer left |
 | Generic best practice | Names nothing repo-specific | Delete; global instructions carry habits |
@@ -104,12 +106,13 @@ Root:
 ## Editing docs
 
 - One rule per bullet, imperative, with at most one because-clause naming the failure it prevents.
-- This file and every doc it orders agents to read state what must stay true, never what currently is: what a change did goes in its commit and PR, what the code does stays in the code, and status goes to the tracker.
+- This file and every doc it points agents at state what must stay true, never what currently is: what a change did goes in its commit and PR, what the code does stays in the code, and status goes to the tracker.
 - A change that makes a sentence here false replaces that sentence in the same change, and never appends an account of the change.
+- A doc written for people (a README manual, a guide) changes when the owner asks or at a release, never as a side effect of a code change; a change that makes one of its sentences false replaces that sentence.
 - A lesson from one session goes to commit messages, issues, or the maintainer's memory store; a rule enters only when the owner decides it, the same mistake repeats, or a review catches it.
 - A rule an existing check asserts is a one-line pointer to that check, not a restatement.
-- Keep this file under 8 KB, any nested AGENTS.md under 5 KB, and each doc it orders agents to read under 16 KB, with no inventories, dates, issue numbers, or module internals; an amendment that would pass a target settles the file first.
-- Edit these files with an editor, never through a script, so every amendment stays reviewable.
+- Keep this file under 8 KB, any nested AGENTS.md under 5 KB, and each doc it points agents at under 16 KB, with no inventories, dates, issue numbers, or module internals; an amendment that would pass a target settles the file first.
+- Edit these files with the editing tool, never through a shell script or heredoc, so every amendment stays reviewable and the doc hook sees it.
 ```
 
 Nested (a package or app):
@@ -132,7 +135,7 @@ Nested (a package or app):
 - <Only pointers local to this package.>
 ```
 
-Read-path doc (a `DESIGN.md`, or the rules part of a manual README):
+Read-path doc (a `DESIGN.md`, or a README an instruction file names as a registry):
 
 ```md
 # <name>
@@ -170,7 +173,7 @@ README sections that were written for agents (headings naming agents, Claude, Co
 
 A README-only directory that is not a workspace package or app gets no AGENTS.md, because no harness loads anything there; its agent-facing sections move to the nearest ancestor AGENTS.md instead.
 
-A README an instruction file names as the manual or as a registry (routes, bindings, commands) is a read-path doc for those parts. A route, binding, or component table the code carries is an inventory and leaves, one pointer to the file that registers them (the router, the bindings config, the barrel) taking its place, and the AGENTS.md pointer is rewritten to name that file; setup, operation, and configuration written for a person stay.
+A README an instruction file names as a registry (routes, bindings, commands) is a read-path doc: a route, binding, or component table the code carries is an inventory and leaves, one pointer to the file that registers them (the router, the bindings config, the barrel) taking its place, and the AGENTS.md pointer is rewritten to name that file. A README an instruction file names as the manual leaves the agent's path as Read-path docs says: its rules move into AGENTS.md, the pointer is deleted, and setup, operation, and configuration written for a person stay.
 
 ## Ledger
 
