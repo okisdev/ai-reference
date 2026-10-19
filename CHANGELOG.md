@@ -2,6 +2,23 @@
 
 All notable changes to this collection. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions match `.claude-plugin/plugin.json`. Changes before 0.0.41 live in the merged pull requests.
 
+## [0.0.46] (2026-10-20)
+
+### Added
+
+- `measure.py --since <commit or date>` reports how much each instruction file, read-path doc, and README, DESIGN, or ARCHITECTURE doc grew since then, so a normalization pass is judged on the tree a week later instead of on its own checks; report mode flags a pointed doc past its 16 KB target and lists every large doc off the agent's path.
+- `measure.py --hook` and `check.py --hook` read Codex `apply_patch` and Grok edit payloads as well as Claude Code's, so the same doc and memory checks run as PostToolUse hooks in all three harnesses.
+- Eval cases for a README manual taken off the agent's path, the markdown churn routing ask, an output-first digest, a share form held against real values, a reference's information layout, a states list in a render check, a pending CI row, an approval the base branch would ignore, and a design contract of rules only.
+
+### Changed
+
+- normalize-agents-md judges a doc by whether an instruction file points agents at it, not by who it was written for: a manual for people leaves the agent's path with its rules moved into AGENTS.md, the editing contract keeps person-facing docs from changing with every code change, every pass starts from the growth table and keeps a ledger, the loss check brief names no intended drop, and a moved as-built description never becomes a nested AGENTS.md.
+- The doc hook also checks status lines and growth past 16 KB in every README, DESIGN, and ARCHITECTURE doc, and `since <date>` or `deployed <date>` lines count as status lines; `check.py` flags such dated status lines in memory topics and the index.
+- use-project-memory stops at once in a run another agent dispatched, writes only through each harness's editing tool, and nudges for `clean-memory` when the index regrows by half; clean-memory always writes its sidecar.
+- recap-activity's digest says what was produced before it counts anything; plan-charts holds each form against the values production would show; mirror-reference carries a reference's information layout when that layout is what makes it worth following; verify-ui lists every state a change touches as checked or not checked; optimize-repo reports its net line count and a doc sync line.
+- verify-pr reads its CI row from the checks on the head; ship-pr prints a status line before each wait, keeps waits to 270 seconds, merges in the same turn once verify-pr clears the head, accepts `--approve`, and uses `--admin` on another author's PR only when the user passed it, after the approval path; approve-pr posts no approval the base branch would ignore from the account that pushed the last commit.
+- distill-session scans every project's store when the ask is how the skills are used, works from per-invocation episodes when sessions outnumber its cap, and measures lasting goals on the tree; AUTHORING.md asks the same of every skill whose goal must hold after it runs.
+
 ## [0.0.45] (2026-10-15)
 
 ### Fixed
