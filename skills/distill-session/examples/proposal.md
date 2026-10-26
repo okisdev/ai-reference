@@ -10,10 +10,10 @@ The bar for a proposal: a few rows, each pinned to a verbatim quote with its fil
 
 | Target | Proposed change | Evidence |
 |---|---|---|
-| `skills/release-notes/SKILL.md`, Process step 2, the sentence "Collect the merged PRs since the last release." | Replace "since the last release" with "since the last tag (`git describe --tags --abbrev=0`), because a draft release has no tag". Anti-pattern: the notes started at a draft release and covered the wrong range | `"范围不对，应该从 v2.3.1 开始"` (`4f1c9a02.jsonl:312`) |
-| `skills/triage-issues/SKILL.md`, Rules, after the bullet "Reply before you close." | Add the bullet "Comment the canonical issue's link before closing a duplicate." Win: the reporter did not reopen | `"对，这样关 duplicate 就不会被重开了"` (`b7e3d518.jsonl:241`) |
-| New-skill candidate (an issue in the skills repository) | `bump-changelog`: the same three-step edit (read the unreleased section, move it under the version heading, add the compare link) was done by hand in 3 sessions | `"又要手动改 CHANGELOG 了"` (`2d80a6ce.jsonl:58`), `"同上，改 CHANGELOG"` (`b7e3d518.jsonl:402`) |
-| Standing rule (suggested line, not written) | "Run `pnpm typecheck` before saying a UI change works." | `"你说好了，但 typecheck 过不了"` (`91ac07d4.jsonl:204`); the agent's own "typecheck passes" at `:199` was re-run on `main` at `a1b2c3d` and exits 2 |
+| `skills/release-notes/SKILL.md`, Process step 2, the sentence "Collect the merged PRs since the last release." | Replace "since the last release" with "since the last tag (`git describe --tags --abbrev=0`), because a draft release has no tag". Anti-pattern: the notes started at a draft release and covered the wrong range | `"wrong range, it should start from v2.3.1"` (`4f1c9a02.jsonl:312`) |
+| `skills/triage-issues/SKILL.md`, Rules, after the bullet "Reply before you close." | Add the bullet "Comment the canonical issue's link before closing a duplicate." Win: the reporter did not reopen | `"right, closing duplicates this way keeps them closed"` (`b7e3d518.jsonl:241`) |
+| New-skill candidate (an issue in the skills repository) | `bump-changelog`: the same three-step edit (read the unreleased section, move it under the version heading, add the compare link) was done by hand in 3 sessions | `"editing the CHANGELOG by hand again"` (`2d80a6ce.jsonl:58`), `"same again, update the CHANGELOG"` (`b7e3d518.jsonl:402`) |
+| Standing rule (suggested line, not written) | "Run `pnpm typecheck` before saying a UI change works." | `"you said it was done, but typecheck fails"` (`91ac07d4.jsonl:204`); the agent's own "typecheck passes" at `:199` was re-run on `main` at `a1b2c3d` and exits 2 |
 
 **Dropped at the gates**: 10 of 14. 5 not durable (paths from one task), 3 not decision-changing ("be careful with dates"), 1 not encodable (no home), 1 already recorded (`AGENTS.md:14` already says to run the unit tests before a commit). No quote carries a secret.
 

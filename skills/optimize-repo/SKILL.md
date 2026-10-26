@@ -1,6 +1,6 @@
 ---
 name: optimize-repo
-description: Extract, decouple, refactor, remove redundancy and dead code, and reuse existing helpers (抽离, 解耦, 重构, 冗余, 简化代码), then verify and leave the changes uncommitted.
+description: Extract, decouple, refactor, simplify, remove redundancy and dead code, and reuse existing helpers, then verify and leave the changes uncommitted.
 argument-hint: "[scope] [--code-only|--docs-only]"
 ---
 
@@ -22,7 +22,7 @@ Optimize the scope by deleting and simplifying first, reusing what the repositor
 
 ### Process
 
-1. Parse `$ARGUMENTS` (scope is a path or `all`, defaulting to the changes since the default base when the current branch is a feature branch and the whole repository otherwise; `--code-only` and `--docs-only` limit the pass, otherwise process the whole scope). A bare ask to extract, decouple, or refactor (抽离, 解耦, 重构) runs this pass over the scope it names instead of an ad hoc edit (seen: asks to extract, decouple, and refactor went ad hoc in 34 sessions).
+1. Parse `$ARGUMENTS` (scope is a path or `all`, defaulting to the changes since the default base when the current branch is a feature branch and the whole repository otherwise; `--code-only` and `--docs-only` limit the pass, otherwise process the whole scope). A bare ask to extract, decouple, or refactor, in any language, runs this pass over the scope it names instead of an ad hoc edit (seen: asks to extract, decouple, and refactor went ad hoc in 34 sessions).
 2. Read before touching: map the scope's idiom, entry points, and in-repo prior art; no edit lands before this read.
 3. Decide the release posture from evidence, not habit. A package with `private: true`, no version tags, and no published artifact gets no backward compatibility: no deprecation aliases, no compat shims, no old path kept, delete instead. A published package keeps compatibility and takes a changeset in the repository's format when `.changeset` exists. State the evidence in the report.
 4. Simplify and delete: strip comments that fail the bar (a comment survives only when it states a why the code cannot show), remove dead code, unused files, and unused exports. Aim past local cleanup: prefer the restructuring that makes a whole branch, mode, helper, or layer disappear over polishing what could vanish. For the riskiest removal, name the one fact it is safe because of and prove that fact by running real code (a test or scratch script importing the shipped path); a safety fact that stays unproven is reported as unproven, not assumed. When the scope includes work this session authored, run this review in a fresh subagent with none of the authoring context, because an authoring context defends its own output. Exempt primitives that look unused but are the repository's public building blocks; leave those in place.

@@ -8,7 +8,7 @@ Matched the reference. Copied its Toolbar and FilterChip components, class strin
 
 Why each part fails:
 
-- `class strings and color tokens included (rounded-xl bg-zinc-900/60 text-[13px])`: class strings, tokens, colors, and names are never copied verbatim, and a rename leaves the skin intact; the pattern transfers, the skin does not (seen: asks to follow a reference without copying it, as in 参考 X，不要照抄, went ad hoc).
+- `class strings and color tokens included (rounded-xl bg-zinc-900/60 text-[13px])`: class strings, tokens, colors, and names are never copied verbatim, and a rename leaves the skin intact; the pattern transfers, the skin does not (seen: asks to follow a reference without copying it went ad hoc).
 - `Copied its Toolbar and FilterChip components`: no search for an existing primitive; this repository already has `components/ui/toolbar.tsx`, and a parallel implementation must state what existing thing it rejected and why.
 - `merged them`: with several references each contributes one named pattern class as a take and a not-take, and each adopted pattern is attributed, not blended into something nobody can trace.
 - `Read the references' current files`: a reference's recent direction comes from its dated git history; current files cannot tell a direction from a leftover.
