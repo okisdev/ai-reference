@@ -19,6 +19,6 @@ The bar for a verification report: each claim sits beside the evidence that deci
 
 **Teardown.** Closed the two pages the run opened and killed PID 48213 only; `lsof -nP -iTCP:3001 -sTCP:LISTEN` printed nothing. The app on 3000 is not this skill's server and was left running.
 
-**States the change touches.** Viewports: 390x844 and 1440x900 checked. Theme: light checked, dark not checked (no theme switch in the review build). Empty and loading: not applicable, `SaveBar` renders only with a loaded form. Error: the save failure banner renders inside `SaveBar` and was not checked, since producing it needs a failing API the read-only caller cannot arrange. Flags: none gate `SaveBar`.
+**States the change touches.** Viewports: 390x844 and 1440x900 checked. Theme: light checked; dark not checked, because the review build pins the light theme and ignores the emulated dark color scheme. Empty and loading: not applicable, `SaveBar` renders only with a loaded form. Error: the save failure banner renders inside `SaveBar` and was not checked, since producing it needs a failing API the read-only caller cannot arrange. Flags: none gate `SaveBar`.
 
 **Not checked.** Dark mode, the save error state, a keyboard focus pass, and engines other than Chrome's emulation.
