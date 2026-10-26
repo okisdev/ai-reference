@@ -43,7 +43,7 @@ The question picks the form; the data's shape never does. A table answers "what 
 - A node graph for a strict hierarchy at scale.
 - A percentile band drawn from three static percentiles with no time series.
 - A chart column repeating a value the page is already scoped to.
-- A share, ratio, or progress form when most entities sit within a few percent of one end of its scale: it draws nothing a person can read; check the real distribution first and draw the absolute quantity, a zoomed or log scale, or a rank instead (seen: allowance shares drawn as thin bars, where almost every account used 0 to 2 percent, drew "那些线条并不是我们想要的内容").
+- A share, ratio, or progress form when most entities sit within a few percent of one end of its scale: it draws nothing a person can read; check the real distribution first and draw the absolute quantity, a zoomed or log scale, or a rank instead (seen: allowance shares drawn as thin bars, where almost every account used 0 to 2 percent, drew the complaint that those lines were not what anyone wanted).
 
 ## Expanding the vocabulary
 
@@ -64,7 +64,7 @@ The question picks the form; the data's shape never does. A table answers "what 
 - A row is keyed by index and disambiguated in its label, never by a domain id that can repeat.
 - A connector or point that looks accidental is a rendering defect to fix (one rounded track with square joins, a straight connector), not a data quirk to explain.
 - Server-rendered date math is UTC, explicit, and identical in the page and its skeleton.
-- Verified through `verify-ui` on a project with data, an empty project, the demo, both themes, and a narrow viewport.
+- Verified through `verify-ui` on a project with data, an empty project, one with a single entity, one where an entity holds under 2 percent of the total, the demo, both themes, and a narrow viewport; a part-to-whole form lays out by entity count and folds parts too thin to draw into one "N more" part (seen: one entity drew as a single dot in the corner, and a sliver share as a stray line at the edge).
 
 ## Placement
 
@@ -92,6 +92,7 @@ The question picks the form; the data's shape never does. A table answers "what 
 ## Time and buckets
 
 - One range per page in the URL, as UTC days or instants to the second.
+- A relative range ends at the current instant (the last 24 hours runs from now back 24 hours) on a real time axis, where a bucket without data is a gap, never interpolated, and a series kept only in memory says on the chart that it restarts with the process (seen: a 24 hour trend drawn as evenly spaced points, which the user asked to run from now back with the empty stretches left empty).
 - One function derives the bucket from the span (daily beyond three days, down to seconds for a range of seconds, capped near ninety bars) and is shared by URL state, SQL grouping, and axis labels.
 - Daily rollups serve day granularity only; a narrower view recomputes from base rows; percentiles never come from a rollup.
 - Bucket boundaries live in one fixed zone; the displayed zone is a render-time toggle applied on Apply, with Reset visible.

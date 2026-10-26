@@ -43,7 +43,7 @@ gh api graphql --paginate -f query='query($q:String!,$endCursor:String){search(q
 jq -s --arg l '<login>' --arg s '<start UTC>' --arg e '<end UTC>' '[.[].data.search.nodes[] | {url, title, comments: [.comments.nodes[] | select(.author.login == $l and .createdAt >= $s and .createdAt <= $e)] | length} | select(.comments > 0)]' comments-pages.json > commented.json
 ```
 
-Default branch commits, per repo in scope (an empty repo answers HTTP 409; skip it). A subject with a trailing `(#N)` is a merged PR already counted, so report only the commits without one, the work that bypassed a PR:
+Default branch commits, per repo in scope, deduped by SHA across repos (an empty repo answers HTTP 409; skip it). A subject with a trailing `(#N)` is a merged PR already counted, so report only the commits without one, the work that bypassed a PR:
 
 ```
 gh api -X GET repos/<owner>/<name>/commits -f author=<login> -f since=<start> -f until=<end> -f per_page=100 --paginate --jq '.[] | {sha: .sha[0:7], date: .commit.author.date, subject: (.commit.message | split("\n")[0])}'
@@ -106,3 +106,4 @@ gh api repos/<owner>/<name>/compare/<good-sha>...<bad-sha> --jq '{status, commit
 - An open PR or issue reports `closedAt` as `0001-01-01T00:00:00Z`; a window filter on `closedAt` must skip open items.
 - The events API (`/users/<login>/events`) stops at 300 events, a couple of days for a busy account; never use it for a window.
 - Agents running with the user's credentials author as the user; the session index in [workspace.md](workspace.md) tells their PRs apart.
+- A private security advisory repository (`<repo>-ghsa-*`, not flagged as a fork) replays its parent's default branch, so its commits dedupe against the parent's by SHA and its open PRs are listed as their own items (seen: three advisory repositories returned the same 84 commits as main).

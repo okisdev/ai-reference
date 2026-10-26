@@ -1,6 +1,6 @@
 ---
 name: normalize-agents-md
-description: Rewrite a repository's instruction files, and the docs they point agents at such as a DESIGN.md or a README manual, into short normative files when markdown grows into a running record or changes with every change (文档写成流水账, md 文件经常被更改, 沉淀成规章, DESIGN.md 太长), retiring CLAUDE.md and routing as-built descriptions, incidents, and inventories to where they belong, within the size caps every harness reads.
+description: Rewrite a repository's instruction files, and the docs they point agents at such as a DESIGN.md or a README manual, into short normative files when markdown grows into a running log, changes with every change, or runs too long, retiring CLAUDE.md and routing as-built descriptions, incidents, and inventories to where they belong, within the size caps every harness reads.
 argument-hint: "[scope]"
 ---
 
@@ -16,7 +16,7 @@ Doc hook registered in: !`out=$(grep -l 'normalize-agents-md/scripts/measure.py'
 
 ## Instructions
 
-**The one rule: docs hold the rules every change follows, not a record of the code, and no rule is lost getting there.** Description, history, and inventory move or go with the reason written down, and an order to update a doc alongside the code ("a change to this file first", "add it to this file in the same change") is dropped, because the editing contract replaces it; an obligation never goes to meet a size, and overflow is reported instead. A pass is judged by the tree after it, not by its own checks: `measure.py --since` shows whether the docs stopped growing with the code. The bar is a rewrite where every old clause is kept, moved to a named home, or dropped for a stated reason, as in [examples/rewrite.md](examples/rewrite.md) for an instruction file and [examples/read-path-doc.md](examples/read-path-doc.md) for a doc agents are pointed at: open the closer one before rewriting, and check the draft against [examples/rejected.md](examples/rejected.md).
+**The one rule: docs hold the rules every change follows, not a record of the code, and no rule is lost getting there.** Description, history, and inventory move or go with the reason written down, and an order to update a doc alongside the code ("a change to this file first", "add it to this file in the same change") is dropped, because the editing contract replaces it, and a line that makes the doc win over the code is reworded to cover rules only (the code is fixed where it breaks one), because a doc that wins whole lets a description outrank the code; an obligation never goes to meet a size, and overflow is reported instead. A pass is judged by the tree after it, not by its own checks: `measure.py --since` shows whether the docs stopped growing with the code. The bar is a rewrite where every old clause is kept, moved to a named home, or dropped for a stated reason, as in [examples/rewrite.md](examples/rewrite.md) for an instruction file and [examples/read-path-doc.md](examples/read-path-doc.md) for a doc agents are pointed at: open the closer one before rewriting, and check the draft against [examples/rejected.md](examples/rejected.md).
 
 Rewrite every instruction file and read-path doc in scope into a short normative document: keep the rules, move everything else to its owning home, take manuals written for people off the agent's path, remove what generators wrote, add a file only where the tree needs one, prove nothing load-bearing was lost, and stop at an uncommitted tree.
 
@@ -41,3 +41,4 @@ Rewrite every instruction file and read-path doc in scope into a short normative
 - A placeholder never survives because it might come back; the switch lands in the same pass when one exists, and the marker is reported when none does.
 - A new file with nothing to say is never created; absence is the valid outcome.
 - No new dependency; the measure script stays Python 3 standard library.
+- Edit instruction files and read-path docs with the editing tool, never a script or heredoc, because the doc hook sees only the editing tool's writes (seen: two AGENTS.md files were appended through a Python heredoc that no hook saw).
