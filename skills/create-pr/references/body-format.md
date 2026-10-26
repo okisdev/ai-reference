@@ -28,7 +28,7 @@ closes #<n>
 
 Body rules:
 
-- `closes #<n>`: very first line, no heading, lowercase keyword. Repeat on its own line per issue (`closes #10` then `closes #11`); cross-repo is `closes owner/repo#<n>`. Omit when no issue is referenced. Issue numbers come from explicit user mention, branch name patterns like `fix/4005-foo`, or commit subjects mentioning `#<n>`.
+- `closes #<n>`: very first line, no heading, lowercase keyword, only when the merge resolves the whole issue; a PR that delivers part of it opens with `part of #<n>` instead and says in `## notes` what remains. Repeat on its own line per issue (`closes #10` then `closes #11`); cross-repo is `closes owner/repo#<n>`. Omit when no issue is referenced. Issue numbers come from explicit user mention, branch name patterns like `fix/4005-foo`, or commit subjects mentioning `#<n>`.
 - When the diff mixes hand-written and generated or mechanical files (lockfiles, snapshots, codemod output), say so in the summary and name which files carry the reviewable logic.
 - When the change needs a rollout or migration order (deploy X before Y, run the migration first), state it in `## notes`; the diff cannot show sequencing.
 - All section headings are lowercase.
