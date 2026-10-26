@@ -27,7 +27,7 @@ Changesets: !`test -d .changeset && echo "yes (.changeset/)" || echo "(none)"`
 
 Drive the change to a merged PR: implement if needed, branch, open the PR, then monitor CI and reviews until the merge gate passes, addressing feedback each cycle. Execute immediately without asking.
 
-Delegate branch/commit/PR to their named skills (`create-branch`, `commit-changes`, `create-pr`); the should-this-merge judgment to `verify-pr`; review-thread triage to `verify-pr-comments`. Own only the monitor loop, the merge gate, and the merge. Invoke the others by name and act on their output; never inline or reimplement their logic.
+Delegate branch/commit/PR to their named skills (`create-branch`, `commit-changes`, `create-pr`), apart from the single-purpose review fix that `references/threads.md` commits directly; the should-this-merge judgment to `verify-pr`; review-thread triage to `verify-pr-comments`. Own only the monitor loop, the merge gate, and the merge. Invoke the others by name and act on their output; never inline or reimplement their logic.
 
 Auxiliary skills, used only when relevant:
 - **verify-issue**: optional upstream precursor when the change originates from an issue.
