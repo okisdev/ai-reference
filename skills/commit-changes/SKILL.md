@@ -12,6 +12,8 @@ Uncommitted changes: !`git status --short 2>/dev/null || echo "(not a git reposi
 
 Uncommitted diff stat: !`git diff --stat HEAD 2>/dev/null || echo "(none or not a git repository)"`
 
+Recent commit subjects (style reference): !`git log --pretty=%s -12 2>/dev/null || echo "(none)"`
+
 ## Instructions
 
 **The one rule: each commit is one purpose and holds exactly the paths you planned for it.** A great run leaves a short series a reviewer can read commit by commit: subjects in the repo's own conventional style, foundational changes first, nothing pre-staged riding into the wrong commit, a clean tree at the end, and every new commit proven signed where signing is on. The bar is [examples/grouped.md](examples/grouped.md); open it before grouping and check the plan against [examples/rejected.md](examples/rejected.md).
