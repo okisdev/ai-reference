@@ -2,6 +2,23 @@
 
 All notable changes to this collection. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions match `.claude-plugin/plugin.json`. Changes before 0.0.41 live in the merged pull requests.
 
+## [0.0.47] (2026-10-26)
+
+### Added
+
+- verify-ui maps every browser operation (open, viewport, color scheme, script, screenshot, page snapshot, input, console, close) across Chrome DevTools MCP, Claude in Chrome, and Gode's site tools with the traps each has shown, and gives sandboxed or unattended runs a path that reads an open tab or hands the browser pass back.
+- use-project-memory ships `agents/openai.yaml` with `allow_implicit_invocation: false`, so Codex lists it only for explicit invocation.
+- Eval cases for a browser tool chosen from the ones a session exposes and for an old green whose base moved under the PR's own files.
+
+### Changed
+
+- verify-ui drives whichever browser tool the session exposes instead of naming Chrome DevTools tools, takes the one that can emulate a viewport and a color scheme when several are present, opens pages where the tool opens them by default, closes what it opened, counts a scripted event as injection, and reads a control's own state back after an action.
+- ship-pr pins the merge to verify-pr's verified head with `--match-head-commit`, follows a merge queue until the PR merges, refreshes an old green only when the base moved under the PR's own files, watches several PRs from one request separately, bounds a loop by 45 minutes without a settled head, reruns a tracked flake and a timed-out review bot once, rescans open PRs before a follow-up PR, runs the CI test target before opening a PR, commits single-purpose review fixes directly with their hooks and signature in view, and claims only checks that ran.
+- organize-commits gives each commit kept out of a regroup its own plan line; read-source reads tag naming from the latest release and reads installed CLIs by their binary; diagnose-root names the condition that separates intermittent failures; recap-activity dedupes the commits of advisory repositories; plan-charts draws relative ranges back from now with gaps and verifies one entity and sliver shares; upgrade-deps restores devDependencies that mirror a peer range; normalize-agents-md edits only with the editing tool; approve-pr says on which side of a change each run happened.
+- Skill text is English: descriptions drop their Chinese trigger phrases, and seen clauses paraphrase reports made in another language. AUTHORING.md records that rule, that a skill names operations and takes the tool from the session, and that a skill is changed here and reinstalled rather than edited in its installed copy.
+- README.md describes each skill in a few sentences and stays under its 16 KB target; the detail lives in each SKILL.md.
+- The documented eval command judges with sonnet, because the default haiku judge failed answers that met their criterion; normalize-agents-md rewords a line that makes a doc win over the code to cover rules only, and verify-ui ends a read-only check with the finding and the cause's exact `file:line`.
+
 ## [0.0.46] (2026-10-20)
 
 ### Added

@@ -1,6 +1,6 @@
 ---
 name: use-project-memory
-description: Read and write Claude project auto-memory so Claude, Grok, and Codex share one store that holds only durable facts the repository and GitHub cannot give; load it when a person starts work in a repository (a run another agent dispatched with a brief skips that load), and use it when work surfaces a user decision, an external system fact, or a private operational fact that no commit, PR, issue, or instruction file can hold (never an analysis, plan, or build status just delivered), or when the user says remember / 记住 / 项目记忆.
+description: Read and write Claude project auto-memory so Claude, Grok, and Codex share one store that holds only durable facts the repository and GitHub cannot give; load it when a person starts work in a repository (a run another agent dispatched with a brief skips that load), and use it when work surfaces a user decision, an external system fact, or a private operational fact that no commit, PR, issue, or instruction file can hold (never an analysis, plan, or build status just delivered), or when the user asks to remember something or to use the project memory.
 argument-hint: "[note]"
 ---
 

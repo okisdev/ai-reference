@@ -20,6 +20,13 @@ Check for a local patch of the pin; a hit makes the patched output the behavior 
 ```
 jq -r '.pnpm.patchedDependencies // empty' package.json; ls patches/ 2>/dev/null
 ```
+An installed CLI with no `node_modules` entry: its version, its resolved binary, and an npx cache copy when there is one:
+```
+<bin> --version; realpath "$(command -v <bin>)"
+ls -d ~/.npm/_npx/*/node_modules/<pkg> 2>/dev/null
+```
+Bound a run of the binary with a SIGTERM wrapper, since macOS ships no `timeout`: `perl -e '$p=fork or exec @ARGV; $SIG{ALRM}=sub{kill TERM=>$p}; alarm 60; waitpid $p,0; exit($? & 127 ? 124 : $? >> 8)' <bin> <args>`.
+
 This rung is the compatibility authority for what the project can actually import or typecheck; no later rung overrides it for that question.
 
 ## L1 published artifact
@@ -44,9 +51,10 @@ npm view <pkg> repository.url
 ```
 The result is usually a `git+https://github.com/<owner>/<repo>.git` URL; strip the `git+` prefix and the `.git` suffix to get `<owner>/<repo>`.
 
-Probe the release tag; naming varies, so try the `v` prefixed form first and fall back to the bare version:
+Read the tag naming from the latest release, since it varies (`v16.4.3`, `rust-v0.164.0`, `@changesets/cli@3.0.3`), then probe the target version in that form before the `v` prefixed and bare forms:
 ```
-gh api repos/<owner>/<repo>/git/ref/tags/v<ver> || gh api repos/<owner>/<repo>/git/ref/tags/<ver>
+gh release view -R <owner>/<repo> --json tagName -q .tagName
+gh api repos/<owner>/<repo>/git/ref/tags/<prefix><ver> || gh api repos/<owner>/<repo>/git/ref/tags/v<ver> || gh api repos/<owner>/<repo>/git/ref/tags/<ver>
 ```
 Fetch a single file at that resolved ref:
 ```

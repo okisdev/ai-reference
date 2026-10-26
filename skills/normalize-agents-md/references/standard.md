@@ -20,6 +20,8 @@ A read-path doc states what must stay true, never what currently is. What a surf
 
 The reader decides where content lives, never whether a doc may grow with the code. A manual written for people (setup, operation, configuration, a tour of each feature) leaves the agent's path: the rules inside it move into AGENTS.md or the read-path doc that governs them, the instruction file's pointer to it is deleted, what it tells a person stays, and the editing contract keeps it from growing with every change, because a manual that restates what each surface does grows with the code exactly as a design doc does (seen: after a `DESIGN.md` was cut to its rules, the README its AGENTS.md called "its manual" grew from 122 KB to 140 KB in four days while every check passed, and two passes left it as found because it was written for people). A doc off the path (a decision record, an archive, a user guide, a changelog) is left as found; `measure.py` lists every doc past the target as a large doc, so its growth stays visible to the next pass and to the owner.
 
+A precedence line (where this doc and the code disagree, this doc wins) is kept only as a rule about rules: the code is fixed where it breaks one, so no description is written down to win (seen: rewrites that kept the line word for word over a doc that still described pages).
+
 ## Caps and targets
 
 | Limit | Value | Source |
@@ -105,7 +107,7 @@ Root:
 
 ## Editing docs
 
-- One rule per bullet, imperative, with at most one because-clause naming the failure it prevents.
+- One rule per bullet, imperative, with at most one because-clause naming the failure it prevents in general terms, never the pages, labels, or dates of the incident that taught it.
 - This file and every doc it points agents at state what must stay true, never what currently is: what a change did goes in its commit and PR, what the code does stays in the code, and status goes to the tracker.
 - A change that makes a sentence here false replaces that sentence in the same change, and never appends an account of the change.
 - A doc written for people (a README manual, a guide) changes when the owner asks or at a release, never as a side effect of a code change; a change that makes one of its sentences false replaces that sentence.

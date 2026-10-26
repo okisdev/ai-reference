@@ -4,7 +4,7 @@ Invoked from ship-pr's monitor loop whenever the reviewThreads read returns an u
 
 Every unresolved thread is dispositioned and then resolved (three dispositions, reconciled with the governing rule below).
 
-- **Valid feedback.** Fix in a follow-up commit (`commit-changes` on the plain-git path, `but commit` on the GitButler path, then push), then resolve the thread. The fix commit is already on the PR timeline, so do not add a reply that only points at it.
+- **Valid feedback.** Fix in a follow-up commit, push, then resolve the thread. On the plain-git path a single-purpose fix commits directly with its paths named (`git add -- <paths> && git commit -m "<message>" -- <paths>`, which leaves anything else in the index staged and out of the commit), its hook output left visible, and, when `git config commit.gpgsign` is true, its signature proved by `git cat-file commit HEAD | grep -c '^gpgsig'` printing 1; a fix that spans several purposes goes through `commit-changes`, and the GitButler path uses `but commit` (seen: review fixes committed inline with their output sent to `/dev/null`, hiding the hooks and the signature). The fix commit is already on the PR timeline, so do not add a reply that only points at it.
 - **Invalid feedback.** Reply with a short rationale (it carries information the diff does not), then resolve.
 - **Outdated thread** (`isOutdated` true). Resolve it; the moved diff is self-evident, so do not reply.
 
@@ -13,3 +13,5 @@ Use judgment on bot nits: common-sense suggestions a competent agent already fol
 ship-pr owns the writes (`verify-pr-comments` is read-only): build the reply body safely with `printf '%s' "$reply" | jq -Rs '{body: .}'` and post it via `gh api repos/$OWNER/$REPO/pulls/<n>/comments/<databaseId>/replies --method POST --input -` (inline `-f body='...'` breaks on backticks and code; databaseId is the REST integer from ship-pr's reviewThreads nodes), and resolve via `gh api graphql -f query='mutation($id:ID!){resolveReviewThread(input:{threadId:$id}){thread{isResolved}}}' -f id=<threadId>` (threadId is the opaque node id, so `-f` not `-F`).
 
 A reply carries no trace of tooling (no generated-by line, session link, or tool trailer). Governing rule: do not add comments or changeset prose that only acknowledge review feedback; the test is, would you write it if no reviewer had flagged the code? If no, drop it.
+
+A reply, like a PR body or an approval note, claims only checks that ran on the pushed head, and says so when a mechanism could not be exercised (seen: a posted reply claimed a browser check that never ran).

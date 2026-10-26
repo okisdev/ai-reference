@@ -1,6 +1,6 @@
 ---
 name: find-icon
-description: Find, add, or swap an icon or logo for a brand, product, vendor, file type, or UI concept (图标, logo, 文件图标).
+description: Find, add, or swap an icon or logo for a brand, product, vendor, file type, or UI concept.
 argument-hint: "<brand|product|concept>..."
 ---
 

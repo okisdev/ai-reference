@@ -10,151 +10,151 @@ Follows the [Agent Skills](https://skills.sh) format.
 
 #### create-branch
 
-Create a new branch and move all uncommitted changes to it. Defaults to branching off the default base so unrelated commits don't leak in; supports `--base` and `--keep-base` overrides. Skips the stash when HEAD already sits on the freshened base.
+Create a new branch off the default base, not the current HEAD, and move all uncommitted changes onto it; `--base` and `--keep-base` override the base.
 
 **Triggers:** "Move these changes to a new branch", "Start a feat branch for this"
 
 #### commit-changes
 
-Stage and commit only the current uncommitted changes into clean, conventional-commit groups, one commit per distinct purpose. Owns the index: records anything already staged, unstages it, and stages each group by path, confirming the staged list before every commit, then proves each commit is signed when the repo signs. Leaves existing commits untouched.
+Commit only the uncommitted changes as conventional commits, one per purpose: it unstages what was already staged, stages each group by path, confirms the staged list before every commit, and proves each commit is signed when the repository signs. Existing commits stay untouched.
 
 **Triggers:** "Commit my changes", "Split these changes into commits"
 
 #### organize-commits
 
-Reorganize uncommitted changes and/or messy commits on the current branch into clean, categorized commits grouped by purpose. Hands an uncommitted-only scope to `commit-changes`, re-stages each group by path after a soft reset, and accepts `--base` and `--cwd`.
+Regroup uncommitted changes and messy branch commits into clean commits by purpose, rewriting even pushed history after it prints the plan, records a recovery ref, and asks before every reset; the content stays identical.
 
 **Triggers:** "Clean up the commits on this branch", "Reorganize this branch's history"
 
 #### create-pr
 
-Create a GitHub PR from the current branch with a title and body that follow the repo's conventions and the user's writing style. Auto-detects the repo's PR template, places `closes #N` at the top of the body, derives a `type(scope):` title from recent merged PRs, splits the test plan into "already verified" vs "reviewer should verify", and runs pre-flight guards for empty PR / WIP commits / behind-base / merge commits. Takes the base from `--base <branch>` or a leading branch name rather than a positional probe, and always passes `--head` and `--repo` so multi-remote checkouts open the PR on the first try.
+Open a GitHub PR from the current branch with a title and body in the repository's conventions and the user's voice: its template, `closes #N` first, a `type(scope):` title from recent merges, a test plan split into verified and to verify, and guards against empty, WIP, behind-base, or merge-commit branches.
 
 **Triggers:** "Open a PR", "Create a pull request for this branch"
 
 #### verify-issue
 
-Fetch a GitHub issue and verify each of its claims against the current codebase with concrete `file:line` evidence. Escalates past surface code reading when the conclusion depends on it: running repros for behavioral claims, checking canonical upstream source for third-party and runtime claims, and adversarially testing the load-bearing claim and the issue's own reasoning. A PR counts as covering the issue only after the issue's own repro runs against its head, and the report says whether it removes the cause or masks the symptom.
+Verify each claim of a GitHub issue against the codebase with `file:line` evidence, running repros for behavioral claims and reading pinned upstream source for third-party ones; a PR covers the issue only once the issue's repro passes on its head.
 
 **Triggers:** "Verify issue #123", "Is this issue still valid?"
 
 #### verify-pr
 
-Verify a GitHub PR against its stated goal and the surrounding codebase. Judges first whether the PR should exist at all (necessity, redundancy, honest scope), then correctness, tests, paradigm and convention conformance, and side effects. Conformance is judged against the repo's own precedents (the nearest sibling hook, test, doc example, or type), not against generic best practice, and each deviation cites the in-repo pattern it breaks. Produces a maintainer-ready verdict that can recommend closing a redundant PR even when it is technically clean, separates blocking issues from optional polish, and marks each pre-existing gap as fold in (fixable inside the PR's own files and checks) or follow-up issue. The verdict binds to the head SHA it was computed on, and `--since <sha>` re-reads only what landed after a previous pass so re-verifying a PR that keeps moving costs the delta rather than the whole patch. It reads AGENTS.md and CLAUDE.md first (a written rule outranks a sibling precedent), says whether a fix removes the cause or patches a symptom, reproduces only in a `.claude/worktrees` checkout, reports pending checks without waiting on them, and names one winner when two open PRs overlap.
+Judge a GitHub PR against its stated goal: whether it should exist at all, then correctness, tests, conformance to the repository's own precedents, and side effects. The verdict binds to the head it judged, and `--since <sha>` re-reads only what landed after it.
 
 **Triggers:** "Should we merge PR #456?", "Verify this PR before merge". This is the whole-PR verdict; for per-comment triage of the review threads use `verify-pr-comments`.
 
 #### verify-pr-comments
 
-Fetch review comments on a GitHub PR (bots + humans), classify by staleness, and verify each fresh claim against the current code, reporting which to accept, reject, or defer with fix drafts. Reads every review thread through a paginated recipe shared with `approve-pr`, and judges edited-in-place issue comments by `updated_at`.
+Fetch every review comment on a PR, from bots and humans, classify each by staleness, and verify the fresh claims against the current code, reporting which to accept, reject, or defer with fix drafts.
 
 **Triggers:** "Check the PR review comments", "Verify the bot comments on #456"
 
 #### summarize-review
 
-Write a maintainer-style summary review of a GitHub PR as a message to the original author: the verdict and the reason it holds, then only what the diff cannot say for itself, with the evidence behind each load-bearing claim. Prose rather than sections, and no recapping of bot output.
+Write a maintainer's summary review to a PR's author: the verdict and why it holds, then only what the diff cannot say for itself, with evidence behind each load-bearing claim.
 
 **Triggers:** "Write the approval review for #789", "Summarize what we fixed on this PR"
 
 #### approve-pr
 
-Review a GitHub PR as a maintainer and, when it earns it, post the GitHub APPROVED review; otherwise report and decline. The maintainer-side counterpart to `ship-pr`: it owns the self-approval guard, the verify-pr-verdict to review-action mapping, and the `gh pr review` write (including the anti-stacking PUT-replace of a prior review), and it delegates the approve-or-decline verdict to `verify-pr`, thread triage to `verify-pr-comments`, the review body to `summarize-review`, and the optional post-approval merge to `ship-pr`. Auto-posts only an approval; `--request-changes`, `--comment`, and a close recommendation never write without an explicit opt-in. Reuses a verify-pr report already made for the same head instead of rerunning it, and stops after posting rather than watching checks.
+Review a PR as a maintainer and post the GitHub approval when it earns one, otherwise report and decline. It owns the self-approval guard and the review write, and composes `verify-pr`, `verify-pr-comments`, `summarize-review`, and optionally `ship-pr` for the merge.
 
 **Triggers:** "Approve PR #4621", "Review and approve this PR", "Approve and merge #4621"
 
 #### ship-pr
 
-Drive a change all the way to a merged PR: implement if needed, branch, open the PR, then monitor CI and review threads on a recurring loop, addressing feedback each cycle and merging once the gate passes. Auto-detects the entry point (uncommitted changes, an existing branch, or an already open PR) and resumes at the right step rather than forcing the full flow, auto-detects GitButler versus plain git, and waits for every check and review to settle (reviews and CI are expected to finish in about 15 minutes; skip only a still-pending item that has gone quiet well past that window). Composes `create-branch`, `commit-changes`, and `create-pr` to create, `verify-pr` to judge the PR, and `verify-pr-comments` to triage the threads; it owns the loop, the merge gate, and the merge itself. When shepherding another author's PR it delegates to `approve-pr` by default to post the maintainer approval the merge gate needs, rather than forcing the merge; `--admin` is reserved for your own PRs, where GitHub blocks self-approval. Every wait in the loop is heartbeat-bounded: a wall-clock budget picked up front, a visible per-tick status line naming each pending check, and stalled items sidestepped instead of polled forever. Only the user shrinks the wait set (`--advisory` or a named skip), never a memory note; an explicit "merge now" merges at once, and a PR merged outside the loop ends it. Checks the open PRs for the same fix before branching, batches fix pushes until the head's checks and review bots settle, counts only the latest run of each check name, bounds every watch call below the shell's time limit, and `--cwd <path>` carries a task worktree or another repository through every composed skill. Without a `.changeset/` directory it makes the version bump or changelog entry that CONTRIBUTING.md or AGENTS.md documents, and when the watch cannot cover the wait it falls back to a bounded poll.
+Drive a change to a merged PR: implement if needed, branch, open the PR, then watch CI and review threads, fixing feedback each cycle, and merge once every check and review has settled on the head that merges. It resumes from whatever state exists, bounds every wait with a visible heartbeat, pins the merge to the head `verify-pr` judged, and follows merge queues.
 
 **Triggers:** "Ship this change", "Take this PR to merge", "Open a PR and merge it when CI is green"
 
 #### upgrade-deps
 
-Upgrade every dependency the repository actually has: npm workspaces via taze, Python projects via uv, and GitHub Actions via ratchet. Prefers root `package.json` dependency scripts over the generic recipe; repins SDK-matrix-governed packages after blanket bumps (Expo via `expo install --fix`); leaves Actions alone when Dependabot or Renovate owns them; validates with the repository's build, lint, and test scripts, pins back an individual major that breaks, writes a patch changeset only when `.changeset/` exists, and ends with a validated uncommitted tree, where committing composes `commit-changes` and shipping composes `ship-pr`. Drops an SDK hold once the blocker's latest peer range accepts the new major, and lists exact-pinned dependencies with newer releases as held or bumped.
+Upgrade every dependency the repository has (npm workspaces through taze, Python through uv, GitHub Actions through ratchet), repin SDK-governed packages, validate with the repository's own checks, and name every dependency left short of its latest release, leaving an uncommitted tree.
 
 **Triggers:** "Upgrade all dependencies", "Bump deps and fix what breaks", "Refresh the lockfile"
 
 #### find-icon
 
-Locate a verified icon for a brand, product, AI model, or UI concept and deliver it the way the repository already consumes icons: routes each target down a source ladder (lucide for UI concepts, lobe-icons for AI model, provider, and agent brands, svgl then simple-icons for other brands, the vendor's own repository or official site as the last resort); proves every pick exists at its source before writing any code, extracting SVG path data by script rather than retyping it; delivers a UI glyph as a lucide-react import and a brand mark as a vendored SVG component, preserving official brand colors while UI glyphs stay on `currentColor`.
+Find a verified icon for a brand, product, AI model, or UI concept down a source ladder (lucide, lobe-icons, svgl, simple-icons, then the vendor), prove it exists before writing code, and deliver it the way the repository already consumes icons.
 
 **Triggers:** "Find an icon for Zed", "Add icons for the remaining providers", "Replace this text with an icon"
 
 #### verify-ui
 
-Render and verify a web UI change in a real browser: manages the dev server lifecycle (stale lock cleanup, nohup start with a recorded PID, readiness polling, port drift detection), waits for hydration, asserts the specific claim with a DOM query, and backs every visual claim with a screenshot that is actually read. Parses pasted DOM fragments to their source file and line, respects per-repo visual QA ownership, and never kills processes by name. Waits are budgeted: the readiness poll is bounded, and expiry kills the recorded PID and reports the failure with log evidence.
+Render and verify a web UI change in a real browser through whichever browser tool the session exposes, mapped by operation across Chrome DevTools, Claude in Chrome, Gode, and others. It owns the dev server lifecycle, waits for hydration, backs each claim with a DOM query and a screenshot someone looked at, lists every state the change touches, and never kills processes by name.
 
 **Triggers:** "Verify the UI change in the browser", "The spacing still looks wrong, check it", "Render this page and confirm the fix"
 
 #### optimize-repo
 
-Run the standing optimization pass: read the scope's idiom first, decide the release posture from evidence (an unpublished package gets deletions instead of backward compatibility), strip comments and dead surface, replace hand-rolled fragments with the repo's own primitives, audit conformance against the nearest precedent, sweep changed patterns for completeness, sync docs (an instruction file loses the inventory lines a change invalidates instead of re-syncing them), verify with the repo's own ladder, and stop at an uncommitted validated tree.
+Run the standing optimization pass: read the scope's idiom, strip comments and dead surface, replace hand-rolled code with the repository's own primitives, sweep each changed pattern everywhere, sync the docs, verify with the repository's own ladder, and stop at an uncommitted tree.
 
 **Triggers:** "Optimize the codebase", "Clean this up and simplify", "Run an optimization pass, don't commit"
 
 #### read-source
 
-Answer an API or behavior question about a dependency from authoritative source, choosing the ladder rung by question type: installed code for import and typecheck questions, the published npm artifact for what actually shipped (npm pack at the exact version, outside the repo, scripts ignored), the upstream repository pinned to the release tag for behavior and history, and docs last, never as proof. Every answer names the rung and version that proved it.
+Answer a question about a dependency or an installed CLI from source at the pinned version, choosing the rung by the question: installed code, the published artifact, the upstream repository at the release tag, and docs last, never as proof. Every answer names the rung and version that proved it.
 
 **Triggers:** "Does this API exist in our version?", "Check the source of this package", "When did this behavior change?"
 
 #### inspect-db
 
-Inspect a live database with real SQL before reasoning from ORM schema files: resolves the connection from the project's own configuration (Neon MCP, `DATABASE_URL`, or wrangler d1), reads live DDL and targeted rows first, treats schema drift against the ORM files as the finding, and never conflates D1 `--local` with `--remote`. Read-only by default; `--write` gates every mutation behind a counted `SELECT` of the same rows, and credentials never appear in output.
+Inspect a live database with real SQL before reasoning from ORM schema files: resolve the connection from the project's own configuration, read live DDL and rows, treat drift from the ORM files as the finding, and stay read-only unless `--write` gates a mutation behind a counted `SELECT`.
 
 **Triggers:** "What's actually in the users table?", "Check the live schema against our drizzle schema", "Why does prod data look wrong?"
 
 #### design-dashboard
 
-Design or redesign an admin, ops, or customer dashboard end to end in the repository's own design law. Frames the dashboard's job first (Decide versus Read, audience, the question each screen answers), diagnoses in measurements rather than adjectives (`scripts/density.mjs` counts the stacked defaults: body size, radius, control and row heights, hand-styled panels, widths, rules, shadows), reads the law in a fixed ladder (the app's own AGENTS.md contract, the organization's `design.md`, a sibling app on the same stack, and only then the reference's application density defaults, which it writes back as the repository's own), takes exactly one attributed contribution per reference project, fixes the navigation and page grammar (groups by whose data, a URL only when the unit of analysis changes, one detail grammar, URL as the state container), composes `plan-charts` for content, publishes a blueprint artifact in a fixed section order with every fork decided and the gain quantified, implements the core first and the pages in parallel waves, verifies in a browser in a declared order with measured pixels, runs the polish loop on pasted component stacks, and leaves the contract in AGENTS.md at an uncommitted tree.
+Design or redesign an admin, ops, or customer dashboard in the repository's own design law: frame each screen's job, diagnose in measurements, take one contribution per reference, publish a blueprint, build the core and then the pages in waves, verify in a browser, and leave the contract in AGENTS.md.
 
 **Triggers:** "Completely redesign the dashboard", "Every element is a big block, we need to show more", "The sidebar is a mess, split internal from customer-facing", "Design the console for this product"
 
 #### plan-charts
 
-Decide what a dashboard shows and in which form, including forms and data it does not have yet. Inventories what pages already fetch and discard, rollups, telemetry the code emits but never shows, and tables with rows and no UI; proves every candidate metric is real against production before it earns a form (a status the API never writes reads 0.0% forever); writes a catalog with source, aggregation, unlock tier, and what production says each chart would show; chooses the form by the question (`references/forms.md`) with hue by entity and explicit polarity; places each answer so every mark links onward (summary on the overview, detail on the subject page, a strip above the table it filters, tiles only with a window and a comparison, one time axis and one bucketing function per page); publishes the grammar artifact; and implements in batches, each verified by typecheck, read-only SQL against production, and a browser pass. When no form in the kit answers a question it expands the vocabulary from sibling kits, the organization's own library taxonomy, and the world's question families, admitting a form only for a question a page answers badly and holding a new form to a definition of done; when no data exists it designs the capture by a standards test (take an upstream-implemented standard's names and semantics, keep the product's own otherwise) with an attributes bag and append-only compatibility. `--restore` adds the removal table for charts a redesign took away, and `--observability` swaps in the telemetry-tool mechanics (dashboards by system, monitors from measured baselines, staged schema changes).
+Decide what a dashboard shows and in which chart form: inventory the data pages fetch and discard, prove each metric against production, choose the form by the question, place each answer so every mark links onward, and design the capture when no data exists yet.
 
 **Triggers:** "What else could we show on the dashboard?", "We removed too many charts, which ones come back and in what form?", "What could become a monitor or a dataset?", "Which chart for this data, and where?"
 
 #### use-project-memory
 
-Read and write Claude project auto-memory (`~/.claude/projects/<encoded>/memory/`) so Claude, Grok, and Codex share one store. Resolves worktrees to the primary repo directory and treats `MEMORY.md` as a short index. Writes on a user decision, an external system fact, or a private operational fact, never to save an analysis, plan, or build status just delivered. Admits only facts that change a later decision and that the tree, git history, a PR or issue, an instruction file, or a skill cannot give: what shipped, measurements, and session reports go nowhere, a repository rule goes to AGENTS.md once it recurs, and a memory never relaxes a gate a skill or AGENTS.md sets. Rewrites a topic to current truth instead of appending to it, and ships `scripts/check.py`, which every write runs to hold hooks to 80 characters, topics to 4 KB, and the index to bullets within 200 lines and 25 KB, with no dated status line outside the frontmatter; `check.py --hook` runs as a PostToolUse hook in Claude Code (`Write|Edit`), Codex (`apply_patch`), and Grok (`search_replace`) and applies the same check to memory writes made without the skill, judging only what each write introduced, so trimming a topic that is already over its limit is never blocked. A run another agent dispatched with a brief loads nothing.
+Read and write the project memory store that Claude, Codex, and Grok share, admitting only a fact that changes a later decision and that the tree, git, GitHub, or an instruction file cannot give. `scripts/check.py` holds every write to the store's limits, also as a PostToolUse hook in all three harnesses. A run another agent dispatched loads nothing, and Codex lists the skill only for explicit invocation.
 
 **Triggers:** "Remember this about the repo", "What do we already know about this project?", "Write that into project memory"
 
 #### diagnose-root
 
-Diagnose a failure to its origin with a reproduction first: runs the failing thing before explaining it, traces the wrong value back to the first place it is wrong, names the mechanism in one sentence, and fixes at the origin after explicitly rejecting the symptom-site patch, then sweeps for the same root cause elsewhere and proves the fix by rerunning the reproduction. A why question stops at the diagnosis and never turns into an edit.
+Diagnose a failure to its origin with a reproduction first: trace the wrong value back to where it starts, name the mechanism in one sentence, and fix at the origin only when a fix was asked, then sweep for the same cause and rerun the reproduction.
 
 **Triggers:** "Why does this keep happening?", "Is this a root fix?", "Fix this properly, not a patch"
 
 #### recap-activity
 
-Recap what a person, team, project, or this computer did, or what failed, over a time window, from whatever records exist. Parses the ask into a subject, window, and shape (a digest, a filtered list such as failed deployments, or a why), finds every store that can speak to it (playbooks first, then installed CLIs and harness connectors, then an app's own data on disk), probes each one, and says there is nothing to recap, listing every place it looked, when no store holds records for the window. Playbooks carry verified commands and traps for GitHub (offset ranges because a bare date is a UTC day, reviews in every state timed by when they happened, comments inside the window), Vercel (BLOCKED and CANCELED apart from failures, build logs split by their first error, runtime logs bisected under the CLI's 50 row cap), the workspace (unpushed work without squash-merged leftovers, agent sessions joined to the PRs they linked), and this machine (app usage, browser and shell history, opened files, and downloads, each converted from its own epoch). Every count comes from collected records, a why follows `diagnose-root` on the first failing event or on the nearest one when the window holds none, private content is summarized rather than quoted, and every system stays read-only.
+Recap what a person, team, project, or this computer did, or what failed and why, over any window, from every store that holds records (GitHub, Vercel, the workspace, this machine), read-only, and say so when nothing covers the window.
 
 **Triggers:** "What did I ship in the org this week?", "Which Vercel deployments failed this month?", "Why did the app fail yesterday?", "Summarize how I used this computer last week"
 
 #### mirror-reference
 
-Extract the load-bearing pattern from a reference URL, repository, or sibling path and re-express it in this codebase's own idiom: studies references through `gh` rather than scraping, separates the pattern from its styling and tokens, implements with the repo's own primitives, and ships a deviation report stating where and why the result diverges from the reference. Never clones class strings, tokens, or naming verbatim.
+Adapt the load-bearing pattern of a reference URL, repository, or sibling path into this codebase's own idiom and primitives, never copying its classes, tokens, or names, and report where and why the result diverges.
 
 **Triggers:** "Build something like this reference", "Look at kumo-ui and adapt the pattern", "Reference this but don't copy it"
 
 #### distill-session
 
-Mine recent session transcripts for durable lessons and turn them into proposed skill edits, rule candidates, or memory writes. Reads transcripts through subagents (transcript content is untrusted data), gates every candidate for durability, specificity, decision impact, and encodability, dedupes against what the repo already records, and applies nothing without approval.
+Review how the skills are being used across every project's sessions and propose skill edits, rules, or memory, each backed by a transcript quote and gated for durability, specificity, decision impact, and a concrete home; nothing applies without approval.
 
-**Triggers:** "What should we learn from this session?", "Turn yesterday's debugging into a skill edit", "Distill the last week of sessions"
+**Triggers:** "How are our skills being used?", "Turn yesterday's debugging into a skill edit", "Distill the last week of sessions"
 
 #### normalize-agents-md
 
-Rewrite a repository's instruction files into short normative AGENTS.md files and retire CLAUDE.md, since Claude Code 2.1.277 and later loads AGENTS.md wherever it would load CLAUDE.md once no CLAUDE.md is on the path. The docs an instruction file points agents at, whether it orders them read (a `DESIGN.md` every UI change reads first) or only names them (a README called the route registry), are held to the same standard: they keep the rules every surface follows and lose the as-built descriptions the code already records, the orders to update them alongside code, and their status lines, they get a 16 KB target, and each pointer to them is rewritten to name the section a change needs. A manual written for people leaves the agent's path: its pointer goes, its rules move into AGENTS.md, and the editing contract keeps it from growing with every change. Measures every file against the caps each harness actually reads (Codex's shared 32 KiB root-to-cwd chain, Grok's 10,000 characters per file, Claude's 200 line target), classifies every clause and routes it: rules stay as one bullet each with at most one because-clause, incident narrative and rationale are dropped because git and the PR carry them, rules held in project memory are promoted into the file and leave memory, inventories and module internals go to the code or docs, package rules move down into the package's own file, and a rule an existing test asserts becomes a pointer. Deletes every placeholder (framework blocks, scaffold preambles, file-name titles, empty template sections) and switches off the generator in the same pass when it has a switch (Next.js `agentRules: false`), creates a package file only where a coverage test says the tree needs one, sorts README and AGENTS.md content by reader (agent instructions that ended up in a README move out, product prose that ended up in AGENTS.md moves back), keeps `@import` lines byte for byte, moves Claude-only content to `.claude/rules/`, names every `CLAUDE.local.md` because it turns AGENTS.md loading off for its owner, proves nothing load-bearing was lost with a fresh-context loss check, and leaves the tree uncommitted with a before and after report. Ships `scripts/measure.py`, which lists every instruction file, chain, generator, and read-path doc with the line that points at it, every large doc off the agent's path, and the accretion orders and status lines in each; with `--since <commit or date>` it shows how much each file grew since then, which is how a pass is judged a week later; a repository can run it with `--strict` in CI to fail when a file passes a harness's hard cap (targets, accretion orders, and status lines are reported, not failed); and its `--hook` mode, registered as a PostToolUse hook in Claude Code, Codex, and Grok, flags what a single write adds to an instruction file, a read-path doc, or a README, DESIGN, or ARCHITECTURE doc past its target. Rewrites a dirty instruction file on top of the working copy and names the pending diff instead of skipping it.
+Rewrite instruction files and the docs they point agents at into short normative files within every harness's size caps: keep the rules, route descriptions, incidents, and inventories to their homes, take manuals for people off the agent's path, retire CLAUDE.md, and prove nothing was lost. `scripts/measure.py` measures the tree, judges a pass a week later with `--since`, and runs as a PostToolUse hook.
 
 **Triggers:** "Clean up AGENTS.md", "Our CLAUDE.md has become a changelog", "Our DESIGN.md reads like a running log", "Our markdown files change every day", "Normalize the instruction files across the monorepo"
 
 #### clean-memory
 
-Verify a repository's project memory against reality and forget safely. `scripts/audit.py` checks every anchor a topic body carries (paths and symbols against `git ls-files`, line ranges and symbol suffixes included; SHAs against the object store; issue and PR numbers against GitHub with `--gh`, two list calls that cover every ref), skips paths on lines that name another repository (a GitHub URL, or an owner/repo of a known owner or on an upstream line), marks anchors that changed after the memory was written, finds orphans, format problems through `use-project-memory`'s `check.py`, and project facts leaking into other harnesses' memory stores, and declares mass drift when a third of the anchors are dead. The skill snapshots the store, verifies flagged topics in fresh-context subagents with `file:line` evidence, then confirms, corrects, compacts, promotes into AGENTS.md, archives, disproves, supersedes, deletes, demotes, or escalates each one through `use-project-memory`'s conventions (a topic git or GitHub already records is derivable and goes, and one that relaxes a skill's gate is disproved), archives terminal index lines on every pass so the index each session loads stays short, rebuilds the store when the architecture moved under it, and records the run in a sidecar that `use-project-memory` reads to suggest the next pass after thirty days. Keeps its ledger beside the snapshot so a pass that dies resumes from its last settled row, and its verifiers never run a probe that touches the user's machine state.
+Verify a repository's project memory against the live tree and GitHub, then confirm, correct, compact, promote, archive, or delete each topic, so stale or wrong memories stop steering agents; `scripts/audit.py` checks every anchor a topic carries.
 
 **Triggers:** "Clean up the project memory", "Half of these memories are outdated", "Check what memory still holds after the refactor"
 
@@ -166,7 +166,9 @@ Verify a repository's project memory against reality and forget safely. `scripts
 npx skills add okisdev/ai-reference
 ```
 
-### OpenAI Codex
+Update with `npx skills update -g -y`. Change a skill in this repository and reinstall it; an installed copy edited in place is overwritten by the next update.
+
+### OpenAI Codex and Grok
 
 Codex scans `~/.agents/skills` (user) and `.agents/skills` (repo), not `~/.claude`, and it follows symlinks. Clone the repo and link the skills you want into a scanned path:
 
@@ -176,13 +178,12 @@ mkdir -p ~/.agents/skills
 for d in ai-reference/skills/*/; do ln -s "$(cd "$d" && pwd)" ~/.agents/skills/"$(basename "$d")"; done
 ```
 
-Grok scans `~/.grok/skills`, which should symlink to the same `~/.agents/skills` store. Enable or disable individual skills in `~/.codex/config.toml`. `ship-pr` ships `allow_implicit_invocation: false`, so Codex will not auto-trigger it; invoke it explicitly. Each skill's `## Context` probes are auto-run by Claude Code; in Codex and Grok the agent must run them itself before following the skill.
+Grok scans `~/.grok/skills`, which should link to the same `~/.agents/skills` store. Enable or disable individual skills in `~/.codex/config.toml`. `ship-pr` and `use-project-memory` ship `allow_implicit_invocation: false`, so Codex never loads them on its own; invoke them explicitly (`$ship-pr`, `$use-project-memory`), and have AGENTS.md ask for the memory index when interactive Codex work should read it at the start. Claude Code runs each skill's `## Context` probes; in Codex and Grok the agent runs them itself before following the skill.
 
 ## Usage
 
-Skills are automatically available once installed. The agent will use them when relevant tasks are detected.
+Skills are available once installed, and the agent uses them when a task matches. For example:
 
-**Examples:**
 ```
 Optimize the codebase
 ```
@@ -205,6 +206,7 @@ Verify the review comments on PR #123
 │   └── <skill>-<case>/          (prompt.md plus graders/, for claude plugin eval)
 ├── scripts/
 │   ├── check-probes.py
+│   ├── test-measure.py
 │   ├── test-memory-scripts.py
 │   └── validate-skills.mjs
 └── skills/
@@ -214,11 +216,11 @@ Verify the review comments on PR #123
         └── references/
 ```
 
-CI validates the collection on every PR touching skills: `scripts/validate-skills.mjs` checks that every frontmatter parses, `name:` matches its directory, no Context probe uses a positional parameter, and `plugin.json` and this README agree with the `skills/` tree; `scripts/check-probes.py` runs every Context probe in an empty directory and in a repository without a remote, under bash and zsh, and fails on any probe that exits non-zero, since Claude Code will not load such a skill. Run them locally with `npm install --no-save js-yaml && node scripts/validate-skills.mjs` and `python3 scripts/check-probes.py`.
+CI validates every PR that touches skills: `scripts/validate-skills.mjs` checks that every frontmatter parses, `name:` matches its directory, no Context probe uses a positional parameter, and `plugin.json` and this README agree with the `skills/` tree, and `scripts/check-probes.py` runs every Context probe in an empty directory and in a repository without a remote, under bash and zsh, failing on any probe that exits non-zero. Run them locally with `npm install --no-save js-yaml && node scripts/validate-skills.mjs` and `python3 scripts/check-probes.py`.
 
-The eval suite runs with `claude plugin eval . --trust-plugin --allow-tools Bash --no-publish`: every skill has a routing case in the user's own words, and skills whose output a person reads have quality cases for their one rule, each scored with and without the plugin.
+The eval suite runs with `claude plugin eval . --trust-plugin --allow-tools Bash --no-publish --judge-model sonnet`: every skill has a routing case in the user's own words, and skills whose output a person reads have quality cases for their one rule, each scored with and without the plugin.
 
-New skills follow [AUTHORING.md](AUTHORING.md): a lean, imperative register, the one rule and quality bar up front, rules that carry the fault that taught them, examples beside the skill, and detail pushed into `references/`.
+New skills follow [AUTHORING.md](AUTHORING.md).
 
 ## License
 

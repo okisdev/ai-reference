@@ -1,6 +1,6 @@
 ---
 name: plan-charts
-description: "Decide what a page, screen, or dashboard shows and in which chart form when a view is text heavy or under-visualized (可视化程度低, 图表形式)."
+description: "Decide what a page, screen, or dashboard shows and in which chart form when a view is text heavy or under-visualized."
 argument-hint: "[app-or-page] [--restore] [--observability]"
 ---
 
