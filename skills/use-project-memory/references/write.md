@@ -13,7 +13,9 @@ Route every candidate that fails the admission test in `SKILL.md`:
 | A rule for working in the repository (a trap, a prohibition, a command) that the repository can publish | This store as `feedback` for the first sighting; once it recurs or a review catches it, the repository's `AGENTS.md` under its editing contract (`normalize-agents-md` owns the format), and the rule leaves this store, because Codex and Grok never load it |
 | A change to how a skill behaves | That skill's source, proposed to the user |
 | A habit that holds in every repository | The global instruction file, proposed to the user |
-| A user decision, an external system fact, cross-repository state, or a private operational fact that still gates later work | This store |
+| Vendor documentation, prices, deprecations, model lists, or upstream behavior | Nowhere: read them at use time (`read-source`, the vendor's docs), because they change without the store knowing (seen: a model deprecation stored as a durable fact) |
+| A triage list, ranking, or plan not yet filed on GitHub | Nowhere: file it as an issue or keep it in the session (seen: a triage ladder stored because it was not on GitHub yet) |
+| A user decision, a fact held by the person's own account, deployment, or machine, cross-repository state, or a private operational fact that still gates later work | This store |
 
 ## Write
 
