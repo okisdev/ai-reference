@@ -14,12 +14,12 @@ Current branch: !`git branch --show-current 2>/dev/null || echo "(not a git repo
 
 **The one rule: say only what the diff cannot.** The body is a message from a maintainer to the author: the verdict and the one reason it holds, then the judgment the patch does not show (why this approach beat the one it displaced, what you ran and what it printed, the trap the next reader falls into), in prose. Open the closer of [examples/clean.md](examples/clean.md) and [examples/blocking.md](examples/blocking.md) before writing, and check the draft against [examples/rejected.md](examples/rejected.md).
 
-Output the body for the user to confirm; do not post unless explicitly asked.
+Output the body for the user to confirm; do not post unless explicitly asked. When `approve-pr` or `ship-pr` invoked this skill, return the body to that caller to post without asking for confirmation (seen: a body held for confirmation inside a ship run, and the user saying to post it with the approval).
 
 ### Process
 
 1. **Establish baseline and head** (`$ARGUMENTS` is a PR number, a full PR URL, or empty; if empty, infer the PR from the current branch via `gh pr view --json number,title,headRefName`):
-   - Baseline `<baseline-sha>` (last commit in the PR author's leading run): `gh api repos/<o>/<r>/pulls/<n>/commits --paginate --jq '(.[0].author.login // .[0].commit.author.name) as $a | reduce .[] as $c ({run: true, sha: null}; if .run and (($c.author.login // $c.commit.author.name) == $a) then {run: true, sha: $c.sha} else {run: false, sha: .sha} end) | .sha'`. `.author.login` is null for unlinked-email commits, so fall back to `.commit.author.name` when reducing.
+   - Baseline `<baseline-sha>` (last commit in the PR author's leading run): `gh api repos/<o>/<r>/pulls/<n>/commits --paginate --jq '(.[0].author.login // .[0].commit.author.name) as $a | reduce .[] as $c ({run: true, sha: null}; if .run and (($c.author.login // $c.commit.author.name) == $a) then {run: true, sha: $c.sha} else {run: false, sha: .sha} end) | .sha'`. `.author.login` is null for unlinked-email commits, so fall back to `.commit.author.name` when reducing. When a rebase or reset rewrote the branch so every commit shows the author, the leading run is the whole PR; take as baseline the head recorded before your first push instead (seen: five commits all attributed to the contributor while the run claimed its own commits were on the PR).
    - Latest head SHA: `gh api repos/<o>/<r>/pulls/<n> --jq .head.sha`
    - First commit's author is the review's audience: `gh api repos/<o>/<r>/pulls/<n>/commits --paginate --jq '.[0].author.login'`
 
