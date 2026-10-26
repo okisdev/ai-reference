@@ -1,0 +1,5 @@
+interface:
+  display_name: "Use Project Memory"
+  short_description: "Read and write the project memory store that Claude, Codex, and Grok share"
+policy:
+  allow_implicit_invocation: false
