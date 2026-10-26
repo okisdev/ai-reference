@@ -38,10 +38,9 @@ When in doubt and the set is small, err on branching off the default base.
 2. If branching off the default base (not current HEAD):
    - `git fetch origin` so the base is current, not a stale local ref
    - If `git rev-parse HEAD` equals `git rev-parse origin/<base>`, skip the stash and the rest of this step: run `git checkout -b <branch-name>` directly (uncommitted changes carry over; seen: every run stashed even when HEAD already sat on the base, and 184 of 289 runs needed only `git checkout -b`)
-   - `git stash push -u -m "create-branch-skill-transfer"` to capture both tracked + untracked
-   - `git checkout -b <branch-name> origin/<base>` (leaves the local base ref untouched)
-   - `git stash pop`
-   - If pop conflicts on files the user did not author, that signals a bad base pick; abort and ask
+   - Otherwise try `git checkout -b <branch-name> origin/<base>` first (leaves the local base ref untouched); git carries the uncommitted changes across when they do not collide with the base, so no stash is needed
+   - Only when git refuses because a change would be overwritten: `git stash push -u -m "create-branch-<branch-name>-<epoch seconds>"`, then `git checkout -b <branch-name> origin/<base>`, then pop that exact entry by its ref (`git stash list --format='%gd %s'`, then `git stash pop <ref>`), never a bare `git stash pop`, because `refs/stash` is shared by every worktree of the repository (seen: a bare pop in a PR worktree applied another session's `stash@{0}`)
+   - If the pop conflicts on files the user did not author, that signals a bad base pick; abort and ask
 3. Otherwise (branching off current HEAD): `git checkout -b <branch-name>`.
 4. **Stage ALL uncommitted changes with `git add -A`. NEVER revert, discard, filter, or skip any file.**
 5. Check for **gitignored files** that look like they belong to the work (e.g. drizzle migration SQL/snapshot when `drizzle/` is in `.gitignore`): if found, force-add with `git add -f <file>` AND flag to the user that the `.gitignore` rule may need fixing.

@@ -1,6 +1,6 @@
 ---
 name: inspect-db
-description: Inspect a live database with real SQL before reasoning from ORM schema files, resolving the connection from the project's own configuration and staying read-only unless explicitly asked to write.
+description: Inspect a live database with real SQL before reasoning from ORM schema files or writing any ad hoc SQL against it, resolving the connection from the project's own configuration and staying read-only unless explicitly asked to write.
 argument-hint: "[table-or-question] [--write]"
 ---
 
@@ -18,8 +18,8 @@ Packages with a database directory or schema file: !`out=$(find . -name node_mod
 
 ### Process
 
-1. Parse `$ARGUMENTS` (a table name or a question about the data; `--write` opts into mutations and schema pushes, otherwise the whole session is read-only). Pick the connection route from the probes per [references/connect.md](references/connect.md): the Neon MCP tools when the project uses Neon, the `DATABASE_URL` from `.env` otherwise, and wrangler d1 for Cloudflare D1.
-2. Read live structure first: list tables, then the DDL of the target table (`information_schema` or the platform equivalent). Assume drift; the live database is the authority for what exists right now, the ORM schema file is the authority for what the code expects, and the diff between them is the finding to report.
+1. Parse `$ARGUMENTS` (a table name or a question about the data; `--write` opts into mutations and schema pushes, otherwise the whole session is read-only). Pick the connection route from the probes per [references/connect.md](references/connect.md): the Neon MCP tools when the project uses Neon, the `DATABASE_URL` from `.env` otherwise, and wrangler d1 for Cloudflare D1. When the question names an environment (production, staging, a branch), confirm the host or Neon branch behind the chosen connection is that one before querying, because a project's `.env` often points at a development copy (seen: a `.env` that reached a development mirror while the question was about production).
+2. Read live structure first: list tables, then the DDL of every table the query will read or join (`information_schema` or the platform equivalent), not only the one named (seen: 34 column-does-not-exist errors in sessions that wrote SQL without this skill, and more where a joined table's columns were guessed). Assume drift; the live database is the authority for what exists right now, the ORM schema file is the authority for what the code expects, and the diff between them is the finding to report.
 3. Read live data with targeted queries: always `LIMIT`, always name columns when a row is wide, never dump a whole table into the transcript.
 4. Compare against the ORM schema files (drizzle schema, prisma schema) and report mismatches with both sides quoted.
 5. For Cloudflare D1, never conflate `--local` (the miniflare sqlite under `.wrangler/state`) with `--remote` (production); name which one every query ran against.

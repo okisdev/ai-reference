@@ -6,7 +6,7 @@ Exact commands for each connection route, referenced from SKILL.md step 1 onward
 
 | Route | When it applies | First command |
 | --- | --- | --- |
-| Neon MCP | The project uses Neon. | `list_projects`, then `get_connection_string`, then `run_sql`. |
+| Neon MCP | The project uses Neon. | `list_projects`, then `list_branches` to pick the environment's branch, then `run_sql` with `project_id` and `branch_id`. Never call `get_connection_string`: it returns a password-bearing URL into the transcript. |
 | Direct psql | A `DATABASE_URL` exists in `.env`. | Load the env, then `psql`. |
 | wrangler d1 | A wrangler config declares `d1_databases`. | `npx wrangler d1 execute <db>`. |
 

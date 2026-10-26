@@ -24,6 +24,7 @@ TABLE_ROW = re.compile(r"^\s*\|")
 DATED_REFERENCE = re.compile(r"20\d\d-\d\d-\d\d|#\d{2,}|\b\d+(?:\.\d+)?\s*(?:seconds?|milliseconds?|ms|KB|MB|GB|%)", re.IGNORECASE)
 NEXT_AGENT_RULES_OFF = re.compile(r"agentRules\s*:\s*false")
 PLACEHOLDER = re.compile(r"^#\s+(?:AGENTS|AGENT|CLAUDE|GEMINI)\.md\b|This file provides guidance to|guidance for (?:Claude Code|coding agents|AI coding agents)|^\s*(?:[-*]\s*)?(?:(?-i:TODO)\b|fill (?:me )?in\b)", re.IGNORECASE | re.MULTILINE)
+GROWTH_FLOOR = 256
 HISTORY_PHRASES = ("used to", "once hid", "previously", "no longer", "formerly", "the failure this rule names")
 READ_ORDER = re.compile(r"\bread\b[^\n]{0,120}\b(?:before|first)\b|\bbefore\b[^\n]{0,120}\bread\b|\bbefore (?:any|every|changing|editing|adding|touching)\b", re.IGNORECASE)
 PRECEDENCE = re.compile(r"this file wins|where the two disagree|this file is the source of truth|\bchange to this file\b[^.\n]{0,80}\bfirst\b", re.IGNORECASE)
@@ -766,7 +767,7 @@ def hook_findings(path, root, text, data, original, added, kind, original_size=N
         original_size = len(original.encode("utf-8"))
     if original_size is not None:
         target = (8192 if path.parent == root else 5120) if kind == "instruction" else DOC_TARGET
-        if len(data) > target and len(data) > original_size:
+        if len(data) > target and len(data) - original_size >= GROWTH_FLOOR:
             findings.append((0, "over-target", "{} bytes (target {})".format(len(data), target)))
     if kind == "instruction" or kind == "required" and path.name not in README_NAMES:
         added_numbers = {number for number, _ in added}

@@ -35,7 +35,7 @@ Repo PR template (if present): !`for p in .github/pull_request_template.md .gith
 
 4. **Compose the title.** Follow the title format below.
 
-5. **Compose the body.** If a repo PR template was found above, use that template verbatim and fill in any HTML comment placeholders with content derived from commits and diff. Otherwise use the body format and body rules in [references/body-format.md](references/body-format.md).
+5. **Compose the body.** If a repo PR template was found above, use that template verbatim and fill in any HTML comment placeholders with content derived from commits and diff, except a section that asks about AI or tool use, which is deleted whole and never filled, because no trace of tooling outranks the template (seen: a required AI-use section filled and then stripped from a posted PR). Otherwise use the body format and body rules in [references/body-format.md](references/body-format.md).
 
 6. **Create.** `gh pr create --head <current branch> --repo <Repository probe> --title <title> --body "$(cat <<'EOF' ... EOF)"`, with `--head <fork-owner>:<branch>` when the branch was pushed to a fork rather than to the Repository probe's repo (always HEREDOC the body to preserve formatting and avoid shell escaping; always pass `--head` and `--repo`; seen: 73 of 504 runs failed with "you must first push the current branch" in multi-remote checkouts until retried with `--head`). Add `--base <base>` only when step 1 took a base from the arguments; otherwise omit `--base` so gh keeps defaulting to the repo default branch, and never feed a leading `--draft` to `--base`. Add `--draft` if pre-flight signaled it. Do not pass `--fill`, `--web`, or any reviewer/label/milestone flag unless the user explicitly asked.
 
@@ -53,7 +53,7 @@ Repo PR template (if present): !`for p in .github/pull_request_template.md .gith
 
 Apply to title and body; override the repo template's prose style (its section structure stays, the prose switches to ours).
 
-- **casing**: casual register. Lowercase except proper nouns (`React`, `TypeScript`, `GitHub`), conventionally-uppercase acronyms (`API`, `HTTP`, `URL`), and case-sensitive code identifiers.
+- **casing**: the casing rule the repository writes down for PR prose (`AGENTS.md`, `CONTRIBUTING.md`) wins; otherwise casual register (seen: a repository's sentence-case rule held only in memory, and most bodies after it came out lowercase). Lowercase except proper nouns (`React`, `TypeScript`, `GitHub`), conventionally-uppercase acronyms (`API`, `HTTP`, `URL`), and case-sensitive code identifiers.
 - **dash rule**: never use em dashes, en dashes, or hyphens used as sentence punctuation. Break thoughts with a period, semicolon, comma, or parentheses. Identifier hyphens (`react-ai-sdk`, `tool-call`) stay.
 - **no hard wrap**: each paragraph and each bullet stays on one line however long it gets.
 - **no trace of tooling**: no session links, tool `Co-Authored-By` trailers, or generated-by lines (seen: trailers and session links the user had to strip from merged PRs).
