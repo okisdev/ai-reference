@@ -380,7 +380,7 @@ class MeasureTests(unittest.TestCase):
         self.write("AGENTS.md", "Read `DESIGN.md` before editing.\n")
         path = self.root / "DESIGN.md"
         old = "x\n" * 8100
-        grown = "x\n" * 8200
+        grown = "x\n" * 8300
         result = self.hook(path, grown, tool="Write", original=old)
         self.assertEqual(result.returncode, 2)
         self.assertIn("over-target", result.stderr)
@@ -536,7 +536,7 @@ class MeasureTests(unittest.TestCase):
 
     def test_grok_hashline_edit_growth_and_whole_file_without_original(self):
         self.write("README.md", "x\n" * 8500)
-        payload = {"tool_name": "hashline_edit", "tool_input": {"file_path": "README.md", "find": "x\n", "replace": "x\nx\n"}, "tool_response": "Success", "cwd": str(self.root)}
+        payload = {"tool_name": "hashline_edit", "tool_input": {"file_path": "README.md", "find": "x\n", "replace": "x\n" * 200}, "tool_response": "Success", "cwd": str(self.root)}
         result = self.hook_payload(payload)
         self.assertEqual(result.returncode, 2, result.stderr)
         self.assertIn("README.md:0: over-target: 17000 bytes (target 16384)", result.stderr)
@@ -546,9 +546,11 @@ class MeasureTests(unittest.TestCase):
 
     def test_unpointed_readme_growth_and_status(self):
         path = self.root / "README.md"
-        result = self.hook(path, "x\n" * 8500, original="x\n" * 8499)
+        result = self.hook(path, "x\n" * 8500, original="x\n" * 8300)
         self.assertEqual(result.returncode, 2, result.stderr)
         self.assertIn("README.md:0: over-target: 17000 bytes (target 16384)", result.stderr)
+        result = self.hook(path, "x\n" * 8500, original="x\n" * 8499)
+        self.assertEqual((result.returncode, result.stderr), (0, ""))
         result = self.hook(path, "x\n" * 1000, original="x\n" * 999)
         self.assertEqual((result.returncode, result.stderr), (0, ""))
         result = self.hook(path, "x\n" * 1000 + "Last updated 2026-10-19\n", original="x\n" * 1000)
