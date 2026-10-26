@@ -8,4 +8,5 @@
 | `greptile-apps` | Short status comment plus separate inline comments. Summary often contains only `<!-- greptile_other_comments_section -->`. | Inline comments only; the summary is metadata. |
 | `changeset-bot` | "🦋 Changeset detected" or a warning if missing. | Whether a changeset exists; nothing else. |
 | `vercel[bot]` / `vercel` | Deployment URL or build status. | Always noise. |
+| `rupic-app[bot]` / `rupic-app` | Review comments and sometimes its own draft PRs. GraphQL reports the login without `[bot]`, so match both forms. | Findings with `file:line`; accuracy is mixed, so verify each against the code before accepting. |
 | Human reviewer | Free-form prose, sometimes inline. | Take seriously; outweighs bots on disagreement. |
