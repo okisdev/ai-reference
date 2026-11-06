@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Usage: python3 scripts/test-memory-scripts.py. Contract test for use-project-memory check.py and clean-memory audit.py."""
+"""Usage: python3 scripts/test-memory-scripts.py. Contract test for the memory scripts check.py, resolve.py, and audit.py."""
 import importlib.util
 import json
 import subprocess
@@ -10,6 +10,7 @@ from pathlib import Path
 sys.dont_write_bytecode = True
 REPO = Path(__file__).resolve().parents[1]
 CHECK = REPO / "skills/use-project-memory/scripts/check.py"
+RESOLVE = REPO / "skills/use-project-memory/scripts/resolve.py"
 AUDIT = REPO / "skills/clean-memory/scripts/audit.py"
 
 FM = "---\nname: {name}\ndescription: \"{name} fact\"\nmetadata:\n  node_type: memory\n  type: {type}\n---\n\n{body}\n"
@@ -403,6 +404,13 @@ with tempfile.TemporaryDirectory() as temporary:
 
     result = run(AUDIT, repo, "--memory", good, "--strict")
     expect(result.returncode == 0, "audit --strict passes on a clean store, got {}: {}".format(result.returncode, result.stdout[-300:]))
+
+spec = importlib.util.spec_from_file_location("memory_resolve", RESOLVE)
+resolver = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(resolver)
+expect(resolver.encode_claude_project(Path("/Users/a_b/x.y-z")) == "-Users-a-b-x-y-z", "the store folder name turns underscores and dots into dashes like Claude Code")
+LONG = "/" + "a" * 250
+expect(resolver.encode_claude_project(Path(LONG)) == "-" + "a" * 199 + "-feo44x", "a store folder name past 200 characters is cut and gains the path's hash, got {}".format(resolver.encode_claude_project(Path(LONG))[-12:]))
 
 if failures:
     print("FAIL")

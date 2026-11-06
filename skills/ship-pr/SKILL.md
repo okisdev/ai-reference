@@ -2,6 +2,8 @@
 name: ship-pr
 description: Ship a change to a merged PR end to end (ship it, run the flow, merge it), building or resuming the PR, looping over CI and review threads to address feedback, and merging once every check and review has settled on the head that merges.
 argument-hint: "[task-or-pr] [--squash|--merge|--rebase] [--approve] [--admin] [--delete-branch] [--base <branch>] [--draft] [--advisory <check>] [--cwd <path>]"
+metadata:
+  requires: "create-branch commit-changes create-pr verify-pr verify-pr-comments approve-pr summarize-review"
 ---
 
 ## Context

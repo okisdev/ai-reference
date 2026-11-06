@@ -64,7 +64,7 @@ The question picks the form; the data's shape never does. A table answers "what 
 - A row is keyed by index and disambiguated in its label, never by a domain id that can repeat.
 - A connector or point that looks accidental is a rendering defect to fix (one rounded track with square joins, a straight connector), not a data quirk to explain.
 - Server-rendered date math is UTC, explicit, and identical in the page and its skeleton.
-- Verified through `verify-ui` on a project with data, an empty project, one with a single entity, one where an entity holds under 2 percent of the total, the demo, both themes, and a narrow viewport; a part-to-whole form lays out by entity count and folds parts too thin to draw into one "N more" part (seen: one entity drew as a single dot in the corner, and a sliver share as a stray line at the edge).
+- Verified in a browser, through `verify-ui` when installed, on a project with data, an empty project, one with a single entity, one where an entity holds under 2 percent of the total, the demo, both themes, and a narrow viewport; a part-to-whole form lays out by entity count and folds parts too thin to draw into one "N more" part (seen: one entity drew as a single dot in the corner, and a sliver share as a stray line at the edge).
 
 ## Placement
 

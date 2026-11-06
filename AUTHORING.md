@@ -63,6 +63,15 @@ Short is not the goal; lean is. Do not cut into the do-not-cut floor: verificati
 - Waits and monitors: a step that waits on an external process states a heartbeat (a visible per-tick status line plus a liveness re-check, not just still-pending) and a wall-clock budget with the expiry action spelled out (keep waiting through the expected window, drop only a still-pending item that has gone quiet well past it, surface failed items as blockers, kill and report owned processes). No skill ships an unbounded wait. A command bound delivers SIGTERM (the ship-pr step 3 wrapper), never a bare `alarm; exec`: Go binaries such as gh catch SIGALRM and keep running.
 - Process steps are written to be copied into the executing agent's plan verbatim, one self-contained action each; a consciously skipped step stays visible as `skip: <reason>` rather than silently dropped. An agent that paraphrases a checklist drops its gates.
 
+## Standing alone
+
+A skill works when it is the only one installed, because `npx skills add --skill` installs a single folder.
+
+- A skill that cannot do its job without another declares it in `metadata.requires`, a space-separated list, and its README entry repeats it under **Requires**; keep the list to what the skill's own output depends on.
+- Any other skill is named as an option: the step still succeeds without it ("read the source at the pinned version (`read-source` when installed)"), or the skill is only suggested to the user.
+- A Context probe reaches its own script through `d="${CLAUDE_SKILL_DIR}"; python3 "${d:-$HOME/.agents/skills/<name>}/scripts/<file>"`, and a Process step names `<this skill's directory>`, because an install lands in `~/.agents/skills` or `~/.claude/skills` depending on its agents, and Claude Code substitutes only the exact `${CLAUDE_SKILL_DIR}`.
+- A skill reads files only from its own folder or from a skill it requires; a script or reference that two independent skills need is a copy in each, listed in `identicalCopies` in `scripts/validate-skills.mjs`, which fails when they differ.
+
 ## Evals
 
 Every skill has a routing case in the user's own words, and a skill whose output a person reads has a quality case for its one rule: `evals/<skill>-<case>/prompt.md` plus `graders/*.md`, in the format `claude plugin eval init --bare` writes. A case puts the whole scenario in its prompt, because an eval run has no network, a redirected home, and an empty working directory, and it allows `[Skill, Read, Bash]` so the skill's probes can run. Routing graders are `tool_used` on `Skill` with `arm: both`; quality graders are `llm` judges with a concrete criterion, or `regex` with the pattern in frontmatter. A quality criterion states the outcome the user asked for, so that the skill's own success check cannot satisfy it alone (a digest whose counts are right but which never says what was produced fails). A case passes with the skill, and the delta against the no-plugin arm says what the skill adds.
@@ -76,8 +85,8 @@ A skill whose goal must hold after it runs (docs that stay rules, a memory store
 ## Before you ship
 
 - `python3 scripts/check-probes.py` passes, and `claude plugin eval . --trust-plugin --allow-tools Bash --no-publish --judge-model sonnet` passes the cases of every touched skill, judged by sonnet because the default haiku judge fails answers that meet a criterion (seen: a read-only render check that labeled its suggestion not applied failed the no-edit grader under haiku and passed it unanimously under sonnet).
-- `node scripts/validate-skills.mjs` passes. It enforces the mechanical checks (frontmatter parses, `name:` equals the directory name, the skill is listed in `.claude-plugin/plugin.json` and `README.md`), and CI runs the same script on every PR touching skills.
+- `node scripts/validate-skills.mjs` passes. It enforces the mechanical checks (frontmatter parses, `name:` equals the directory name, the skill is listed in `.claude-plugin/plugin.json` and `README.md`, and it stands alone as `## Standing alone` asks), and CI runs the same script on every PR touching skills.
 - `npx skills add <repo> -l` lists the skill (proves the consumer-side CLI parses the frontmatter too).
-- `python3 scripts/test-memory-scripts.py` passes when a change touches `use-project-memory/scripts/check.py` or `clean-memory/scripts/audit.py`; CI runs it beside the validator.
+- `python3 scripts/test-memory-scripts.py` passes when a change touches the `check.py`, `resolve.py`, or `audit.py` of `use-project-memory` or `clean-memory`; CI runs it beside the validator.
 - `python3 scripts/test-measure.py` passes when a change touches `normalize-agents-md/scripts/measure.py`; CI runs it beside the validator.
 - Bump the `.claude-plugin/plugin.json` version.

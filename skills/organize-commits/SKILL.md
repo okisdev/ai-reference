@@ -2,6 +2,8 @@
 name: organize-commits
 description: Organize uncommitted changes or messy commits on the current branch into clean, categorized commits grouped by purpose, resetting and rewriting already-committed (even pushed) history when needed.
 argument-hint: "[base-branch | --base <branch>] [--cwd <path>]"
+metadata:
+  requires: "commit-changes"
 ---
 
 ## Context

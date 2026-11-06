@@ -63,18 +63,12 @@ def parse_args(args):
 def root_for(repository):
     result = run(["git", "rev-parse", "--show-toplevel"], repository)
     return Path(result.stdout.strip()).resolve() if result and result.returncode == 0 and result.stdout.strip() else repository.resolve()
-def encoded(root):
-    return "".join("-" if char in "/." or ord(char) > 127 else char for char in str(root.resolve()))
 def memory_for(root, supplied):
     if supplied is not None: return supplied.resolve()
-    home = Path(os.environ.get("HOME", str(Path.home())))
-    resolver = home / ".agents" / "skills" / "use-project-memory" / "scripts" / "resolve.py"
-    result = run(["python3", str(resolver)], root) if resolver.is_file() else None
-    if result and result.returncode == 0:
-        for line in result.stdout.splitlines():
-            if line.startswith("dir "):
-                return Path(line[4:]).expanduser().resolve()
-    return home / ".claude" / "projects" / encoded(root) / "memory"
+    spec = importlib.util.spec_from_file_location("memory_resolve", Path(__file__).with_name("resolve.py"))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return Path(module.resolve(root)["dir"]).resolve()
 def date_for(value):
     if not value: return None
     try:
@@ -280,7 +274,7 @@ def leakage(root):
     return sorted(found, key=lambda value: value["file"])
 
 def format_check(memory):
-    path = Path(__file__).resolve().parents[2] / "use-project-memory" / "scripts" / "check.py"
+    path = Path(__file__).with_name("check.py")
     if not path.is_file():
         return {"unavailable": True}
     spec = importlib.util.spec_from_file_location("memory_format_check", path)

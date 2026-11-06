@@ -23,7 +23,7 @@ Study the reference until the pattern separates from its styling, implement the 
 3. Read the target area's own idiom before writing: nearest siblings decide naming, placement, and import style, and the repository's own primitives and helpers are the building blocks. Read the repository's `AGENTS.md` and README first when the codebase is unfamiliar.
 4. Implement the pattern expressed entirely in this repository's conventions and primitives. Search for an existing primitive before writing a new one; a new parallel implementation states what existing thing was rejected and why.
 5. Write the deviation report as part of the result: where the implementation intentionally diverges from the reference and why (this repository's idiom, its constraints, its design system), where it matches, and which reference each adopted pattern came from when more than one reference was studied.
-6. Verify with the repository's own checks; compose `verify-ui` for render evidence when the result is UI.
+6. Verify with the repository's own checks; when the result is UI, take render evidence in a browser (`verify-ui` when installed).
 
 ### Rules
 

@@ -24,7 +24,7 @@ Run `status` in every worktree the list names and report uncommitted changes, wh
 
 ## Agent sessions
 
-Store layouts, including how a path is encoded into `<encoded>`, are in [distill-session's stores.md](../../distill-session/references/stores.md). Index sessions by default; read one only when the ask is about the work itself rather than its outputs, and then through distill-session's reader brief.
+Store layouts, including how a path is encoded into `<encoded>`, are in [stores.md](stores.md). Index sessions by default; read one only when the ask is about the work itself rather than its outputs, and then only for the question asked.
 
 Claude sessions of a clone, including its task worktrees' `<encoded>--claude-worktrees-*` directories, with each session's latest title and the PRs it linked (opened or worked on):
 

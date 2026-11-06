@@ -38,7 +38,7 @@ Read in order. The first rung that answers a dimension wins; lower rungs fill th
 
 ## Writing it
 
-The contract lands under a `## Design contract` heading in the app's AGENTS.md: a precedence line first, then one bullet per row of the table above in table order, each naming the kit file or test that proves it, then the chart grammar bullets `plan-charts` produced. It states rules, never the surfaces built under them: a page, component, or token inventory stays in the code and the kit, because a contract that lists surfaces grows with every page and makes every page change a contract change. Run `python3 "$HOME/.agents/skills/normalize-agents-md/scripts/measure.py" <app-path> --strict` afterwards and cut prose, never a rule, to fit the caps.
+The contract lands under a `## Design contract` heading in the app's AGENTS.md: a precedence line first, then one bullet per row of the table above in table order, each naming the kit file or test that proves it, then the chart grammar bullets `plan-charts` produced. It states rules, never the surfaces built under them: a page, component, or token inventory stays in the code and the kit, because a contract that lists surfaces grows with every page and makes every page change a contract change. Run `python3 <normalize-agents-md's directory>/scripts/measure.py <app-path> --strict` afterwards and cut prose, never a rule, to fit the caps.
 
 ## Precedence
 

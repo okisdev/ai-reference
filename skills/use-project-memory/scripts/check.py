@@ -518,7 +518,7 @@ def check_hook():
         return 0
     for violation in violations:
         print("{file}:{line}: {rule}: {detail}".format(**dict(violation, line=violation["line"] or 0)), file=sys.stderr)
-    print("use-project-memory: rewrite what this write added to fit these limits; older lines are clean-memory's job.", file=sys.stderr)
+    print("memory: rewrite what this write added to fit these limits; older lines are clean-memory's job.", file=sys.stderr)
     return 2
 
 

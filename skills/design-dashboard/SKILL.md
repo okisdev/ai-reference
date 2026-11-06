@@ -2,6 +2,8 @@
 name: design-dashboard
 description: "Design or redesign an admin, ops, or customer dashboard in the repository's own design law, from a measured diagnosis to a verified build and a contract in AGENTS.md."
 argument-hint: "[app-path] [reference-path-or-url...] [--analysis]"
+metadata:
+  requires: "plan-charts mirror-reference verify-ui normalize-agents-md"
 ---
 
 ## Context
@@ -10,7 +12,7 @@ Design law in the tree: !`top=$(git rev-parse --show-toplevel 2>/dev/null || pwd
 
 Kit, shared, and chart directories: !`out=$(find . -name node_modules -prune -o -type d \( -iname ui -o -iname shared -o -iname charts \) -print 2>/dev/null | grep -v node_modules | head -6); echo "${out:-(none)}"`
 
-Density audit: !`out=$(node "$HOME/.agents/skills/design-dashboard/scripts/density.mjs" . 2>/dev/null | head -24); echo "${out:-(density script unavailable)}"`
+Density audit: !`out=$(d="${CLAUDE_SKILL_DIR}"; node "${d:-$HOME/.agents/skills/design-dashboard}/scripts/density.mjs" . 2>/dev/null | head -24); echo "${out:-(density script unavailable)}"`
 
 Routes: !`n=$(find . -name node_modules -prune -o -name 'page.tsx' -print 2>/dev/null | grep -v node_modules | wc -l | tr -d ' '); echo "$n page.tsx files"`
 
@@ -34,7 +36,7 @@ Decide what the dashboard is for, diagnose it in measurements, draw it in the re
 10. Fan out the pages as parallel packages on top of the verified core: one exemplar page first, breadth pages next, detail and trace pages last. Each brief names its files, the exemplar page path, the contract path, sibling packages' files as in flight, and its verification command, and the uncommitted core rides into each worktree as an applied and staged patch. Merge each returned package into the main tree one at a time with a typecheck after each; a package past its lifecycle budget is terminalized as a sizing error and re-dispatched bounded, never waited on; when a package deleted a file mid-rewrite, restore it from the base and re-dispatch a bounded follow-up instead of patching around the gap.
 11. Verify in a browser through `verify-ui` in a declared order: the overview, a list with filter, sort, and paging, a detail page, the command palette, a create form, both themes, a narrow viewport, with the console watched throughout; prove an alignment claim with measured pixels, not a glance. Seed staging with realistic variety (many entities, id spellings, outcome mixes) through the app's own seed script or `inspect-db --write` against the staging connection named by host, never production, before judging a list or chart page. Grep for a destructive action outside the confirm dialog and for a hand-rolled control the kit has before calling the pass done. The handoff names the surfaces not verified, each delegated decision with the choice made, and any page that missed its density target with the cause.
 12. Run the polish loop on the user's feedback: a pasted bracketed component stack is a locator, resolved to its file and line; fix at the shared component; put labels back when compression reads as broken; when two consecutive instructions contradict, the later one wins and the reading is flagged; a defect that recurs becomes a contract rule on its second occurrence.
-13. Leave the contract behind: the design contract and the chart grammar live in the app's AGENTS.md in the shape the contract reference's writing section gives and pass `python3 "$HOME/.agents/skills/normalize-agents-md/scripts/measure.py" <app-path> --strict`, the blueprint link goes to project memory through `use-project-memory`, and the tree stays uncommitted; committing composes `commit-changes`, shipping composes `ship-pr`.
+13. Leave the contract behind: the design contract and the chart grammar live in the app's AGENTS.md in the shape the contract reference's writing section gives and pass `python3 <normalize-agents-md's directory>/scripts/measure.py <app-path> --strict`, the blueprint link goes to project memory, and the tree stays uncommitted; committing composes `commit-changes`, shipping composes `ship-pr`.
 
 ### Rules
 

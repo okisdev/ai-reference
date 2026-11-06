@@ -17,7 +17,7 @@ The live tree outranks git history, git history outranks GitHub state, installed
 | Dead anchor | A path, symbol, or command no longer exists | `git ls-files`, grep, manifest scripts | All anchors dead: disprove or archive; some dead: correct the anchors |
 | Drifted anchor | The path exists but changed after the memory was written | `git log --since=<modified> -- <path>` | Semantic check; confirm or correct |
 | Terminal line | A live index line whose hook carries SHIPPED, CLOSED, DISPROVEN, or SUPERSEDED while its topic keeps no live leftover, standing prohibition, or recurring recipe | The topic | Archive on every pass, not only under index pressure, because the index loads into every session |
-| Closed saga | The referenced issue or PR is CLOSED or MERGED while the hook says OPEN, pending, or BLOCKED | `gh issue view`, `gh pr view`, the fix commit | Hook gains the terminal token; the line moves to ARCHIVE.md per `use-project-memory` |
+| Closed saga | The referenced issue or PR is CLOSED or MERGED while the hook says OPEN, pending, or BLOCKED | `gh issue view`, `gh pr view`, the fix commit | Hook gains the terminal token; the line moves to ARCHIVE.md per [write.md](write.md) |
 | Contradicted behavior | The topic describes a mechanism the code no longer has | Subagent read with `file:line` | Disprove: one paragraph stating what was believed, what the tree shows, the evidence |
 | Superseded decision | A newer topic, PR, or code decides the same question the other way | The newer artifact | Older topic gains SUPERSEDED and a pointer; its index line moves to ARCHIVE.md |
 | Expired temporal fact | deadline, pending, until, wait for, plus a date now past | The date and the outcome | Archive with the outcome |
@@ -40,7 +40,7 @@ The live tree outranks git history, git history outranks GitHub state, installed
 | disprove | Rewritten to one paragraph: believed, observed, evidence, date | Hook gains DISPROVEN, line moved to ARCHIVE.md |
 | supersede | Gains one line naming the newer topic | Hook gains SUPERSEDED, line moved to ARCHIVE.md |
 | compact | Rewritten to the claims that hold and pass the admission test, each with its citation, within the `check.py` limits; `verified` set | Hook rewritten only when it breaks the limit or the cue changed |
-| promote | Its rule claims land in `AGENTS.md` under `normalize-agents-md`'s editing contract; deleted when no other claim in it holds, otherwise compacted to the rest | Line removed, or rewritten when the topic stays |
+| promote | Its rule claims land in `AGENTS.md` under the file's editing contract; deleted when no other claim in it holds, otherwise compacted to the rest | Line removed, or rewritten when the topic stays |
 | delete | File removed | Line removed |
 | demote | Claim labeled inference, `verified` left unset | none |
 | escalate | Unchanged | Unchanged; the question goes to the user with both sides' evidence |
@@ -59,7 +59,7 @@ When dead path anchors exceed thirty percent of at least twenty, the architectur
 
 ## Snapshot and sidecar
 
-Before any write, the memory directory is copied to `<memory dir>/../memory-backups/<YYYY-MM-DD>/`; the three newest snapshots are kept and older ones removed. After the pass, `<memory dir>/.clean-memory.json` holds `{"last_run": "<YYYY-MM-DD>", "stats": {"topics": n, "confirmed": n, "corrected": n, "compacted": n, "promoted": n, "archived": n, "disproved": n, "superseded": n, "deleted": n, "demoted": n, "escalated": n}}`; the audit reads it to report the days since the last cleanup, and `use-project-memory` reads it on load to suggest a pass when it is older than thirty days.
+Before any write, the memory directory is copied to `<memory dir>/../memory-backups/<YYYY-MM-DD>/`; the three newest snapshots are kept and older ones removed. After the pass, `<memory dir>/.clean-memory.json` holds `{"last_run": "<YYYY-MM-DD>", "stats": {"topics": n, "confirmed": n, "corrected": n, "compacted": n, "promoted": n, "archived": n, "disproved": n, "superseded": n, "deleted": n, "demoted": n, "escalated": n}}`; the audit reads it to report the days since the last cleanup.
 
 ## Report
 

@@ -24,6 +24,8 @@ Commit only the uncommitted changes as conventional commits, one per purpose: it
 
 Regroup uncommitted changes and messy branch commits into clean commits by purpose, rewriting even pushed history after it prints the plan, records a recovery ref, and asks before every reset; the content stays identical.
 
+**Requires:** `commit-changes`
+
 **Triggers:** "Clean up the commits on this branch", "Reorganize this branch's history"
 
 #### create-pr
@@ -60,11 +62,15 @@ Write a maintainer's summary review to a PR's author: the verdict and why it hol
 
 Review a PR as a maintainer and post the GitHub approval when it earns one, otherwise report and decline. It owns the self-approval guard and the review write, and composes `verify-pr`, `verify-pr-comments`, `summarize-review`, and optionally `ship-pr` for the merge.
 
+**Requires:** `verify-pr`, `verify-pr-comments`, `summarize-review`
+
 **Triggers:** "Approve PR #4621", "Review and approve this PR", "Approve and merge #4621"
 
 #### ship-pr
 
 Drive a change to a merged PR: implement if needed, branch, open the PR, then watch CI and review threads, fixing feedback each cycle, and merge once every check and review has settled on the head that merges. It resumes from whatever state exists, bounds every wait with a visible heartbeat, pins the merge to the head `verify-pr` judged, and follows merge queues.
+
+**Requires:** `create-branch`, `commit-changes`, `create-pr`, `verify-pr`, `verify-pr-comments`, `approve-pr`, `summarize-review`
 
 **Triggers:** "Ship this change", "Take this PR to merge", "Open a PR and merge it when CI is green"
 
@@ -107,6 +113,8 @@ Inspect a live database with real SQL before reasoning from ORM schema files: re
 #### design-dashboard
 
 Design or redesign an admin, ops, or customer dashboard in the repository's own design law: frame each screen's job, diagnose in measurements, take one contribution per reference, publish a blueprint, build the core and then the pages in waves, verify in a browser, and leave the contract in AGENTS.md.
+
+**Requires:** `plan-charts`, `mirror-reference`, `verify-ui`, `normalize-agents-md`
 
 **Triggers:** "Completely redesign the dashboard", "Every element is a big block, we need to show more", "The sidebar is a mess, split internal from customer-facing", "Design the console for this product"
 
@@ -154,7 +162,7 @@ Rewrite instruction files and the docs they point agents at into short normative
 
 #### clean-memory
 
-Verify a repository's project memory against the live tree and GitHub, then confirm, correct, compact, promote, archive, or delete each topic, so stale or wrong memories stop steering agents; `scripts/audit.py` checks every anchor a topic carries.
+Verify a repository's project memory against the live tree and GitHub, then confirm, correct, compact, promote, archive, or delete each topic, so stale or wrong memories stop steering agents; `scripts/audit.py` checks every anchor a topic carries, and `scripts/check.py` holds a write to the store's limits.
 
 **Triggers:** "Clean up the project memory", "Half of these memories are outdated", "Check what memory still holds after the refactor"
 
@@ -164,6 +172,13 @@ Verify a repository's project memory against the live tree and GitHub, then conf
 
 ```bash
 npx skills add okisdev/ai-reference
+```
+
+Each skill also installs on its own, and one marked **Requires** installs with what it needs:
+
+```bash
+npx skills add okisdev/ai-reference --skill clean-memory
+npx skills add okisdev/ai-reference --skill organize-commits commit-changes
 ```
 
 Update with `npx skills update -g -y`. Change a skill in this repository and reinstall it; an installed copy edited in place is overwritten by the next update.
