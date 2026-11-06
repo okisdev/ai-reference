@@ -19,7 +19,7 @@ Tiers decide order: A ships in the first batch, B in the second, C only with the
 
 ## Production evidence queries
 
-Run read-only through `inspect-db` against the repository's own connection, and name the window. Recipes:
+Run read-only (through `inspect-db` when installed) against the repository's own connection, and name the window. Recipes:
 
 - Volume shape: count per day over the last 14 full days, platform wide and for the ten largest tenants; a flat line means no time series form.
 - Reality of a status: count by status all time and in the window; a status the API never writes reads zero forever.
@@ -51,8 +51,8 @@ Published as an artifact, revised in place. Sections in order:
 ## Batch verification
 
 - Typecheck, lint, and build across every package.
-- Every new SQL shape executed read-only through `inspect-db` against the named staging or production connection.
-- A browser pass per batch through `verify-ui`: scrub a sparkline, toggle a legend, click a strip day, change the range and the zone, both themes, and the empty variant.
+- Every new SQL shape executed read-only (through `inspect-db` when installed) against the named staging or production connection.
+- A browser pass per batch, through `verify-ui` when installed: scrub a sparkline, toggle a legend, click a strip day, change the range and the zone, both themes, and the empty variant.
 - Thin staging data is seeded with variety (many tenants, providers, id spellings, outcome mixes) through the app's own seed script or `inspect-db --write` against the staging connection named by host, never production, before a chart page is judged.
 - Synthetic or demo data is labelled, forward-only, and never backfilled history.
 - The handoff names the surfaces not verified.

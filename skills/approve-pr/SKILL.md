@@ -2,6 +2,8 @@
 name: approve-pr
 description: Approve a GitHub PR as a maintainer once verify-pr clears it, posting the GitHub approval or declining, with an optional hand-off to ship-pr for the merge.
 argument-hint: "<pr-number-or-url> [--merge] [--request-changes] [--comment] [--squash|--admin|--delete-branch]"
+metadata:
+  requires: "verify-pr verify-pr-comments summarize-review"
 ---
 
 ## Context
@@ -47,7 +49,7 @@ Delegate the approve-or-decline verdict to `verify-pr` (consume its recommendati
 
 6. **On a decline, write only the opt-in path.** When an opt-in flag authorizes a non-approving write (`--request-changes` for a push back, `--comment` for a note), post it via `--body-file -`. Otherwise report verify-pr's recommendation and any blocking thread, and stop without writing.
 
-7. **Optional `--merge` hand-off.** Only when `--merge` was passed and the approval posted, hand the PR number and any pass-through flags to `/ship-pr <n>` and stop. Never merge directly.
+7. **Optional `--merge` hand-off.** Only when `--merge` was passed and the approval posted, hand the PR number and any pass-through flags to `/ship-pr <n>` and stop; when `ship-pr` is not installed, report the posted approval and that the merge did not run. Never merge directly.
 
 ### Decision table
 

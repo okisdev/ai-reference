@@ -2,6 +2,17 @@
 
 All notable changes to this collection. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions match `.claude-plugin/plugin.json`. Changes before 0.0.41 live in the merged pull requests.
 
+## [0.0.49] (2026-11-06)
+
+### Added
+
+- Every skill works when installed alone. `metadata.requires` and **Requires** in the README name what must install together (ship-pr, approve-pr, organize-commits, design-dashboard), and `validate-skills.mjs` fails on a read of another skill's files outside that list, on a required composition with no fallback, and on copies that differ.
+
+### Changed
+
+- clean-memory carries its own `check.py`, `resolve.py`, and `references/write.md`, and recap-activity its own `references/stores.md`; a skill names any other skill only as an option.
+- The memory resolver names a store's folder as Claude Code does: every character other than an ASCII letter or digit becomes a dash, and a name past 200 characters is cut and gains a hash of the path. The audit takes the store from it instead of keeping a second encoding.
+
 ## [0.0.47] (2026-10-26)
 
 ### Added

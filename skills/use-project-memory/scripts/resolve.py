@@ -14,13 +14,20 @@ PROJECTS = HOME / ".claude" / "projects"
 
 def encode_claude_project(path: Path) -> str:
     text = str(path.resolve())
-    out: list[str] = []
-    for ch in text:
-        if ("A" <= ch <= "Z") or ("a" <= ch <= "z") or ("0" <= ch <= "9") or ch in {"_", "-"}:
-            out.append(ch)
-        else:
-            out.append("-")
-    return "".join(out)
+    key = "".join(ch if ch.isascii() and ch.isalnum() else "-" for ch in text)
+    if len(key) <= 200:
+        return key
+    units = text.encode("utf-16-le")
+    value = 0
+    for index in range(0, len(units), 2):
+        value = (value * 31 + int.from_bytes(units[index:index + 2], "little")) & 0xFFFFFFFF
+    if value >= 0x80000000:
+        value = 0x100000000 - value
+    digits = ""
+    while value:
+        value, digit = divmod(value, 36)
+        digits = "0123456789abcdefghijklmnopqrstuvwxyz"[digit] + digits
+    return f"{key[:200]}-{digits or '0'}"
 
 
 def git(cwd: Path, *args: str) -> str | None:

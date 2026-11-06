@@ -208,16 +208,100 @@ for (const [skillPath, frontmatter] of frontmatterByPath) {
   }
 }
 
-const scriptReference = /\$HOME\/\.agents\/skills\/([a-z0-9-]+)\/scripts\/([A-Za-z0-9_.-]+)/g;
+const scriptReference = /\$HOME\/\.agents\/skills\/([a-z0-9-]+)\}\/scripts\/([A-Za-z0-9_.-]+)/g;
+const fixedInstallPath = /(?<!\$\{d:-)\$HOME\/\.agents\/skills\//;
 
 for (const skillPath of skillPaths) {
   const contents = fs.readFileSync(skillPath, "utf8");
+
+  if (fixedInstallPath.test(contents)) {
+    fail(`${relativePath(skillPath)} names a fixed install path; use the probe form in AUTHORING.md.`);
+  }
 
   for (const match of contents.matchAll(scriptReference)) {
     const scriptPath = path.join(skillsDirectory, match[1], "scripts", match[2]);
 
     if (!fs.existsSync(scriptPath)) {
       fail(`${relativePath(skillPath)} references ${relativePath(scriptPath)}, which does not exist.`);
+    }
+  }
+}
+
+const identicalCopies = [
+  ["skills/use-project-memory/scripts/check.py", "skills/clean-memory/scripts/check.py"],
+  ["skills/use-project-memory/scripts/resolve.py", "skills/clean-memory/scripts/resolve.py"],
+  ["skills/use-project-memory/references/write.md", "skills/clean-memory/references/write.md"],
+  ["skills/distill-session/references/stores.md", "skills/recap-activity/references/stores.md"],
+];
+
+for (const [first, second] of identicalCopies) {
+  if (!fs.existsSync(path.join(repoRoot, first)) || !fs.existsSync(path.join(repoRoot, second))) {
+    fail(`Copies ${first} and ${second} must both exist.`);
+  } else if (!fs.readFileSync(path.join(repoRoot, first)).equals(fs.readFileSync(path.join(repoRoot, second)))) {
+    fail(`${first} and ${second} must be identical copies.`);
+  }
+}
+
+const skillNames = [...frontmatterByPath.keys()].map((skillPath) => path.basename(path.dirname(skillPath)));
+const requiredBy = new Map();
+
+for (const [skillPath, frontmatter] of frontmatterByPath) {
+  const name = path.basename(path.dirname(skillPath));
+  const requires = typeof frontmatter?.metadata?.requires === "string" ? frontmatter.metadata.requires.trim().split(/\s+/) : [];
+  requiredBy.set(name, requires);
+
+  for (const required of requires) {
+    if (required === name || !skillNames.includes(required)) {
+      fail(`${relativePath(skillPath)} requires "${required}", which is not another skill here.`);
+    }
+  }
+}
+
+function installedWith(name) {
+  const seen = new Set([name]);
+
+  for (const current of seen) {
+    for (const required of requiredBy.get(current) ?? []) {
+      seen.add(required);
+    }
+  }
+
+  return seen;
+}
+
+function filesIn(directory) {
+  return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const entryPath = path.join(directory, entry.name);
+
+    if (entry.isDirectory()) {
+      return entry.name === "examples" ? [] : filesIn(entryPath);
+    }
+
+    return /\.(md|py|mjs|sh)$/.test(entry.name) ? [entryPath] : [];
+  });
+}
+
+for (const name of skillNames) {
+  const available = installedWith(name);
+
+  for (const filePath of filesIn(path.join(skillsDirectory, name))) {
+    const contents = fs.readFileSync(filePath, "utf8");
+
+    for (const other of skillNames) {
+      if (available.has(other)) {
+        continue;
+      }
+
+      const readsFile = new RegExp(`(?:\\.\\./|skills/|")${other}(?:/|" /)|(?<![\\w-])${other}/(?:references|scripts|examples)/`);
+      const composes = new RegExp(`(?:compos(?:e|ing)|through|delegate to|follow)\\s+\`/?${other}\`(?! when installed)`);
+
+      if (readsFile.test(contents)) {
+        fail(`${relativePath(filePath)} reads files of ${other}; add it to metadata.requires or keep a copy.`);
+      }
+
+      if (composes.test(contents)) {
+        fail(`${relativePath(filePath)} needs ${other}; say what happens without it or add it to metadata.requires.`);
+      }
     }
   }
 }
@@ -281,6 +365,17 @@ for (const skillName of listedSkillNames) {
 for (const skillName of readmeSkillNames) {
   if (!listedSkillNames.has(skillName)) {
     fail(`README.md skills heading "#### ${skillName}" does not match a listed skill.`);
+  }
+}
+
+if (typeof readme === "string") {
+  for (const [name, requires] of requiredBy) {
+    const entry = readme.split(`#### ${name}\n`)[1]?.split("\n#### ")[0] ?? "";
+    const listed = [...(entry.match(/\*\*Requires:\*\*(.*)/)?.[1] ?? "").matchAll(/`([a-z0-9-]+)`/g)].map((match) => match[1]);
+
+    if (listed.join(" ") !== requires.join(" ")) {
+      fail(`README.md entry for ${name} must say **Requires:** ${requires.join(", ") || "nothing"}.`);
+    }
   }
 }
 
