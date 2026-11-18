@@ -116,6 +116,20 @@ class MeasureTests(unittest.TestCase):
         scoped = subprocess.run([sys.executable, str(MEASURE), str(self.root / "guide"), "--json"], text=True, capture_output=True, cwd=self.root)
         self.assertEqual(scoped.returncode, 0, scoped.stderr)
 
+    def test_hook_skips_a_changelog_an_instruction_file_names(self):
+        self.write("AGENTS.md", "Bump the version, because CHANGELOG.md entries are keyed to it.\n")
+        self.write("CHANGELOG.md", "# Changelog\n")
+        result = self.hook(self.root / "CHANGELOG.md", "# Changelog\n\n## [1.2.0] (2026-11-18)\n" + "x" * 17000 + "\n", original="# Changelog\n")
+        self.assertEqual((result.returncode, result.stderr), (0, ""))
+
+    def test_inventory_history_for_non_ascii_names(self):
+        self.write("docs/\u6307\u5357.md", "# Guide\n")
+        subprocess.run(["git", "add", "-A"], cwd=self.root, check=True, capture_output=True)
+        subprocess.run(["git", "-c", "user.name=Test", "-c", "user.email=test@example.com", "commit", "-q", "-m", "guide"], cwd=self.root, check=True, capture_output=True)
+        record = {r["path"]: r for r in self.report()["markdown"]}["docs/\u6307\u5357.md"]
+        self.assertEqual(record["changes_90d"], 1)
+        self.assertIsNotNone(record["last_change"])
+
     def test_markdown_inventory_without_git(self):
         outside = Path(self.temp.name) / "plain"
         (outside / "notes").mkdir(parents=True)

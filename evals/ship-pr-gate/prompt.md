@@ -1,6 +1,6 @@
 ---
 description: ship-pr waits for a review bot that is still working and keeps an old green whose base moved only elsewhere.
-tags: [quality, ship-pr]
+tags: [quality, ship-pr, guard]
 runs: 2
 max_turns: 8
 timeout_seconds: 240

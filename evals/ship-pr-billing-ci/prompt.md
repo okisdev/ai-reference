@@ -7,7 +7,7 @@ timeout_seconds: 240
 allowed_tools: [Skill, Read, Bash]
 ---
 
-Use the ship-pr skill's monitor pass to decide what to do next for my PR #88 on okisdev/notes. Answer from this state only; do not run anything.
+Use the ship-pr skill's monitor pass to decide what to do next for my PR #88 on acme/notes. Answer from this state only; do not run anything.
 
 - Head `91be0c4`; verify-pr says Merge as-is on that head. No review threads, no required approvals.
 - Check `CI / check` concluded FAILURE 2 seconds after it started, with 0 steps run. Its annotation reads: "The job was not started because recent account payments have failed or your spending limit needs to be increased."

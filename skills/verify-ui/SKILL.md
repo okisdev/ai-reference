@@ -1,6 +1,6 @@
 ---
 name: verify-ui
-description: Render and verify a web UI in a real browser, loaded before any browser tool is pointed at the app under test (Chrome DevTools, Claude in Chrome, Gode, Playwright, or a built-in browser), when asked to look at a result, open the browser, take a screenshot, open localhost, check mobile or dark mode, or act on pasted-image feedback.
+description: Render and verify a web UI in a real browser, loaded before any browser tool is pointed at the app under test (Chrome DevTools, Claude in Chrome, a site-tools MCP server, Playwright, or a built-in browser), when asked to look at a result, open the browser, take a screenshot, open localhost, check mobile or dark mode, or act on pasted-image feedback.
 argument-hint: "[url-or-route] [--port <n>] [--mobile]"
 ---
 

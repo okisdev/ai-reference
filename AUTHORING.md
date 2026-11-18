@@ -82,7 +82,7 @@ A skill works when it is the only one installed, because `npx skills add --skill
 - A case puts the whole scenario in its prompt and allows `[Skill, Read, Bash]`, because an eval run has no network, a redirected home, and an empty working directory.
 - Routing graders are `tool_used` on `Skill` with `arm: both`; quality graders are `llm` judges with a concrete criterion, or `regex` with the pattern in frontmatter.
 - A quality criterion states the outcome the user asked for, so that the skill's own success check cannot satisfy it alone.
-- A case passes with the skill, and the delta against the no-plugin arm says what the skill adds.
+- A case passes with the skill and scores lower without it; a case whose delta stays 0 across runs is rewritten so the no-skill arm is not handed the answer, kept with the `guard` tag only when it guards a mistake the skill itself once made, or deleted, because each run of it is paid.
 
 ## How a skill improves
 

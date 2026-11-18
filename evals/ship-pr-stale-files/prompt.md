@@ -1,6 +1,6 @@
 ---
 description: ship-pr refreshes an old green when the base moved under the PR's own files.
-tags: [quality, ship-pr]
+tags: [quality, ship-pr, guard]
 runs: 2
 max_turns: 8
 timeout_seconds: 240

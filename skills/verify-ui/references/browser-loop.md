@@ -33,7 +33,7 @@ Port drift detection: grep the log for the printed local URL and use that port i
 
 Every step names an operation, and the session's browser tool performs it. The families seen so far map like this; another tool (Playwright MCP, a desktop app's built-in browser, Codex's browser) maps the same operations by name. An operation the tool lacks is a narrower check the report names, never a reason to install another tool.
 
-| Operation | Chrome DevTools MCP | Claude in Chrome | Gode site tools |
+| Operation | Chrome DevTools MCP | Claude in Chrome | Site-tools MCP server |
 | --- | --- | --- | --- |
 | List open tabs | `list_pages` | `tabs_context_mcp` | `list_sites` |
 | Open a page | `new_page`, `navigate_page` | `tabs_create_mcp`, `navigate` | `open_site` |
@@ -50,11 +50,11 @@ Traps each family has shown:
 
 - Chrome DevTools MCP refuses a `take_screenshot` `filePath` outside its workspace roots ("not within any of the configured workspace roots"); omit the path, or write inside the workspace.
 - Claude in Chrome with several connected browsers and none chosen fails every call until the person picks one: list them with `list_connected_browsers` and ask by display name. Its tools act only on tabs in the session's group, and closing a tab can dissolve the group, so re-read `tabs_context_mcp` after a close.
-- Gode's tools act only on tabs of the agent's group, so "is not in your group" means re-list with `list_sites`; an `act_on_site` wait is capped at 10 seconds; a script on a site that is not a local address waits for the person's approval.
+- A site-tools server acts only on tabs of the agent's group, so "is not in your group" means re-list with `list_sites`; an `act_on_site` wait is capped at 10 seconds; a script on a site that is not a local address waits for the person's approval.
 
 ## Unattended runs
 
-A run another agent dispatched often has a sandbox that cannot bind a port (`listen EPERM`) or browser calls that need an approval nobody is there to give. A refused curl against a port `lsof` shows listening does not prove the server is down: a page snapshot of a tab already open on it is the readiness check. Settle what the run may do before any setup: an approval policy of `never` refuses every call the tool gates behind approval (in Gode, opening a nonlocal page, sending a form, or running a script on one; opening localhost is not gated), and a dev script that wraps a secrets CLI (`infisical run`, `op run`, `doppler run`) needs a login an unattended run lacks, so read the script before starting it. When opening, clicking, or scripting is refused, use the read-only calls on an open tab and report every state that needed a refused call as not checked; with no open tab either, start no server, and end with a hand-back block for the dispatcher listing each route URL with the viewports, color schemes, and empty, error, or loading states it must cover, because a bare "browser blocked" gives the dispatcher nothing to run (seen: 35 dispatched runs loaded this skill and none produced a screenshot; seven started a dev server after the tab list came back empty, seven stopped on a missing Infisical login, and 27 handed back no state at all).
+A run another agent dispatched often has a sandbox that cannot bind a port (`listen EPERM`) or browser calls that need an approval nobody is there to give. A refused curl against a port `lsof` shows listening does not prove the server is down: a page snapshot of a tab already open on it is the readiness check. Settle what the run may do before any setup: an approval policy of `never` refuses every call the tool gates behind approval (in a site-tools server, opening a nonlocal page, sending a form, or running a script on one; opening localhost is not gated), and a dev script that wraps a secrets CLI (`infisical run`, `op run`, `doppler run`) needs a login an unattended run lacks, so read the script before starting it. When opening, clicking, or scripting is refused, use the read-only calls on an open tab and report every state that needed a refused call as not checked; with no open tab either, start no server, and end with a hand-back block for the dispatcher listing each route URL with the viewports, color schemes, and empty, error, or loading states it must cover, because a bare "browser blocked" gives the dispatcher nothing to run (seen: 35 dispatched runs loaded this skill and none produced a screenshot; seven started a dev server after the tab list came back empty, seven stopped on a missing Infisical login, and 27 handed back no state at all).
 
 ## Feedback ingestion
 
@@ -80,7 +80,7 @@ await new Promise(r => setTimeout(r, 1500));
 const n = document.querySelector('<sel>');
 return n ? { found: true, rect: n.getBoundingClientRect().toJSON(), text: n.textContent } : { found: false };
 ```
-Pass it in the form the tool takes: `async () => { <body> }` for Chrome DevTools, the body as it is for Gode, and `await (async () => { <body> })()` for Claude in Chrome.
+Pass it in the form the tool takes: `async () => { <body> }` for Chrome DevTools, the body as it is for a site-tools server, and `await (async () => { <body> })()` for Claude in Chrome.
 
 ## Viewport
 
