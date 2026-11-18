@@ -1,5 +1,5 @@
 ---
-description: normalize-md weighs process rules on their measured cost, rewrites a false enforcer claim, and does not restore a deliberate cut.
+description: normalize-md weighs process rules on their measured cost, rewrites a false enforcer claim, keeps a deliberate rewrite at the loss check, and restores a proposed rule a draft dropped.
 tags: [quality, normalize-md]
 runs: 2
 max_turns: 8
@@ -21,4 +21,4 @@ Facts you have measured:
 - `.check/timings.json` holds the last 30 `make check` runs: median 14 min 20 s, fastest 4 min 51 s, slowest 31 min. 9 of the 30 ran the Linux rerun for changes outside platform code, because 56 of its trigger paths are folder prefixes.
 - `scripts/check-features.mjs` lines 41 to 77 assert each feature doc's front matter and that it has Rules, Interactions, and Decisions sections; nothing in it reads an opening paragraph.
 - Line 4 came in with a copy migration that finished in 2025; `git log` shows no copy change since, and two later PRs were told to revert copy edits because of it.
-- A loss check you ran in a fresh subagent named line 4 as an obligation missing from your draft, which your ledger had already marked `propose removal`.
+- A loss check you ran in a fresh subagent named two obligations missing from your draft: line 3's opening-paragraph claim, which your ledger had rewritten to what the check asserts, and line 4, which your ledger marks `propose removal` but which your draft had dropped.

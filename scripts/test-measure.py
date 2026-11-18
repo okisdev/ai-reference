@@ -101,6 +101,21 @@ class MeasureTests(unittest.TestCase):
         files = {record["path"]: record for record in self.report()["markdown"]}
         self.assertEqual(files["evals/demo-routing/prompt.md"]["readers"], [{"kind": "code", "source": ".claude-plugin/plugin.json (claude plugin eval loads evals/)"}])
 
+    def test_inventory_scope_links_and_quoted_folder(self):
+        self.write("AGENTS.md", "Read `guide/a.md` first.\n")
+        self.write("guide/a.md", "See [details](details.md) and other/only.md.\n")
+        self.write("guide/details.md", "# Details\n")
+        self.write("other/only.md", "# Only\n")
+        self.write("pages/p.md", "# Page\n")
+        self.write("load.js", "readdirSync('pages').filter(n => n.endsWith('.md'))\n")
+        subprocess.run(["git", "add", "-A"], cwd=self.root, check=True, capture_output=True)
+        files = {record["path"]: record for record in self.report()["markdown"]}
+        self.assertEqual(files["guide/details.md"]["readers"], [{"kind": "linked", "source": "guide/a.md:1"}])
+        self.assertEqual(files["other/only.md"]["readers"], [{"kind": "linked", "source": "guide/a.md:1"}])
+        self.assertEqual(files["pages/p.md"]["readers"], [{"kind": "code", "source": "load.js:1"}])
+        scoped = subprocess.run([sys.executable, str(MEASURE), str(self.root / "guide"), "--json"], text=True, capture_output=True, cwd=self.root)
+        self.assertEqual(scoped.returncode, 0, scoped.stderr)
+
     def test_markdown_inventory_without_git(self):
         outside = Path(self.temp.name) / "plain"
         (outside / "notes").mkdir(parents=True)

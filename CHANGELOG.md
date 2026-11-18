@@ -7,7 +7,7 @@ All notable changes to this collection. The format follows [Keep a Changelog](ht
 ### Added
 
 - normalize-md replaces normalize-agents-md and covers every markdown file in a repository: each file is challenged on its readers and what breaks without it (deleted when nobody reads it, proposed for deletion when a person may), each line on whether the code still bears it out, and each rule on the failure it prevents against its measured cost, with process and verification rules weighed every pass and proposed to the owner rather than kept or cut silently. The loss check now restores only what no ledger row decided, and `measure.py` inventories every markdown file with the readers it can prove.
-- `validate-skills.mjs` caps a `SKILL.md` at 20 KiB and now catches `composes` and possessive file reads of a skill that is not required.
+- `validate-skills.mjs` caps a `SKILL.md` at 20 KiB and now catches `composes` of a skill that is not required.
 - A root `AGENTS.md` names the checks a change runs and points at AUTHORING.md's sections; AUTHORING.md is cut to rules and README.md drops its structure tree.
 - A normalize-md pass over this repository corrected commands that no longer worked (summarize-review's paginated baseline, recap-activity's Vercel log flags, the pnpm build allowlist), fetched the base SHA that verify-pr and approve-pr compare against, and removed rules that repeated a Process step.
 - distill-session ships `scripts/episodes.py`, which lists skill episodes from the Claude, Codex, and Grok stores on this machine or another one over ssh, counts a Codex or Grok episode only when the agent reads the skill's `SKILL.md`, and hashes installed skill folders so a hand edit to an installed copy is found before a reinstall overwrites it.

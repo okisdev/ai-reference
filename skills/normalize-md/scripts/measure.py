@@ -397,10 +397,6 @@ def linked_targets(line, source, root, names, basenames):
         value = value.split("#", 1)[0]
         if not value.endswith(".md"):
             continue
-        if "/" not in value and not value.startswith("."):
-            if (marked or value in names) and len(basenames.get(value, ())) == 1:
-                found.update(basenames[value])
-            continue
         for base in (source.parent, root):
             target = os.path.normpath(os.path.join(relative_path(base, root), value)).replace(os.sep, "/")
             if target in names:
@@ -473,7 +469,7 @@ def markdown_inventory(scope, root, in_repository, docs, instruction_paths):
         source_name = relative_path(source, root)
         for number, line in enumerate(text.splitlines(), 1):
             targets = {relative_path(path, root) for path in referenced_docs(line, source, root)}
-            targets.update(name for name in linked_targets(line, source, root, names, basenames)
+            targets.update(name for name in linked_targets(line, source, root, names, basenames) & names
                            if is_instruction_file(candidates[name], root))
             for target in (targets & names) - {source_name}:
                 readers[target].setdefault("pointed", "{}:{}".format(source_name, number))
@@ -485,7 +481,7 @@ def markdown_inventory(scope, root, in_repository, docs, instruction_paths):
             except OSError:
                 continue
             for number, line in enumerate(text.splitlines(), 1):
-                for target in linked_targets(line, source, root, names, basenames):
+                for target in linked_targets(line, source, root, names, basenames) & names:
                     if target != source_name:
                         readers[target].setdefault("linked", "{}:{}".format(source_name, number))
         tracked_code = {}
@@ -500,11 +496,12 @@ def markdown_inventory(scope, root, in_repository, docs, instruction_paths):
                 continue
             tracked_code[name] = path
         parents = {name: name.rsplit("/", 1)[0] + "/" if "/" in name else "./" for name in names}
+        quoted = {name: ["'" + parents[name][:-1] + "'", '"' + parents[name][:-1] + '"'] for name in names if "/" in name}
         entries = {name: name.rsplit("/", 1)[0] for name in names if "/" in name and Path(name).name in ENTRY_NAMES}
-        needles = names | set(parents.values()) | set(entries.values())
-        sources = {needle: grep_sources(root, needle, tracked_code, needle.endswith("/")) for needle in sorted(needles)}
+        needles = names | set(parents.values()) | set(entries.values()) | {needle for values in quoted.values() for needle in values}
+        sources = {needle: grep_sources(root, needle, tracked_code, needle.endswith("/") or needle[:1] in "'\"") for needle in sorted(needles)}
         for name in names:
-            found = sources[name] + sources[parents[name]] + (sources[entries[name]] if name in entries else [])
+            found = sources[name] + sources[parents[name]] + (sources[entries[name]] if name in entries else []) + [source for needle in quoted.get(name, []) for source in sources[needle]]
             if found:
                 readers[name]["code"] = min(found)
     if in_repository and (root / ".claude-plugin/plugin.json").is_file():

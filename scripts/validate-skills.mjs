@@ -298,7 +298,7 @@ for (const name of skillNames) {
         continue;
       }
 
-      const readsFile = new RegExp(`(?:\\.\\./|skills/|")${other}(?:/|" /)|(?<![\\w-])${other}/(?:references|scripts|examples)/|(?<![\\w-])${other}\`?'s \`?(?:references|scripts|examples)/`);
+      const readsFile = new RegExp(`(?:\\.\\./|skills/|")${other}(?:/|" /)|(?<![\\w-])${other}/(?:references|scripts|examples)/`);
       const composes = new RegExp(`(?:compos(?:e|es|ing)|through|delegate to|follow)\\s+\`/?${other}\`(?! when installed)`);
 
       if (readsFile.test(contents)) {
