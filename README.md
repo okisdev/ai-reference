@@ -114,7 +114,7 @@ Inspect a live database with real SQL before reasoning from ORM schema files: re
 
 Design or redesign an admin, ops, or customer dashboard in the repository's own design law: frame each screen's job, diagnose in measurements, take one contribution per reference, publish a blueprint, build the core and then the pages in waves, verify in a browser, and leave the contract in AGENTS.md.
 
-**Requires:** `plan-charts`, `mirror-reference`, `verify-ui`, `normalize-agents-md`
+**Requires:** `plan-charts`, `mirror-reference`, `verify-ui`, `normalize-md`
 
 **Triggers:** "Completely redesign the dashboard", "Every element is a big block, we need to show more", "The sidebar is a mess, split internal from customer-facing", "Design the console for this product"
 
@@ -144,7 +144,7 @@ Recap what a person, team, project, or this computer did, or what failed and why
 
 #### mirror-reference
 
-Adapt the load-bearing pattern of a reference URL, repository, or sibling path into this codebase's own idiom and primitives, never copying its classes, tokens, or names, and report where and why the result diverges.
+Adapt the load-bearing pattern of a reference outside this repository (a URL, another repository, or a sibling checkout) into this codebase's own idiom and primitives, never copying its classes, tokens, or names, and report where and why the result diverges.
 
 **Triggers:** "Build something like this reference", "Look at kumo-ui and adapt the pattern", "Reference this but don't copy it"
 
@@ -154,11 +154,11 @@ Review how the skills are being used across every project's sessions and propose
 
 **Triggers:** "How are our skills being used?", "Turn yesterday's debugging into a skill edit", "Distill the last week of sessions"
 
-#### normalize-agents-md
+#### normalize-md
 
-Rewrite instruction files and the docs they point agents at into short normative files within every harness's size caps: keep the rules, route descriptions, incidents, and inventories to their homes, take manuals for people off the agent's path, retire CLAUDE.md, and prove nothing was lost. `scripts/measure.py` measures the tree, judges a pass a week later with `--since`, and runs as a PostToolUse hook.
+Challenge every markdown file in a repository on whether it should exist, whether each line is true against the code, and whether each rule is worth what it costs, then rewrite instruction files and the docs they point agents at into short rules within every harness's size caps. Files nobody reads are deleted or proposed for deletion, untrue lines are rewritten, rules whose measured cost outweighs the failure they prevent go to the owner as proposals, CLAUDE.md is retired, and the loss check restores only accidental losses. `scripts/measure.py` inventories every markdown file with its readers, judges a pass a week later with `--since`, and runs as a PostToolUse hook.
 
-**Triggers:** "Clean up AGENTS.md", "Our CLAUDE.md has become a changelog", "Our DESIGN.md reads like a running log", "Our markdown files change every day", "Normalize the instruction files across the monorepo"
+**Triggers:** "Clean up AGENTS.md", "Go through every md in the repo and question it", "Our CLAUDE.md has become a changelog", "Our DESIGN.md reads like a running log", "Our markdown files change every day", "Normalize the instruction files across the monorepo"
 
 #### clean-memory
 
@@ -209,33 +209,9 @@ Move these uncommitted changes to a new feat branch
 Verify the review comments on PR #123
 ```
 
-## Structure
+## Contributing
 
-```
-.
-├── .claude-plugin/plugin.json
-├── .github/workflows/validate-skills.yml
-├── AUTHORING.md
-├── CHANGELOG.md
-├── evals/
-│   └── <skill>-<case>/          (prompt.md plus graders/, for claude plugin eval)
-├── scripts/
-│   ├── check-probes.py
-│   ├── test-measure.py
-│   ├── test-memory-scripts.py
-│   └── validate-skills.mjs
-└── skills/
-    └── <name>/                  (one directory per skill listed under "Available")
-        ├── SKILL.md
-        ├── examples/            (outputs that cleared the bar, and a rejected one)
-        └── references/
-```
-
-CI validates every PR that touches skills: `scripts/validate-skills.mjs` checks that every frontmatter parses, `name:` matches its directory, no Context probe uses a positional parameter, and `plugin.json` and this README agree with the `skills/` tree, and `scripts/check-probes.py` runs every Context probe in an empty directory and in a repository without a remote, under bash and zsh, failing on any probe that exits non-zero. Run them locally with `npm install --no-save js-yaml && node scripts/validate-skills.mjs` and `python3 scripts/check-probes.py`.
-
-The eval suite runs with `claude plugin eval . --trust-plugin --allow-tools Bash --no-publish --judge-model sonnet`: every skill has a routing case in the user's own words, and skills whose output a person reads have quality cases for their one rule, each scored with and without the plugin.
-
-New skills follow [AUTHORING.md](AUTHORING.md).
+Changes to a skill follow [AUTHORING.md](AUTHORING.md); the checks a change runs are in [AGENTS.md](AGENTS.md).
 
 ## License
 

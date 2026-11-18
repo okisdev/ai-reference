@@ -32,4 +32,4 @@ For surfaces owned by a telemetry tool (Axiom, Grafana, PostHog, Better Stack) r
 
 - One dashboard per batch. After creation, fetch it back by id and diff its panel list against the grammar artifact; rerun every panel query standalone and read back row counts.
 - Fire each monitor against a probe window before trusting its threshold; a notifier is verified by one delivered test message.
-- Labels on shared surfaces are English; probe objects are deleted; the handoff names every dataset with zero dashboards left and every monitor whose baseline was guessed rather than measured.
+- Probe objects are deleted; the handoff names every dataset with zero dashboards left and every monitor whose baseline was guessed rather than measured.

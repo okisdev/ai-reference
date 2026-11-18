@@ -19,9 +19,9 @@ Output the body for the user to confirm; do not post unless explicitly asked. Wh
 ### Process
 
 1. **Establish baseline and head** (`$ARGUMENTS` is a PR number, a full PR URL, or empty; if empty, infer the PR from the current branch via `gh pr view --json number,title,headRefName`):
-   - Baseline `<baseline-sha>` (last commit in the PR author's leading run): `gh api repos/<o>/<r>/pulls/<n>/commits --paginate --jq '(.[0].author.login // .[0].commit.author.name) as $a | reduce .[] as $c ({run: true, sha: null}; if .run and (($c.author.login // $c.commit.author.name) == $a) then {run: true, sha: $c.sha} else {run: false, sha: .sha} end) | .sha'`. `.author.login` is null for unlinked-email commits, so fall back to `.commit.author.name` when reducing. When a rebase or reset rewrote the branch so every commit shows the author, the leading run is the whole PR; take as baseline the head recorded before your first push instead (seen: five commits all attributed to the contributor while the run claimed its own commits were on the PR).
+   - Baseline `<baseline-sha>` (last commit in the PR author's leading run): `gh api repos/<o>/<r>/pulls/<n>/commits --paginate --slurp | jq -r 'add | (.[0].author.login // .[0].commit.author.name) as $a | reduce .[] as $c ({run: true, sha: null}; if .run and (($c.author.login // $c.commit.author.name) == $a) then {run: true, sha: $c.sha} else {run: false, sha: .sha} end) | .sha'`. `.author.login` is null for unlinked-email commits, so fall back to `.commit.author.name` when reducing. When a rebase or reset rewrote the branch so every commit shows the author, the leading run is the whole PR; take as baseline the head recorded before your first push instead (seen: five commits all attributed to the contributor while the run claimed its own commits were on the PR).
    - Latest head SHA: `gh api repos/<o>/<r>/pulls/<n> --jq .head.sha`
-   - First commit's author is the review's audience: `gh api repos/<o>/<r>/pulls/<n>/commits --paginate --jq '.[0].author.login'`
+   - First commit's author is the review's audience: `gh api repos/<o>/<r>/pulls/<n>/commits --jq '.[0].author.login // .[0].commit.author.name'`
 
 2. **Read the original author's final baseline**, the code as their last commit in the leading run left it: `git show <baseline-sha>:<path>` for each changed file.
 

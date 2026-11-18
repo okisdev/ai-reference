@@ -37,5 +37,5 @@ Inventory the data the product already has, prove each candidate metric is real 
 - A chart whose table is empty in production is an empty state that names how to fill it.
 - Every chart's trailing slot carries the one sentence it is read for; the title is the question.
 - No entrance animation on any chart; a legend toggle repaints and never rescales.
-- Palette contrast per theme, axis hygiene, and the generic chart rejections are checked through `dataviz` before a chart ships; this skill adds only what the question decides.
+- Palette contrast per theme, axis hygiene, and the generic chart rejections are checked before a chart ships, through `dataviz` when installed; this skill adds only what the question decides.
 - No chart component for a data shape the app does not have.

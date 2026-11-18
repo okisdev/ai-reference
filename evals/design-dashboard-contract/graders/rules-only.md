@@ -3,4 +3,4 @@ type: llm
 weight: 2
 ---
 
-The added lines state the four decisions as rules (right aligned mono tabular figures; a closing sentence naming each chart's question; shares only when values span the scale, else the absolute quantity; hue by entity, never rank), one per bullet, and none of them describes the built surface: no line lists what the Usage dashboard shows (the plan badge, the three RingGauge cells, the TrendArea, the PeriodChart, the empty state).
+Every added line states a rule. Each of the four decisions appears as a rule (right aligned mono tabular figures; a closing sentence naming each chart's question; a share only when values span the scale, else the absolute quantity; hue by entity, never rank), alone or inside a contract bullet. Naming a kit component as the file that proves a rule is fine; no line lists what the Usage dashboard shows or contains (the plan badge, three RingGauge cells for calls, storage, and seats, a TrendArea with five ticks, the PeriodChart's month comparison, the empty state).

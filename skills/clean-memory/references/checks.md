@@ -57,9 +57,9 @@ One topic per subagent, or up to five topics under the topic limit, fresh contex
 
 When dead path anchors exceed thirty percent of at least twenty, the architecture moved under the store. Patching topic by topic then produces a half-true store, so the pass rebuilds: every topic is verified, what holds is confirmed, everything else is archived in one sweep with its verdict, and the report says the store was rebuilt and when.
 
-## Snapshot and sidecar
+## Sidecar
 
-Before any write, the memory directory is copied to `<memory dir>/../memory-backups/<YYYY-MM-DD>/`; the three newest snapshots are kept and older ones removed. After the pass, `<memory dir>/.clean-memory.json` holds `{"last_run": "<YYYY-MM-DD>", "stats": {"topics": n, "confirmed": n, "corrected": n, "compacted": n, "promoted": n, "archived": n, "disproved": n, "superseded": n, "deleted": n, "demoted": n, "escalated": n}}`; the audit reads it to report the days since the last cleanup.
+After the pass, `<memory dir>/.clean-memory.json` holds `{"last_run": "<YYYY-MM-DD>", "stats": {"topics": n, "confirmed": n, "corrected": n, "compacted": n, "promoted": n, "archived": n, "disproved": n, "superseded": n, "deleted": n, "demoted": n, "escalated": n}}`; the audit reads it to report the days since the last cleanup.
 
 ## Report
 

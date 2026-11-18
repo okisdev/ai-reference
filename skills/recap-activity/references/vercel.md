@@ -42,13 +42,13 @@ The log arrives on stderr and the command exits 1 for a failed deployment; both 
 ## Runtime
 
 ```
-vercel logs --project <project> --scope <team> --since <iso> --until <iso> --status-code 5xx --json > http-5xx.jsonl
-vercel logs --project <project> --scope <team> --since <iso> --until <iso> --level error --json > errors.jsonl
+vercel logs requests --project <project> --scope <team> --since <iso> --until <iso> --query 'httpStatus >= 500 AND httpStatus < 600' --limit 10000 --json > http-5xx.jsonl
+vercel logs --project <project> --scope <team> --since <iso> --until <iso> --query 'level:error OR level:fatal' --limit 10000 --json > errors.jsonl
 ```
 
-- `vercel logs` returns at most 50 rows whatever `--limit` says, so a file of 50 rows is incomplete: bisect the window until every slice returns fewer than 50, then merge the slices deduplicated by `id` (seen: `vercel logs` silently stopped at 50 rows whatever `--limit` said, where 24 hourly slices held 173).
-- A runtime failure is a 5xx response, a `--level fatal` row, or an error row that is not a warning. `--level error` also holds whatever a function wrote to stderr, such as Node `(node:N) Warning:` lines, so cluster by message prefix and set warnings apart before calling anything an error.
-- Fields: `timestamp`, `deploymentId`, `requestMethod`, `requestPath`, `responseStatusCode`, `level`, `message`, `source`, `environment`, `branch`, `traceId`.
+- Each `--json` file ends with a summary line (`recordsReturned`, `pagination.hasMore`, `pagination.next`); a non-null `next` means more records: continue with `vercel logs --next <cursor> --json` until it is null and dedupe the merged records by `requestId`, `timestamp`, and `message`, because records sharing a timestamp at a page boundary can repeat or be skipped.
+- A runtime failure is a request record with `httpStatus` 500 to 599, a `level:fatal` row, or a `level:error` row that is not a warning. `level:error` also holds whatever a function wrote to stderr, such as Node `(node:N) Warning:` lines, so cluster by message prefix and set warnings apart before calling anything an error.
+- Each line is `{type, data}`; runtime `data` carries `timestamp`, `deploymentId`, `requestId`, `requestMethod`, `requestPath`, `level`, `message`, `source`, `environment`, `branch`, `traceId`; request records (`vercel logs requests`) carry `httpStatus`, `requestPath`, `route`, `cacheResult`, `deploymentId`, `timestamp`.
 - An empty file means a clean window only once an unfiltered `--limit 3` query shows logs exist in it; retention depends on the plan.
 
 ## Team activity and alerts

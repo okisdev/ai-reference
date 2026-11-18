@@ -34,8 +34,6 @@ Verify every substantive review comment on a GitHub PR against the current codeb
    - `greptile-apps` when body is just the `<!-- greptile_other_comments_section -->` footer.
    - Any body that is entirely HTML attribution / CTA / badges with no prose claim. Strip `<!-- ... -->` markers and "Fix with …" buttons before reading.
 
-   Resolved-thread comments are not noise; they get the **Resolved** verdict (step 2) and are skipped for active verification.
-
 5. **Classify each remaining comment by staleness**:
    - **Inline comments**: judge by `isOutdated` from the reviewThreads map (step 2). `isOutdated: true` => **Stale**; `isOutdated: false` => **Fresh**, verify it.
    - **Top-level review summary bodies**: these carry no thread, so use `commit_id` equality. `commit_id === latest head SHA` => **Fresh**, verify it; otherwise **Stale**.

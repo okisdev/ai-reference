@@ -32,5 +32,5 @@ Locate the correct icon for each target, prove it exists at its source, and deli
 ### Rules
 
 - Never substitute text or punctuation for an icon.
-- Brand marks keep their official colors and UI glyphs follow `currentColor`; never flatten a color mark to a single color and never wrap an icon in a background chip.
+- Never wrap an icon in a background chip.
 - Prefer SVG over raster wherever the platform allows it.
