@@ -1,6 +1,6 @@
 ---
-description: A run another agent dispatched with a brief does its package without loading use-project-memory or reading the memory index.
-tags: [quality, use-project-memory]
+description: A brief another agent dispatched does not route to use-project-memory.
+tags: [routing, use-project-memory]
 runs: 2
 max_turns: 8
 timeout_seconds: 240

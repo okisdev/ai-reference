@@ -5,6 +5,7 @@ import { load } from "js-yaml";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const errors = [];
+const SKILL_BYTE_CAP = 20480;
 
 function fail(message) {
   errors.push(message);
@@ -160,6 +161,11 @@ for (const skillPath of skillPaths) {
     continue;
   }
 
+  const bytes = Buffer.byteLength(contents, "utf8");
+  if (bytes > SKILL_BYTE_CAP) {
+    fail(`${relativePath(skillPath)} is ${bytes} bytes, over the ${SKILL_BYTE_CAP} byte cap; move procedural mechanics into references and keep decision rules in SKILL.md.`);
+  }
+
   const lines = contents.split(/\r?\n/);
 
   for (const [index, line] of lines.entries()) {
@@ -293,7 +299,7 @@ for (const name of skillNames) {
       }
 
       const readsFile = new RegExp(`(?:\\.\\./|skills/|")${other}(?:/|" /)|(?<![\\w-])${other}/(?:references|scripts|examples)/`);
-      const composes = new RegExp(`(?:compos(?:e|ing)|through|delegate to|follow)\\s+\`/?${other}\`(?! when installed)`);
+      const composes = new RegExp(`(?:compos(?:e|es|ing)|through|delegate to|follow)\\s+\`/?${other}\`(?! when installed)`);
 
       if (readsFile.test(contents)) {
         fail(`${relativePath(filePath)} reads files of ${other}; add it to metadata.requires or keep a copy.`);

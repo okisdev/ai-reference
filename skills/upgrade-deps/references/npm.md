@@ -34,7 +34,7 @@ Two pnpm guards routinely interrupt upgrades.
 | Symptom | Meaning | Fix |
 | --- | --- | --- |
 | A just-published version is not picked up | `minimumReleaseAge: 1440` in `pnpm-workspace.yaml` blocks any npm package published in the last 24 hours | Wait out the window, or lower the setting for that run when the fresh release is the point of the upgrade |
-| `ERR_PNPM_IGNORED_BUILDS` | pnpm refused to run postinstall build scripts for packages missing from the allowlist | Add the package (commonly `sharp`, `esbuild`, `workerd`) to `onlyBuiltDependencies` in `pnpm-workspace.yaml`, then reinstall |
+| `ERR_PNPM_IGNORED_BUILDS` | pnpm refused to run postinstall build scripts for packages missing from the allowlist | Add the package (commonly `sharp`, `esbuild`, `workerd`) to `allowBuilds` with `true` in `pnpm-workspace.yaml` (`onlyBuiltDependencies` on older pnpm), then run `pnpm rebuild` |
 
 ## SDK repins
 
@@ -51,7 +51,3 @@ Before a blanket bump, list each workspace package's devDependencies that are al
 jq -r '(.peerDependencies // {}) as $p | (.devDependencies // {}) | to_entries[] | select($p[.key] != null) | "\(.key) dev \(.value) peer \($p[.key])"' <workspace>/package.json
 ```
 After the bump, a dev range whose major no longer satisfies the peer range goes back to the newest release inside the peer range, because the dev pin is what keeps the package's tests on what it advertises.
-
-## Changesets
-
-Before any commit, inspect changed manifests with `git diff HEAD --name-only -- ':(glob)**/package.json'`. Use those files to identify published packages whose dependency manifests changed, excluding packages with `private: true`. Run the repository's changeset-generation script when it provides one. Otherwise create one patch changeset in the repository's established format for all remaining packages.

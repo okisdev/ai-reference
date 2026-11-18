@@ -50,9 +50,6 @@ Published as an artifact, revised in place. Sections in order:
 
 ## Batch verification
 
-- Typecheck, lint, and build across every package.
-- Every new SQL shape executed read-only (through `inspect-db` when installed) against the named staging or production connection.
 - A browser pass per batch, through `verify-ui` when installed: scrub a sparkline, toggle a legend, click a strip day, change the range and the zone, both themes, and the empty variant.
 - Thin staging data is seeded with variety (many tenants, providers, id spellings, outcome mixes) through the app's own seed script or `inspect-db --write` against the staging connection named by host, never production, before a chart page is judged.
-- Synthetic or demo data is labelled, forward-only, and never backfilled history.
 - The handoff names the surfaces not verified.

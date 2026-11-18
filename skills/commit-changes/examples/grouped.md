@@ -12,8 +12,8 @@ Read `git diff HEAD` and the 4 new files directly. Seven purposes:
 5. fix(upgrade-deps): recheck sdk holds and report exact pins (2 files)
 6. feat: route skills by the user's own words and retire four unused ones (16 files, 6 deleted)
 7. docs: sync the readme and bump to 0.0.42 (2 files)
-Commit 5: `git add skills/upgrade-deps/SKILL.md skills/upgrade-deps/references/npm.md`. `git diff --cached --name-only --no-renames` lists exactly those 2 paths. `git commit`.
-Commits 1 to 4, 6, and 7 the same way: stage the group's paths, compare the staged list with the group, commit.
+Commit 5: the group's 2 paths written to `$SCRATCH/group-5.txt`, then `git add --pathspec-from-file=$SCRATCH/group-5.txt && diff <(git -c core.quotePath=false diff --cached --name-only --no-renames | sort) <(sort $SCRATCH/group-5.txt) && git commit -F $SCRATCH/msg-5.txt`; the diff printed nothing.
+Commits 1 to 4, 6, and 7 the same way: one path file and one message file per group, staged, diffed, and committed in one chain.
 `git status` is clean. `git log --oneline -7`:
 73d2862 docs: sync the readme and bump to 0.0.42
 a984776 feat: route skills by the user's own words and retire four unused ones

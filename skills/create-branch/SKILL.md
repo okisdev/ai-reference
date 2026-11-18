@@ -34,7 +34,7 @@ When in doubt and the set is small, err on branching off the default base.
 
 ### Process
 
-1. `--cwd <path>` in `$ARGUMENTS` names the repository or worktree to act in: rerun the Context probes there with `git -C <path>` and run every git command there. If there are no uncommitted changes AND no ignored candidates, abort with a message. (If no branch name is provided via `$ARGUMENTS`, infer one from the uncommitted changes using conventional branch naming: `feat/`, `fix/`, `chore/`, `refactor/`.)
+1. `--cwd <path>` in `$ARGUMENTS` names the repository or worktree to act in: rerun the Context probes there with `git -C <path>` and run every git command there. If there are no uncommitted changes AND no ignored candidates, abort with a message. (A branch name in `$ARGUMENTS` is used exactly as given, never re-prefixed or reshaped; seen: `chore-vp-entrypoints` was created as `chore/vp-entrypoints`. With none given, infer a short kebab-case slug from the uncommitted changes in the shape the repository's recent branches use (`git branch -r --sort=-committerdate | head`), and a bare slug such as `fix-token-refresh` when they show none.)
 2. If branching off the default base (not current HEAD):
    - `git fetch origin` so the base is current, not a stale local ref
    - If `git rev-parse HEAD` equals `git rev-parse origin/<base>`, skip the stash and the rest of this step: run `git checkout -b <branch-name>` directly (uncommitted changes carry over; seen: every run stashed even when HEAD already sat on the base, and 184 of 289 runs needed only `git checkout -b`)
@@ -49,7 +49,7 @@ When in doubt and the set is small, err on branching off the default base.
 
 ### Rules
 
-- Stage only, never commit; kebab-case branch names only (`feat/discord-bot`, not `feat/Discord Bot`).
+- Stage only, never commit; kebab-case branch names only (`discord-bot`, not `Discord Bot`).
 - If the branch already exists, abort with a message; do NOT overwrite. NEVER modify or delete any other branch.
 - Destructive ops (`git checkout HEAD -- <file>`, `git restore`, `git clean`) are forbidden unless the user explicitly asks.
 - NEVER touch `.gitignore` unless asked; flag the issue instead.

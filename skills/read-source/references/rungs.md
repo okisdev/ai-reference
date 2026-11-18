@@ -27,7 +27,22 @@ ls -d ~/.npm/_npx/*/node_modules/<pkg> 2>/dev/null
 ```
 Bound a run of the binary with a SIGTERM wrapper, since macOS ships no `timeout`: `perl -e '$p=fork or exec @ARGV; $SIG{ALRM}=sub{kill TERM=>$p}; alarm 60; waitpid $p,0; exit($? & 127 ? 124 : $? >> 8)' <bin> <args>`.
 
-This rung is the compatibility authority for what the project can actually import or typecheck; no later rung overrides it for that question.
+A task worktree with no `node_modules`: the pin comes from the worktree's lockfile (a scoped `@scope/pkg` sits in pnpm's store directory as `@scope+pkg`), the files from the main checkout's pnpm layout or the pnpm store, never from scratch scripts resolving `./node_modules` in the worktree:
+```
+grep -n '<pkg>@' pnpm-lock.yaml | head -3
+main=$(git worktree list --porcelain | sed -n '1s/^worktree //p'); ls -d "$main"/node_modules/.pnpm/<pkg with / as +>@<ver>*/node_modules/<pkg>
+ls -d ~/Library/pnpm/store/v*/links/*/<pkg>/<ver>* 2>/dev/null
+```
+A Rust crate: the pin from `Cargo.lock`, the source from the registry cache, fetched into a scratch `CARGO_HOME` when the sandbox makes `~/.cargo/registry` read-only or empty:
+```
+grep -A1 'name = "<crate>"' Cargo.lock
+ls -d ~/.cargo/registry/src/*/<crate>-<ver>/src || CARGO_HOME="$SCRATCH/cargo" cargo fetch
+```
+A Maven or AAR artifact without published source: extract `classes.jar` from the Gradle cache and read the bytecode, citing the class and method since there are no source lines:
+```
+find ~/.gradle/caches/modules-2/files-2.1/<group>/<artifact>/<ver> -name '*.aar' -o -name '*.jar'
+unzip -o <artifact>.aar classes.jar -d "$SCRATCH/aar" && javap -c -p -classpath "$SCRATCH/aar/classes.jar" <fully.qualified.Class>
+```
 
 ## L1 published artifact
 
@@ -64,16 +79,5 @@ Shallow clone into scratch for cross-file tracing:
 ```
 gh repo clone <owner>/<repo> "$SCRATCH/<repo>-ref" -- --depth=1 --branch <tag>
 ```
-Always pin `<tag>` to the resolved ref. The default branch describes a future version, not the one installed.
 
-## L3 docs
-
-Fetch the documentation site only after the earlier rungs cannot answer the question, or to confirm intended usage and find examples. Docs answer intent and examples only; they never prove an API exists or behaves as described.
-
-## Choosing the entry rung
-
-| Question type | Entry rung |
-| --- | --- |
-| Import or typecheck question (does this exist in our version, why does the build fail) | L0 |
-| Shipped artifact or regression question (what shipped in version V, when did behavior change) | L1 |
-| Behavior, internals, or history question (how or why it behaves, maintainer intent, unreleased work) | L2 |
+When `gh api` answers `error connecting to api.github.com` or the host does not resolve, the sandbox has no network: stop retrying this rung, return to the local copies at the pinned version (L0 above), and when none holds the answer report the claim as unverified, naming the blocked command (seen: all six upstream reads in sandboxed runs failed to connect at least once).

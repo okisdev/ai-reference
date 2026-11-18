@@ -9,7 +9,7 @@ import unittest
 from pathlib import Path
 
 
-MEASURE = Path(__file__).resolve().parents[1] / "skills/normalize-agents-md/scripts/measure.py"
+MEASURE = Path(__file__).resolve().parents[1] / "skills/normalize-md/scripts/measure.py"
 TABLE_HEADER = "| file | bytes | lines | chars | longest unit | units over 600 | dated | history | flags |"
 
 
@@ -20,6 +20,7 @@ class MeasureTests(unittest.TestCase):
         self.root = Path(self.temp.name) / "repo"
         self.root.mkdir()
         subprocess.run(["git", "init", "-q", str(self.root)], check=True, capture_output=True)
+        subprocess.run(["git", "config", "--local", "core.hooksPath", str(self.root / ".git/hooks")], cwd=self.root, check=True, capture_output=True)
 
     def write(self, name, content):
         path = self.root / name
@@ -56,6 +57,79 @@ class MeasureTests(unittest.TestCase):
         self.assertFalse(docs["services/relay/README.md"]["required"])
         self.assertEqual(docs["services/relay/README.md"]["pointed_by"], ["services/relay/AGENTS.md:1"])
         self.assertIn(TABLE_HEADER, self.measure().stdout)
+
+    def test_markdown_inventory_readers(self):
+        self.write("AGENTS.md", "Read `docs/DESIGN.md` before editing.\n")
+        self.write("docs/DESIGN.md", "# Design\n")
+        self.write("features/a.md", "# Feature\n")
+        self.write("scripts/check.mjs", "readdirSync('features/').filter(name => name.endsWith('.md'))\n")
+        self.write("notes/old.md", "# Old\n")
+        self.write("README.md", "See [the guide](guide/x.md).\n")
+        self.write("guide/x.md", "# Guide\nSee README.md.\n")
+        self.write("notes/untracked.md", "# Untracked\n")
+        self.write("node_modules/pkg/cache.md", "# Package\n")
+        self.write("skills/demo/SKILL.md", "# Demo\n")
+        self.write("plugin.json", '{"skills": ["./skills/demo"]}\n')
+        subprocess.run(["git", "add", "AGENTS.md", "docs/DESIGN.md", "features/a.md", "scripts/check.mjs", "notes/old.md", "README.md", "guide/x.md", "node_modules/pkg/cache.md", "skills/demo/SKILL.md", "plugin.json"], cwd=self.root, check=True, capture_output=True)
+        subprocess.run(["git", "-c", "user.name=Test", "-c", "user.email=test@example.com", "commit", "-q", "-m", "inventory"], cwd=self.root, check=True, capture_output=True)
+        result = self.report()
+        files = {record["path"]: record for record in result["markdown"]}
+        self.assertEqual(set(files), {"AGENTS.md", "docs/DESIGN.md", "features/a.md", "notes/old.md", "README.md", "guide/x.md", "notes/untracked.md", "skills/demo/SKILL.md"})
+        self.assertEqual(files["skills/demo/SKILL.md"]["readers"], [{"kind": "code", "source": "plugin.json:1"}])
+        self.assertEqual((files["notes/untracked.md"]["readers"], files["notes/untracked.md"]["last_change"]), ([], None))
+        self.assertEqual(files["AGENTS.md"]["readers"], [{"kind": "harness", "source": "AGENTS.md"}])
+        self.assertIn({"kind": "pointed", "source": "AGENTS.md:1"}, files["docs/DESIGN.md"]["readers"])
+        self.assertIn({"kind": "code", "source": "scripts/check.mjs:1"}, files["features/a.md"]["readers"])
+        self.assertEqual(files["notes/old.md"]["readers"], [])
+        self.assertEqual(files["guide/x.md"]["readers"], [{"kind": "linked", "source": "README.md:1"}])
+        self.assertEqual(files["README.md"]["readers"], [{"kind": "linked", "source": "guide/x.md:2"}, {"kind": "person", "source": "name"}])
+        self.assertEqual(result["markdown_summary"], {"files": 8, "bytes": sum(record["bytes"] for record in files.values()), "unread": 2})
+        self.assertTrue(all(record["last_change"] and record["changes_90d"] == 1 for name, record in files.items() if name != "notes/untracked.md"))
+        self.assertRegex(files["notes/old.md"]["last_change"], r"^\d{4}-\d{2}-\d{2}$")
+        self.assertEqual(files["features/a.md"]["lines"], 1)
+        self.assertEqual(self.measure("--strict").returncode, 0)
+        output = self.measure().stdout
+        self.assertIn("## Markdown inventory", output)
+        self.assertIn("- notes/old.md: 6 bytes, last change ", output)
+        self.assertIn("no reader found", output)
+        self.assertIn("1 files are reached only through links from other markdown files.", output)
+
+    def test_plugin_evals_have_the_eval_loader_as_reader(self):
+        self.write(".claude-plugin/plugin.json", '{"skills": []}\n')
+        self.write("evals/demo-routing/prompt.md", "Route this.\n")
+        subprocess.run(["git", "add", "-A"], cwd=self.root, check=True, capture_output=True)
+        files = {record["path"]: record for record in self.report()["markdown"]}
+        self.assertEqual(files["evals/demo-routing/prompt.md"]["readers"], [{"kind": "code", "source": ".claude-plugin/plugin.json (claude plugin eval loads evals/)"}])
+
+    def test_inventory_scope_links_and_quoted_folder(self):
+        self.write("AGENTS.md", "Read `guide/a.md` first.\n")
+        self.write("guide/a.md", "See [details](details.md) and other/only.md.\n")
+        self.write("guide/details.md", "# Details\n")
+        self.write("other/only.md", "# Only\n")
+        self.write("pages/p.md", "# Page\n")
+        self.write("load.js", "readdirSync('pages').filter(n => n.endsWith('.md'))\n")
+        subprocess.run(["git", "add", "-A"], cwd=self.root, check=True, capture_output=True)
+        files = {record["path"]: record for record in self.report()["markdown"]}
+        self.assertEqual(files["guide/details.md"]["readers"], [{"kind": "linked", "source": "guide/a.md:1"}])
+        self.assertEqual(files["other/only.md"]["readers"], [{"kind": "linked", "source": "guide/a.md:1"}])
+        self.assertEqual(files["pages/p.md"]["readers"], [{"kind": "code", "source": "load.js:1"}])
+        scoped = subprocess.run([sys.executable, str(MEASURE), str(self.root / "guide"), "--json"], text=True, capture_output=True, cwd=self.root)
+        self.assertEqual(scoped.returncode, 0, scoped.stderr)
+
+    def test_markdown_inventory_without_git(self):
+        outside = Path(self.temp.name) / "plain"
+        (outside / "notes").mkdir(parents=True)
+        (outside / "AGENTS.md").write_text("# Rules\n", encoding="utf-8")
+        (outside / "notes/old.md").write_text("# Old\n", encoding="utf-8")
+        result = subprocess.run([sys.executable, str(MEASURE), str(outside), "--json"], text=True, capture_output=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        report = json.loads(result.stdout)
+        files = {record["path"]: record for record in report["markdown"]}
+        self.assertEqual(set(files), {"AGENTS.md", "notes/old.md"})
+        self.assertEqual(files["AGENTS.md"]["readers"], [{"kind": "harness", "source": "AGENTS.md"}])
+        self.assertEqual(files["notes/old.md"]["readers"], [])
+        self.assertIsNone(files["notes/old.md"]["last_change"])
+        self.assertEqual(report["markdown_summary"]["unread"], 1)
 
     def test_pointed_readme_over_target(self):
         self.write("AGENTS.md", "See `README.md` for setup.\n")
@@ -154,6 +228,8 @@ class MeasureTests(unittest.TestCase):
         result = self.hook(self.root / "README.md", "# Document\n" + "x" * 17000 + "\n", original="# Document\n")
         self.assertEqual(result.returncode, 2, result.stderr)
         self.assertIn("README.md:0: over-target: 17012 bytes (target 16384)", result.stderr)
+        self.assertTrue(result.stderr.rstrip().endswith("settle a file past its target before adding."), result.stderr)
+        self.assertIn("the edit was applied and these findings are advisory", result.stderr)
 
     def test_root_fallback_and_anchor(self):
         self.write("services/relay/AGENTS.md", "Read [design](docs/DESIGN.md#colors) first.\n")

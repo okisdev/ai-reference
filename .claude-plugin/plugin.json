@@ -1,7 +1,7 @@
 {
   "name": "okisdev",
   "description": "Personal skills collection by okisdev",
-  "version": "0.0.49",
+  "version": "0.0.50",
   "author": {
     "name": "okisdev"
   },
@@ -27,7 +27,7 @@
     "./skills/diagnose-root",
     "./skills/mirror-reference",
     "./skills/distill-session",
-    "./skills/normalize-agents-md",
+    "./skills/normalize-md",
     "./skills/clean-memory",
     "./skills/design-dashboard",
     "./skills/plan-charts",

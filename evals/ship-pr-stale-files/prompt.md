@@ -11,6 +11,6 @@ Use the ship-pr skill's merge gate to decide whether PR #418 (my own PR, squash 
 
 - PR #418 changes `sync/retry.ts` and `sync/retry.test.ts`.
 - Checks on head 8b7e6d2: `test (node 20)` SUCCESS, completed 70 minutes ago; `lint` SUCCESS, completed 72 minutes ago.
-- The base branch `main` has 1 commit newer than those completions: another maintainer renamed `maxAttempts` to `attemptLimit` in `sync/retry.ts`.
+- The base branch `main` has 1 commit newer than those completions: another maintainer added a test for jitter to `sync/retry.test.ts`.
 - verify-pr's Verified head is 8b7e6d2.
 - Review bot `coderabbit` reviewed 8b7e6d2 and left no threads. Review threads: none. mergeStateStatus: CLEAN.

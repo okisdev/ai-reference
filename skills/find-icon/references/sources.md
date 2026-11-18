@@ -2,16 +2,6 @@
 
 Exact commands for each source in the routing ladder, referenced from SKILL.md step 3 onward. Prove a match with a listing or a direct probe before writing any code.
 
-## Source ladder
-
-| Target kind | Source | When it applies |
-| --- | --- | --- |
-| UI concept (action, state, object) | lucide | Default source for interface glyphs. |
-| AI model, provider, or agent brand | lobe-icons | Purpose-built registry for AI brand marks. |
-| General brand | svgl | Broad, actively maintained logo registry. |
-| Brand missing from svgl | simple-icons | Large brand fallback; usually sparse on niche AI brands. |
-| Still missing anywhere above | Vendor's own repository or official site | Last resort escalation. |
-
 ## lucide
 
 Repository `lucide-icons/lucide`, files at `icons/<kebab-name>.svg`.

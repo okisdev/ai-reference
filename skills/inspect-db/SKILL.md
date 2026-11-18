@@ -28,6 +28,4 @@ Packages with a database directory or schema file: !`out=$(find . -name node_mod
 
 ### Rules
 
-- Read-only is the default; no `INSERT`, `UPDATE`, `DELETE`, DDL, or schema push without `--write` or an explicit ask.
-- A destructive statement always follows a `SELECT` of the same rows with the count reported.
 - Connection strings and credentials never appear in output; name the host or project, never the full URL, and that includes a connection string the user pasted into the prompt (seen: a connection string pasted in a prompt).

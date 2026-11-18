@@ -1,6 +1,6 @@
 # Form follows the question
 
-The question picks the form; the data's shape never does. A table answers "what happened" and cannot answer "is anything different today", so a page of key/value rows answers only the first question. Generic chart hygiene (dual axes, pies, palette contrast per theme) is checked through `dataviz`; this file adds only what the question decides.
+The question picks the form; the data's shape never does. A table answers "what happened" and cannot answer "is anything different today", so a page of key/value rows answers only the first question. Generic chart hygiene (dual axes, pies, palette contrast per theme) is checked through `dataviz` when it is installed; this file adds only what the question decides.
 
 ## Question to form
 
@@ -109,4 +109,3 @@ The question picks the form; the data's shape never does. A table answers "what 
 - Rank latency by tail to median ratio (p99 over p50) per route or kind, not by absolute latency; averages hide a disproportionate tail.
 - Frame a cache hit rate over routes that were meant to cache; a never-cacheable route is not a problem row.
 - Isolate the failure mode a panel or alert watches: one call kind's latency, not a blended percentile dragged by unrelated long work.
-- Scope thresholds from a measured baseline window, never a round number.
