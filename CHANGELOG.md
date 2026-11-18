@@ -2,6 +2,27 @@
 
 All notable changes to this collection. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions match `.claude-plugin/plugin.json`. Changes before 0.0.41 live in the merged pull requests.
 
+## [0.0.50] (2026-11-18)
+
+### Added
+
+- normalize-md replaces normalize-agents-md and covers every markdown file in a repository: each file is challenged on its readers and what breaks without it (deleted when nobody reads it, proposed for deletion when a person may), each line on whether the code still bears it out, and each rule on the failure it prevents against its measured cost, with process and verification rules weighed every pass and proposed to the owner rather than kept or cut silently. The loss check now restores only what no ledger row decided, and `measure.py` inventories every markdown file with the readers it can prove.
+- `validate-skills.mjs` caps a `SKILL.md` at 20 KiB and now catches `composes` and possessive file reads of a skill that is not required.
+- A root `AGENTS.md` names the checks a change runs and points at AUTHORING.md's sections; AUTHORING.md is cut to rules and README.md drops its structure tree.
+- A normalize-md pass over this repository corrected commands that no longer worked (summarize-review's paginated baseline, recap-activity's Vercel log flags, the pnpm build allowlist), fetched the base SHA that verify-pr and approve-pr compare against, and removed rules that repeated a Process step.
+- distill-session ships `scripts/episodes.py`, which lists skill episodes from the Claude, Codex, and Grok stores on this machine or another one over ssh, counts a Codex or Grok episode only when the agent reads the skill's `SKILL.md`, and hashes installed skill folders so a hand edit to an installed copy is found before a reinstall overwrites it.
+- Eval cases for an admin merge past a merge queue, CI refused for billing, fixes pushed on a contributor's PR, and an unattended browser check, plus routing cases that diagnose-root, verify-ui, and mirror-reference stay unloaded for a feature change, a docs read, and an in-repo exemplar.
+
+### Changed
+
+- ship-pr merges directly when the user passed `--admin` or said to skip the queue, lets a PR added to an `--admin` batch inherit it, says a peer review never stands in for verify-pr, asks once to skip CI that GitHub refused for billing at the first tick, and passes one `Assisted-by` pull request link in a squash body.
+- verify-pr builds a runnable repro worktree (the pinned package manager, the built workspace dependencies, `pipefail`), falls back to staged context and an in-memory harness in a sandbox, marks Necessity inconclusive when the duplicate search never ran, and says whether a small fix list is pushable; approve-pr pushes such fixes when the user asked to land the PR.
+- commit-changes gives one command for staging several groups from pathspec files; create-branch uses a given branch name as is and infers a bare slug; create-pr folds a bundled release title into its headline change.
+- read-source reads a worktree's pin from the main checkout, reads Rust crates and Maven or AAR artifacts from their caches, and stops retrying upstream reads in a sandbox without network.
+- diagnose-root leaves feature changes and audits alone and counts a host run quoted in a brief as observed; verify-ui settles what an unattended run may do before any setup and hands back each route with its states; mirror-reference leaves in-repo exemplars alone.
+- normalize-md's hook says the edit was applied and its findings are advisory.
+- ship-pr keeps its gate rules in `SKILL.md` and moves the watch mechanics, the draft handling, and the merge body format into `references/monitor.md`, which brings it under the new cap.
+
 ## [0.0.49] (2026-11-06)
 
 ### Added
