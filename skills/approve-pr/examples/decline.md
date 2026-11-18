@@ -5,7 +5,7 @@ The bar when the table says do not approve: the same fresh reads, the blocking t
 ---
 
 ````
-Guard: author mia-dev, me okisdev; #4621 is open, head 3f2a9c1, base e4f5a6b.
+Guard: author mia-dev, me maintainer-a; #4621 is open, head 3f2a9c1, base e4f5a6b.
 Gate: verify-pr from this session says push back with Verified head 3f2a9c1 against base e4f5a6b, equal to the fresh pair, so it is reused.
 Threads: 5 total, 2 unresolved, read fresh. verify-pr-comments: 1 Fresh and Confirmed (retry.ts:41), 1 Stale.
 Decision: do not approve. Push back posts nothing without --request-changes, and it was not passed. Nothing was written to GitHub.

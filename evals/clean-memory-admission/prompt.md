@@ -1,13 +1,13 @@
 ---
-description: use-project-memory declines to store an analysis it just delivered and names where the content belongs instead.
-tags: [quality, use-project-memory]
+description: clean-memory declines to store an analysis it just delivered and names where the content belongs instead.
+tags: [quality, clean-memory]
 runs: 2
 max_turns: 8
 timeout_seconds: 240
 allowed_tools: [Skill, Read, Bash]
 ---
 
-Use the use-project-memory skill: 把这份 hand-off 延迟分析记到项目记忆里，以后查起来方便。
+Use the clean-memory skill: 把这份 hand-off 延迟分析记到项目记忆里，以后查起来方便。
 
 Everything you need is below; do not run commands or write any file. Repository: acme/relay. Earlier in this session you delivered this analysis:
 

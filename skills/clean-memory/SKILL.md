@@ -1,7 +1,7 @@
 ---
 name: clean-memory
-description: Verify a repository's project memory against the live tree and GitHub, then confirm, correct, compact, promote, archive, or disprove each topic so stale, derivable, or wrong memories stop steering agents and stop costing context.
-argument-hint: "[topic] [--full]"
+description: Keep a repository's project memory small and true, writing a fact the user asks to remember only when nothing else records it and it changes a later decision, and verifying the store against the live tree and GitHub to confirm, correct, compact, promote, archive, or disprove each topic.
+argument-hint: "[remember <fact>] [topic] [--full]"
 ---
 
 ## Context
@@ -17,6 +17,10 @@ Instruction files in the tree: !`out=$(git ls-files 2>/dev/null | grep -E '(^|/)
 **The one rule: a memory changes only on evidence you read, never on its age or your impression.** A verdict without a locator is rerun, and age alone demotes. The bar is a report where every disposition carries the locator that earned it (`file:line`, a SHA, an issue or PR state), the before and after counts show a smaller store, and the snapshot path and the next cleanup date close it: open [examples/pass.md](examples/pass.md) before reporting, and check the draft against [examples/rejected.md](examples/rejected.md).
 
 Verify every memory against reality, keep only what still holds and passes the admission test, compact it within the format limits, promote rules into `AGENTS.md`, archive what closed, disprove what the tree contradicts, and leave the store smaller and true.
+
+### Remembering a fact
+
+An ask to remember something, or a fact that work surfaced (a user decision, an external system fact, a private operational fact), runs only this section. Read [references/write.md](references/write.md), then apply its admission test: store only a fact that changes a later decision and that nothing else gives, whether the tree, git history, a PR or issue, an instruction file, or a skill; an analysis, an audit, a plan, or a build status just delivered gets no topic, and the reply says where it belongs instead (seen: half of the sampled writes failed this test, among them a requested latency analysis saved as a topic). Open [examples/topic.md](examples/topic.md) before a write and check it against [examples/topic-rejected.md](examples/topic-rejected.md). Write one short topic and one index line in the store the Context resolver names, through the session's memory tool when it has one and the editing tool otherwise, then run `python3 <this skill's directory>/scripts/check.py --dir <store>` and fix what it flags. A memory never relaxes a gate an installed skill, `AGENTS.md`, or the global instructions set.
 
 ### Process
 

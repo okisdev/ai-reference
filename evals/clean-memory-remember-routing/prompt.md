@@ -1,6 +1,6 @@
 ---
-description: An everyday ask to remember a fact about the repo, in the user's words, routes to use-project-memory.
-tags: [routing, use-project-memory]
+description: An everyday ask to remember a fact about the repo, in the user's words, routes to clean-memory.
+tags: [routing, clean-memory]
 runs: 2
 max_turns: 6
 timeout_seconds: 180
