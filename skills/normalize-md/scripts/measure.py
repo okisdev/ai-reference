@@ -7,7 +7,7 @@ import os
 import re
 import subprocess
 import sys
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from difflib import SequenceMatcher
 from pathlib import Path
 
@@ -405,20 +405,43 @@ def linked_targets(line, source, root, names, basenames):
     return found
 
 
-def grep_sources(root, needle, tracked_code, parent=False):
-    result = subprocess.run(["git", "grep", "--untracked", "-n", "-z", "-F", "-I", "--", needle], cwd=root, capture_output=True, check=False)
-    sources = []
-    if result.returncode not in (0, 1):
-        return sources
-    for match in result.stdout.split(b"\n"):
-        parts = match.split(b"\0", 2)
-        if len(parts) != 3:
+def code_sources(tracked_code, needles):
+    """Map each needle to the `file:line` locations of tracked text files that contain it, reading each file once."""
+    found = {needle: [] for needle in needles}
+    for name, path in sorted(tracked_code.items()):
+        try:
+            data = path.read_bytes()
+        except OSError:
             continue
-        name = os.fsdecode(parts[0])
-        if name not in tracked_code or (parent and b".md" not in parts[2]):
+        if b"\0" in data[:8000]:
             continue
-        sources.append("{}:{}".format(name, parts[1].decode("ascii")))
-    return sorted(set(sources))
+        text = data.decode("utf-8", errors="replace")
+        present = [needle for needle in needles if needle in text]
+        if not present:
+            continue
+        for number, line in enumerate(text.splitlines(), 1):
+            for needle in present:
+                if needle in line and (not (needle.endswith("/") or needle[:1] in "'\"") or ".md" in line):
+                    found[needle].append("{}:{}".format(name, number))
+    return found
+
+
+def history_dates(root):
+    """Return each path's last commit date and its commit count over the last 90 days, from one log pass."""
+    last, recent = {}, {}
+    cutoff = (date.today() - timedelta(days=90)).isoformat()
+    result = subprocess.run(["git", "-c", "core.quotePath=false", "log", "--format=%x00%cs", "--name-only", "--no-renames", "HEAD"], cwd=root, capture_output=True, text=True, check=False)
+    day = None
+    for line in result.stdout.splitlines():
+        if line.startswith("\0"):
+            day = line[1:]
+            continue
+        if not line or day is None:
+            continue
+        last.setdefault(line, day)
+        if day >= cutoff:
+            recent[line] = recent.get(line, 0) + 1
+    return last, recent
 
 
 def markdown_inventory(scope, root, in_repository, docs, instruction_paths):
@@ -499,7 +522,7 @@ def markdown_inventory(scope, root, in_repository, docs, instruction_paths):
         quoted = {name: ["'" + parents[name][:-1] + "'", '"' + parents[name][:-1] + '"'] for name in names if "/" in name}
         entries = {name: name.rsplit("/", 1)[0] for name in names if "/" in name and Path(name).name in ENTRY_NAMES}
         needles = names | set(parents.values()) | set(entries.values()) | {needle for values in quoted.values() for needle in values}
-        sources = {needle: grep_sources(root, needle, tracked_code, needle.endswith("/") or needle[:1] in "'\"") for needle in sorted(needles)}
+        sources = code_sources(tracked_code, sorted(needles))
         for name in names:
             found = sources[name] + sources[parents[name]] + (sources[entries[name]] if name in entries else []) + [source for needle in quoted.get(name, []) for source in sources[needle]]
             if found:
@@ -508,19 +531,15 @@ def markdown_inventory(scope, root, in_repository, docs, instruction_paths):
         for name in names:
             if name.startswith("evals/"):
                 readers[name].setdefault("code", ".claude-plugin/plugin.json (claude plugin eval loads evals/)")
+    last_dates, recent_counts = history_dates(root) if in_repository else ({}, {})
     records = []
     for name, path in sorted(candidates.items()):
         try:
             data = path.read_bytes()
         except OSError:
             continue
-        if in_repository:
-            last = subprocess.run(["git", "log", "-1", "--format=%cs", "--", name], cwd=root, capture_output=True, text=True, check=False).stdout.strip() or None
-            count = subprocess.run(["git", "rev-list", "--count", "--since=90.days", "HEAD", "--", name], cwd=root, capture_output=True, text=True, check=False).stdout.strip()
-        else:
-            last, count = None, "0"
         records.append({"path": name, "bytes": len(data), "lines": len(data.decode("utf-8", errors="replace").splitlines()),
-                        "last_change": last, "changes_90d": int(count) if count.isdigit() else 0,
+                        "last_change": last_dates.get(name), "changes_90d": recent_counts.get(name, 0),
                         "readers": [{"kind": kind, "source": readers[name][kind]} for kind in ("harness", "pointed", "linked", "code", "person") if kind in readers[name]]})
     return records
 
@@ -892,6 +911,8 @@ def is_store_file(path):
 
 
 def hook_class(path, root, text):
+    if path.name.upper().startswith("CHANGELOG"):
+        return None
     ignored = subprocess.run(["git", "check-ignore", "-q", "--", relative_path(path, root)], cwd=root, check=False)
     if ignored.returncode == 0:
         return None

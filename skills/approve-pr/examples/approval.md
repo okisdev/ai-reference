@@ -5,7 +5,7 @@ The bar for an approval: the gate is read fresh and named, the approval binds to
 ---
 
 ````
-Guard: author mia-dev, me okisdev; #4621 is open, head 9d1c3f7, base e4f5a6b.
+Guard: author mia-dev, me maintainer-a; #4621 is open, head 9d1c3f7, base e4f5a6b.
 Gate: verify-pr from this session says merge as-is with Verified head 9d1c3f7 against base e4f5a6b, equal to the fresh pair, so it is reused.
 Threads: 3 total, 0 unresolved, read fresh.
 Head re-read before posting: still 9d1c3f7. My latest review here is COMMENTED, so this is a fresh approval, not an edit.

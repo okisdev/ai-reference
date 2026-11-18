@@ -1,6 +1,6 @@
 ---
 description: mirror-reference carries over a reference page's information layout, its grouping and per-row flags, while leaving its styling.
-tags: [quality, mirror-reference]
+tags: [quality, mirror-reference, guard]
 runs: 2
 max_turns: 12
 timeout_seconds: 300

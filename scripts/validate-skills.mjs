@@ -234,9 +234,6 @@ for (const skillPath of skillPaths) {
 }
 
 const identicalCopies = [
-  ["skills/use-project-memory/scripts/check.py", "skills/clean-memory/scripts/check.py"],
-  ["skills/use-project-memory/scripts/resolve.py", "skills/clean-memory/scripts/resolve.py"],
-  ["skills/use-project-memory/references/write.md", "skills/clean-memory/references/write.md"],
   ["skills/distill-session/references/stores.md", "skills/recap-activity/references/stores.md"],
 ];
 

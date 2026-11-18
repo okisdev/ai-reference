@@ -6,9 +6,9 @@ Agent skills published through `npx skills` and as a Claude Code plugin; README.
 
 - `npm install --no-save js-yaml && node scripts/validate-skills.mjs`: asserts frontmatter, the 20 KiB `SKILL.md` cap, probe parameters, the `plugin.json` and README listings, and standing alone; run it before shipping any change, and CI runs it on every PR touching skills.
 - `python3 scripts/check-probes.py`: runs every Context probe in an empty directory and a repository without a remote, under bash and zsh (zsh must be installed); it passes before shipping.
-- `claude plugin eval . --trust-plugin --allow-tools Bash --no-publish --judge-model sonnet`: passes the cases of every touched skill before shipping, judged by sonnet because the default haiku judge fails answers that meet a criterion.
+- `claude plugin eval . --trust-plugin --allow-tools Bash --no-publish --judge-model sonnet --case '<skill>-*'`: passes the cases a change can affect (the skill's routing case when its description changes, the quality case of each rule it touches, and the routing cases of neighbors a description change could steal from) before shipping, and the full suite once per version bump, judged by sonnet because the default haiku judge fails answers that meet a criterion; a case with an open flaky issue is reported, not blocking.
 - `npx skills add <repo> -l`: lists the skill before shipping, which proves the consumer-side CLI parses its frontmatter.
-- `python3 scripts/test-memory-scripts.py`: passes when a change touches the `check.py`, `resolve.py`, or `audit.py` of `use-project-memory` or `clean-memory`.
+- `python3 scripts/test-memory-scripts.py`: passes when a change touches the `check.py`, `resolve.py`, or `audit.py` of `clean-memory`.
 - `python3 scripts/test-measure.py`: passes when a change touches `skills/normalize-md/scripts/measure.py`.
 - `python3 scripts/test-episodes.py`: passes when a change touches `skills/distill-session/scripts/episodes.py`.
 

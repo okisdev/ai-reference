@@ -2,6 +2,32 @@
 
 All notable changes to this collection. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions match `.claude-plugin/plugin.json`. Changes before 0.0.41 live in the merged pull requests.
 
+## [0.0.51] (2026-11-18)
+
+### Added
+
+- triage-backlog sorts every open issue and PR into one batch each (close now, fix now, needs a decision, follow-up), keeps the plan in a file so the next batch resumes it, carries the flags given once to every item, and runs an approved batch to its end.
+- release-changes deploys what changed or cuts a release: it confirms every named change is in what ships, maps the diff to targets, orders schema and data steps so running code never meets storage it cannot handle, proves each target live with a rollback point, and in release mode bumps versions, writes the changelog, and merges the PR.
+- upload-testflight archives through the repository's own path, bumps only the build number unless told otherwise, and counts a build as sent only once App Store Connect shows it processed.
+- draft-reply reads an issue, PR, or chat thread, checks each ask against the code, and drafts a reply in the user's voice and the channel's format that is sent only after approval, then closes, requests changes, or files the follow-up.
+- adopt-pr takes over another author's PR on its own branch, or supersedes it when it cannot be saved, and stops for review or ships when told to, keeping the contributor's commits and credit.
+
+### Changed
+
+- read-source answers what changed upstream between our pin and the latest release and which changes touch our integration.
+- mirror-reference starts an open "what can we learn from this" ask with a survey of what to adopt, what to skip, and what the reference lacks.
+- ship-pr treats a check the repository's `AGENTS.md` declares advisory like `--advisory`, and counts a deployment status that never updated after its deployment finished as passed.
+- normalize-md's doc hook leaves changelogs alone, because they are history by design.
+- approve-pr hands a PR that needs fixes to adopt-pr instead of pushing them itself.
+- normalize-md's markdown inventory reads the history in one log pass and each code file once, so a repository of a few hundred markdown files measures in under a second instead of two minutes.
+- An eval case whose delta stays 0 is rewritten, kept with the `guard` tag when it guards a mistake the skill once made, or deleted; a change runs the cases it can affect, and the full suite runs once per version bump.
+- Skills, references, examples, and evals name only invented accounts, repositories, and tools: a private product's browser tools become a generic site-tools server, a private review bot leaves the bot table, and real logins and repositories give way to neutral ones.
+
+### Removed
+
+- use-project-memory is merged into clean-memory, which now writes a fact the user asks to remember only when it passes the admission test, and keeps the write check and its hook; the harness loads the memory index on its own.
+- summarize-review is merged into draft-reply as its takeover review, which approve-pr and ship-pr now require.
+
 ## [0.0.50] (2026-11-18)
 
 ### Added
@@ -38,7 +64,7 @@ All notable changes to this collection. The format follows [Keep a Changelog](ht
 
 ### Added
 
-- verify-ui maps every browser operation (open, viewport, color scheme, script, screenshot, page snapshot, input, console, close) across Chrome DevTools MCP, Claude in Chrome, and Gode's site tools with the traps each has shown, and gives sandboxed or unattended runs a path that reads an open tab or hands the browser pass back.
+- verify-ui maps every browser operation (open, viewport, color scheme, script, screenshot, page snapshot, input, console, close) across Chrome DevTools MCP, Claude in Chrome, and a site-tools MCP server with the traps each has shown, and gives sandboxed or unattended runs a path that reads an open tab or hands the browser pass back.
 - use-project-memory ships `agents/openai.yaml` with `allow_implicit_invocation: false`, so Codex lists it only for explicit invocation.
 - Eval cases for a browser tool chosen from the ones a session exposes and for an old green whose base moved under the PR's own files.
 

@@ -1,6 +1,6 @@
 ---
 name: mirror-reference
-description: Adapt a design, interaction, or API from a reference outside this repository that the user points at (a URL, another repository, or a sibling checkout) into this project's own components, following it without copying it.
+description: Adapt a design, interaction, or API from a reference outside this repository that the user points at (a URL, another repository, or a sibling checkout) into this project's own components, following it without copying it, or survey what such a reference has worth taking.
 argument-hint: "<url-or-path>... [target-area]"
 ---
 
@@ -18,7 +18,7 @@ Study the reference until the pattern separates from its styling, implement the 
 
 ### Process
 
-1. Parse `$ARGUMENTS` (one or more references: a URL, an owner/repo, or a local sibling path; an optional target area names where in this codebase the pattern lands; with no arguments, infer both from the conversation instead).
+1. Parse `$ARGUMENTS` (one or more references: a URL, an owner/repo, or a local sibling path; an optional target area names where in this codebase the pattern lands; with no arguments, infer both from the conversation instead). An open ask with no pattern named ("what can we learn from this") starts with a survey: map the reference and this repository on the same axes and return three lists (adopt, skip with the reason, and what the reference lacks that this repository has), each item citing files in both, and adapt only the items the user picks (seen: asks to study a repository and say what to learn from it recurred without a fixed shape).
 2. Study each reference with the tool that matches its shape: a repository through `gh` (shallow clone or fetch files via the API) rather than scraping its rendered site, a docs or marketing page through a web fetch, a local sibling path by reading it directly. Identify the load-bearing pattern, the structure, API shape, interaction, or behavior that makes the reference work, and separate it from the reference's styling, naming, and tokens; the pattern transfers, the skin does not. When what makes the reference worth following is how it presents information (what it shows, how it groups and orders it, and the marks that let a person scan it, such as flags, badges, or status dots), that presentation is the pattern and transfers too, drawn in this repository's own components; an ask not to copy the reference exactly leaves out its styling, never its information layout (seen: a diagnostics page that kept only the reference's behavior drew the complaint that it had no layout at all and none of the reference's marks, such as flags).
 3. Read the target area's own idiom before writing: nearest siblings decide naming, placement, and import style, and the repository's own primitives and helpers are the building blocks. Read the repository's `AGENTS.md` and README first when the codebase is unfamiliar.
 4. Implement the pattern expressed entirely in this repository's conventions and primitives. Search for an existing primitive before writing a new one; a new parallel implementation states what existing thing was rejected and why.

@@ -52,17 +52,11 @@ Fetch every review comment on a PR, from bots and humans, classify each by stale
 
 **Triggers:** "Check the PR review comments", "Verify the bot comments on #456"
 
-#### summarize-review
-
-Write a maintainer's summary review to a PR's author: the verdict and why it holds, then only what the diff cannot say for itself, with evidence behind each load-bearing claim.
-
-**Triggers:** "Write the approval review for #789", "Summarize what we fixed on this PR"
-
 #### approve-pr
 
-Review a PR as a maintainer and post the GitHub approval when it earns one, otherwise report and decline. It owns the self-approval guard and the review write, and composes `verify-pr`, `verify-pr-comments`, `summarize-review`, and optionally `ship-pr` for the merge.
+Review a PR as a maintainer and post the GitHub approval when it earns one, otherwise report and decline. It owns the self-approval guard and the review write, composes `verify-pr`, `verify-pr-comments`, and `draft-reply`'s takeover review, hands a PR that needs fixes to `adopt-pr` when installed, and optionally hands the merge to `ship-pr`.
 
-**Requires:** `verify-pr`, `verify-pr-comments`, `summarize-review`
+**Requires:** `verify-pr`, `verify-pr-comments`, `draft-reply`
 
 **Triggers:** "Approve PR #4621", "Review and approve this PR", "Approve and merge #4621"
 
@@ -70,9 +64,41 @@ Review a PR as a maintainer and post the GitHub approval when it earns one, othe
 
 Drive a change to a merged PR: implement if needed, branch, open the PR, then watch CI and review threads, fixing feedback each cycle, and merge once every check and review has settled on the head that merges. It resumes from whatever state exists, bounds every wait with a visible heartbeat, pins the merge to the head `verify-pr` judged, and follows merge queues.
 
-**Requires:** `create-branch`, `commit-changes`, `create-pr`, `verify-pr`, `verify-pr-comments`, `approve-pr`, `summarize-review`
+**Requires:** `create-branch`, `commit-changes`, `create-pr`, `verify-pr`, `verify-pr-comments`, `approve-pr`, `draft-reply`
 
 **Triggers:** "Ship this change", "Take this PR to merge", "Open a PR and merge it when CI is green"
+
+#### adopt-pr
+
+Take over another author's PR as a maintainer: judge it, decide whether to amend it on its own branch or supersede it, fix and trim it in a task worktree, stop for review or push when told to ship, and hand it to approval and merge. The contributor's commits and credit stay.
+
+**Triggers:** "Take over this contributor's PR and fix it", "Optimize this PR but don't commit yet", "Fix their PR instead of waiting for them"
+
+#### triage-backlog
+
+Sort every open issue and PR into one batch each (close now, fix now, needs a decision, follow-up) with the evidence behind it, then run each approved batch to its end without asking again. The plan lives in a file, so "next batch" resumes it and the flags given once carry to every item.
+
+**Triggers:** "Go through all open issues and PRs and batch them", "What's the next batch?", "Handle the backlog the same way as before"
+
+#### draft-reply
+
+Read an issue, PR, or chat thread, check what the other side asks against the code, and draft a reply in the user's voice and the channel's format; nothing is sent until the user approves that draft, after which it posts and closes, requests changes, or files the follow-up.
+
+It also writes the maintainer's review summary to a PR's author after a takeover, saying only what the diff cannot, and returns it to `approve-pr` or `ship-pr` to post with the review.
+
+**Triggers:** "Draft a closing reply, don't send it yet", "Send and close", "Read the thread and give me a reply I can paste", "Summarize what we fixed on this PR"
+
+#### release-changes
+
+Deploy what changed, or cut a release, across a repository's targets in a safe order: confirm every named change is in what ships, map the diff to targets, run schema and data steps where they cannot break running code, ship each target from one verified head, and prove it live with a rollback point recorded. Release mode also bumps versions, writes the changelog, and merges the PR.
+
+**Triggers:** "Push the schema and deploy the API", "Deploy the platforms that changed", "Cut a release with these two changes"
+
+#### upload-testflight
+
+Archive an Xcode app through the repository's own path, bump only the build number unless told otherwise, upload, confirm App Store Connect has the build and finished processing, and add it to a testing group with notes from the commits.
+
+**Triggers:** "Send a TestFlight build, bump only the build", "Upload the next build and submit it for testing", "Why didn't the build reach TestFlight?"
 
 #### upgrade-deps
 
@@ -88,7 +114,7 @@ Find a verified icon for a brand, product, AI model, or UI concept down a source
 
 #### verify-ui
 
-Render and verify a web UI change in a real browser through whichever browser tool the session exposes, mapped by operation across Chrome DevTools, Claude in Chrome, Gode, and others. It owns the dev server lifecycle, waits for hydration, backs each claim with a DOM query and a screenshot someone looked at, lists every state the change touches, and never kills processes by name.
+Render and verify a web UI change in a real browser through whichever browser tool the session exposes, mapped by operation across Chrome DevTools, Claude in Chrome, site-tools MCP servers, and others. It owns the dev server lifecycle, waits for hydration, backs each claim with a DOM query and a screenshot someone looked at, lists every state the change touches, and never kills processes by name.
 
 **Triggers:** "Verify the UI change in the browser", "The spacing still looks wrong, check it", "Render this page and confirm the fix"
 
@@ -124,12 +150,6 @@ Decide what a dashboard shows and in which chart form: inventory the data pages 
 
 **Triggers:** "What else could we show on the dashboard?", "We removed too many charts, which ones come back and in what form?", "What could become a monitor or a dataset?", "Which chart for this data, and where?"
 
-#### use-project-memory
-
-Read and write the project memory store that Claude, Codex, and Grok share, admitting only a fact that changes a later decision and that the tree, git, GitHub, or an instruction file cannot give. `scripts/check.py` holds every write to the store's limits, also as a PostToolUse hook in all three harnesses. A run another agent dispatched loads nothing, and Codex lists the skill only for explicit invocation.
-
-**Triggers:** "Remember this about the repo", "What do we already know about this project?", "Write that into project memory"
-
 #### diagnose-root
 
 Diagnose a failure to its origin with a reproduction first: trace the wrong value back to where it starts, name the mechanism in one sentence, and fix at the origin only when a fix was asked, then sweep for the same cause and rerun the reproduction.
@@ -162,9 +182,9 @@ Challenge every markdown file in a repository on whether it should exist, whethe
 
 #### clean-memory
 
-Verify a repository's project memory against the live tree and GitHub, then confirm, correct, compact, promote, archive, or delete each topic, so stale or wrong memories stop steering agents; `scripts/audit.py` checks every anchor a topic carries, and `scripts/check.py` holds a write to the store's limits.
+Keep the project memory store that Claude, Codex, and Grok share small and true: write a fact only when it changes a later decision and nothing else records it, and verify the store against the live tree and GitHub to confirm, correct, compact, promote, archive, or delete each topic. `scripts/audit.py` checks every anchor a topic carries, and `scripts/check.py` holds every write to the store's limits, also as a PostToolUse hook in all three harnesses.
 
-**Triggers:** "Clean up the project memory", "Half of these memories are outdated", "Check what memory still holds after the refactor"
+**Triggers:** "Remember this about the repo", "Clean up the project memory", "Half of these memories are outdated"
 
 ## Installation
 
@@ -193,7 +213,7 @@ mkdir -p ~/.agents/skills
 for d in ai-reference/skills/*/; do ln -s "$(cd "$d" && pwd)" ~/.agents/skills/"$(basename "$d")"; done
 ```
 
-Grok scans `~/.grok/skills`, which should link to the same `~/.agents/skills` store. Enable or disable individual skills in `~/.codex/config.toml`. `ship-pr` and `use-project-memory` ship `allow_implicit_invocation: false`, so Codex never loads them on its own; invoke them explicitly (`$ship-pr`, `$use-project-memory`), and have AGENTS.md ask for the memory index when interactive Codex work should read it at the start. Claude Code runs each skill's `## Context` probes; in Codex and Grok the agent runs them itself before following the skill.
+Grok scans `~/.grok/skills`, which should link to the same `~/.agents/skills` store. Enable or disable individual skills in `~/.codex/config.toml`. `ship-pr` ships `allow_implicit_invocation: false`, so Codex never loads it on its own; invoke it explicitly (`$ship-pr`). Claude Code runs each skill's `## Context` probes; in Codex and Grok the agent runs them itself before following the skill.
 
 ## Usage
 

@@ -9,8 +9,8 @@ from pathlib import Path
 
 sys.dont_write_bytecode = True
 REPO = Path(__file__).resolve().parents[1]
-CHECK = REPO / "skills/use-project-memory/scripts/check.py"
-RESOLVE = REPO / "skills/use-project-memory/scripts/resolve.py"
+CHECK = REPO / "skills/clean-memory/scripts/check.py"
+RESOLVE = REPO / "skills/clean-memory/scripts/resolve.py"
 AUDIT = REPO / "skills/clean-memory/scripts/audit.py"
 
 FM = "---\nname: {name}\ndescription: \"{name} fact\"\nmetadata:\n  node_type: memory\n  type: {type}\n---\n\n{body}\n"
