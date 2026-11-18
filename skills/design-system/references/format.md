@@ -47,6 +47,7 @@ Empty sections are left out. A rule states an exact value whenever one exists (a
 ## Inheritance
 
 - `extends:` lines name the systems this one builds on, nearest last; a later system overrides an earlier one rule by rule, and a project file holds only what differs from what it extends.
+- A personal or shared system that spans private products is packaged as an installed skill and named `skill:<name>`: it resolves to that skill's `references/` files, read whole, so the skill carries the taste and each product's `DESIGN.md` carries its own paths and exemplars.
 - A reference is `<owner>/<repo>:<path>`, resolved against a local checkout of `<repo>` beside the current repository or under the same source root, and otherwise read through `gh api repos/<owner>/<repo>/contents/<path>` at the default branch; the owner may be left out only for a repository that has no remote, which then resolves from a local checkout alone.
 - A repository names its system in its `AGENTS.md` with one line, `Design system: <owner>/<repo>:<path>`, or keeps a `DESIGN.md` at the root of the app it governs.
 
