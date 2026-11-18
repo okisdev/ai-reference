@@ -1,9 +1,9 @@
 ---
 name: design-dashboard
-description: "Design or redesign an admin, ops, or customer dashboard in the repository's own design law, from a measured diagnosis to a verified build and a contract in AGENTS.md."
+description: "Design or redesign an admin, ops, or customer dashboard in the repository's own design law, from a measured diagnosis to a verified build and its decisions written into the governing design system."
 argument-hint: "[app-path] [reference-path-or-url...] [--analysis]"
 metadata:
-  requires: "plan-charts mirror-reference verify-ui normalize-md"
+  requires: "plan-charts mirror-reference verify-ui design-system"
 ---
 
 ## Context
@@ -36,7 +36,7 @@ Decide what the dashboard is for, diagnose it in measurements, draw it in the re
 10. Fan out the pages as parallel packages on top of the verified core: one exemplar page first, breadth pages next, detail and trace pages last. Each brief names its files, the exemplar page path, the contract path, sibling packages' files as in flight, and its verification command, and the uncommitted core rides into each worktree as an applied and staged patch. Merge each returned package into the main tree one at a time with a typecheck after each; a package past its lifecycle budget is terminalized as a sizing error and re-dispatched bounded, never waited on; when a package deleted a file mid-rewrite, restore it from the base and re-dispatch a bounded follow-up instead of patching around the gap.
 11. Verify in a browser through `verify-ui` in a declared order: the overview, a list with filter, sort, and paging, a detail page, the command palette, a create form, both themes, a narrow viewport, with the console watched throughout; prove an alignment claim with measured pixels, not a glance. Seed staging with realistic variety (many entities, id spellings, outcome mixes) through the app's own seed script or `inspect-db --write` against the staging connection named by host, never production, before judging a list or chart page. Grep for a destructive action outside the confirm dialog and for a hand-rolled control the kit has before calling the pass done. The handoff names the surfaces not verified, each delegated decision with the choice made, and any page that missed its density target with the cause.
 12. Run the polish loop on the user's feedback: a pasted bracketed component stack is a locator, resolved to its file and line; fix at the shared component; put labels back when compression reads as broken; when two consecutive instructions contradict, the later one wins and the reading is flagged; a defect that recurs becomes a contract rule on its second occurrence.
-13. Leave the contract behind: the design contract and the chart grammar live in the app's AGENTS.md in the shape the contract reference's writing section gives and pass `python3 <normalize-md's directory>/scripts/measure.py <app-path> --strict`, the blueprint link goes to project memory, and the tree stays uncommitted; committing composes `commit-changes` when installed, and shipping composes `ship-pr` when installed.
+13. Leave the contract behind through `design-system`: the dashboard's decisions and chart grammar live in the governing design system in the shape the contract reference's writing section gives (what the user's other products share in the shared system the app extends, the app's own differences in its `DESIGN.md`), with one `Design system:` line in the app's AGENTS.md, the blueprint link goes to project memory, and the tree stays uncommitted; committing composes `commit-changes` when installed, and shipping composes `ship-pr` when installed.
 
 ### Rules
 

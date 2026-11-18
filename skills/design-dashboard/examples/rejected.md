@@ -14,4 +14,4 @@ Why each part fails:
 - `a chart on every page`: a view drawn against data that does not exist or a table that is empty in production is deleted, not decorated, and what each page shows and in which form is decided through `plan-charts` from the question the page answers.
 - `The sidebar is icons only now`: the contract's Frame row has the sidebar list places, each named for the entity it lists, and icons alone drop the names; labels go back when compression reads as broken.
 - `Typecheck, lint, and build pass`: a green typecheck, lint, and build is not visual verification; the pass needs the declared browser order, both themes, and a narrow viewport.
-- `Ready to commit`: no size and time estimate came before the run, no blueprint was written or approved before code, no contract was left in the app's AGENTS.md, and the tree stays uncommitted (committing composes `commit-changes`).
+- `Ready to commit`: no size and time estimate came before the run, no blueprint was written or approved before code, no decision was written into the governing design system, and the tree stays uncommitted (committing composes `commit-changes`).

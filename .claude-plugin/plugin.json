@@ -1,7 +1,7 @@
 {
   "name": "okisdev",
   "description": "Personal skills collection by okisdev",
-  "version": "0.0.51",
+  "version": "0.0.52",
   "author": {
     "name": "okisdev"
   },
@@ -32,6 +32,9 @@
     "./skills/distill-session",
     "./skills/normalize-md",
     "./skills/clean-memory",
+    "./skills/design-system",
+    "./skills/build-ui",
+    "./skills/review-ui",
     "./skills/design-dashboard",
     "./skills/plan-charts",
     "./skills/recap-activity"

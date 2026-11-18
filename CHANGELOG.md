@@ -2,6 +2,24 @@
 
 All notable changes to this collection. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions match `.claude-plugin/plugin.json`. Changes before 0.0.41 live in the merged pull requests.
 
+## [0.0.52] (2026-11-18)
+
+### Added
+
+- design-system writes, extracts, merges, and maintains design systems in one format (principles, tokens, registers with exact values, components, reject rules, exemplars across the user's projects, platforms, checks), with shared systems that products extend and corrections turned into rules or checks.
+- build-ui builds or redesigns a surface from the governing design system and its exemplars, compares variants when the direction is open, and covers every state.
+- review-ui reviews UI against its design system and a craft reference of layout, color, type, motion, copy, accessibility, and states, with severity, the rule broken, and the exact fix.
+
+### Changed
+
+- design-dashboard writes its decisions into the governing design system instead of a contract section in AGENTS.md.
+- release-changes lands the review and its fixes before one release verification on a committed head, classifies failures alone and on the base before chasing them, reruns only what failed, and never deploys for docs, instruction files, or tests.
+
+- distill-session prefers a check (a validator or lint rule, a test, a hook, an eval case) to a sentence for a lesson a match can enforce, reads silent edits, repeated nudges, reverts, and confirmed choices as well as explicit corrections, and marks an unstated why as inferred for the user to confirm.
+- normalize-md proposes a check for a rule a match on code can enforce, and challenges a user-level instruction file the user names under that file's own constraints.
+- optimize-repo lists problems by one question, whether pieces that change together are together, reads every special case as a requirement the design missed, and with `--tests` prunes tests that guard no behavior.
+- README.md maps the skills into flows and links each entry to an example of its output.
+
 ## [0.0.51] (2026-11-18)
 
 ### Added

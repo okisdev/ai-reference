@@ -12,7 +12,7 @@ The direction is a decide-first console: three queues (approvals, failed runs, e
 
 Most of the return is cheap: ten of the twelve pages change only through four shared primitives, and the two queues need one endpoint each. The earlier pass was right to chase charts and wrong about their form: it drew a donut for a mix that is one slice for most tenants.
 
-**2. Diagnosis in measurements** (`scripts/density.mjs apps/console`, judged against the contract in `apps/console/AGENTS.md`)
+**2. Diagnosis in measurements** (`scripts/density.mjs apps/console`, judged against the design system `apps/console/DESIGN.md` extends)
 
 | Measure | Found | Contract | Where |
 |---------|-------|----------|-------|
