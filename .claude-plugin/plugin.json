@@ -1,7 +1,7 @@
 {
   "name": "okisdev",
   "description": "Personal skills collection by okisdev",
-  "version": "0.0.52",
+  "version": "0.0.53",
   "author": {
     "name": "okisdev"
   },
@@ -35,6 +35,9 @@
     "./skills/design-system",
     "./skills/build-ui",
     "./skills/review-ui",
+    "./skills/personal-web-design",
+    "./skills/personal-macos-design",
+    "./skills/personal-ios-design",
     "./skills/design-dashboard",
     "./skills/plan-charts",
     "./skills/recap-activity"
