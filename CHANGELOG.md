@@ -2,6 +2,16 @@
 
 All notable changes to this collection. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions match `.claude-plugin/plugin.json`. Changes before 0.0.41 live in the merged pull requests.
 
+## [0.0.53] (2026-11-18)
+
+### Added
+
+- personal-web-design, personal-macos-design, and personal-ios-design package the maintainer's personal design system per platform (one shared taste, each platform's values, components, and checks, and a Swift layer for Apple apps) as skills that products extend from their own `DESIGN.md`.
+
+### Changed
+
+- design-system, build-ui, and the design system format resolve `extends: skill:<name>` to an installed skill, so a system shared by private products is published without their paths.
+
 ## [0.0.52] (2026-11-18)
 
 ### Added

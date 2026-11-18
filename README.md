@@ -41,7 +41,7 @@ Regroup uncommitted changes and messy branch commits into clean commits by purpo
 
 #### create-pr
 
-Open a GitHub PR from the current branch with a title and body in the repository's conventions and the user's voice: its template, `closes #N` first, a `type(scope):` title from recent merges, a test plan split into verified and to verify, and guards against empty, WIP, behind-base, or merge-commit branches.
+Open a GitHub PR from the current branch with a title and body in the repository's conventions and the user's voice: its template, `closes #N` first, a `type(scope):` title from recent merges, a test plan split into verified and to verify.
 
 **Triggers:** "Open a PR", "Create a pull request for this branch" ([example](skills/create-pr/examples/fix.md))
 
@@ -73,7 +73,7 @@ Review a PR as a maintainer and post the GitHub approval when it earns one, othe
 
 #### ship-pr
 
-Drive a change to a merged PR: implement if needed, branch, open the PR, then watch CI and review threads, fixing feedback each cycle, and merge once every check and review has settled on the head that merges. It resumes from any state, bounds every wait with a visible heartbeat, and pins the merge to the head `verify-pr` judged.
+Drive a change to a merged PR: implement if needed, branch, open the PR, then watch CI and review threads, fixing feedback each cycle, and merge once every check and review has settled on the head that merges.
 
 **Requires:** `create-branch`, `commit-changes`, `create-pr`, `verify-pr`, `verify-pr-comments`, `approve-pr`, `draft-reply`
 
@@ -101,7 +101,7 @@ It also writes the maintainer's review summary to a PR's author after a takeover
 
 #### release-changes
 
-Deploy what changed, or cut a release, in a safe order: confirm every named change is in what ships, map the diff to targets, order schema steps so running code never breaks, and prove each target live with a rollback point. Release mode also bumps versions, writes the changelog, and merges the PR.
+Deploy what changed, or cut a release, in a safe order, with every named change confirmed in what ships and each target proven live with a rollback point. Release mode also bumps versions, writes the changelog, and merges the PR.
 
 **Triggers:** "Push the schema and deploy the API", "Deploy the platforms that changed" ([example](skills/release-changes/examples/release.md))
 
@@ -137,7 +137,7 @@ Run the standing optimization pass: read the scope's idiom, strip comments and d
 
 #### read-source
 
-Answer a question about a dependency or an installed CLI from source at the pinned version, choosing the rung by the question: installed code, the published artifact, the upstream repository at the release tag, and docs last, never as proof. Every answer names the rung and version that proved it.
+Answer a question about a dependency or an installed CLI from source at the pinned version (installed code, the published artifact, the upstream tag, docs last), naming the rung and version that proved it.
 
 **Triggers:** "Does this API exist in our version?", "Check the source of this package" ([example](skills/read-source/examples/answer.md))
 
@@ -164,6 +164,30 @@ Build or redesign a surface from the governing design system, reading its exempl
 Review UI against its design system and the craft of layout, color, type, motion, copy, accessibility, and states, with severity, the rule broken, and the exact fix for each finding.
 
 **Triggers:** "What's wrong with this page's design?", "Review the UI in this diff" ([example](skills/review-ui/examples/review.md))
+
+#### personal-web-design
+
+The maintainer's personal web design system: taste, exact values, components, and reject rules a web product's `DESIGN.md` extends.
+
+**Requires:** `design-system`
+
+**Triggers:** "Build this page in my style" ([example](skills/personal-web-design/examples/applied.md))
+
+#### personal-macos-design
+
+The same taste for Mac apps in SwiftUI or a desktop web stack.
+
+**Requires:** `design-system`
+
+**Triggers:** "Add a menu bar item in my style" ([example](skills/personal-macos-design/examples/applied.md))
+
+#### personal-ios-design
+
+The same taste for iPhone and iPad, where native bars, Dynamic Type, and 44 point targets win.
+
+**Requires:** `design-system`
+
+**Triggers:** "Design this iPhone screen my way" ([example](skills/personal-ios-design/examples/applied.md))
 
 #### design-dashboard
 
@@ -205,13 +229,13 @@ Review how the skills are being used across every project's sessions and propose
 
 #### normalize-md
 
-Challenge every markdown file in a repository on whether it should exist, whether each line is true against the code, and whether each rule is worth what it costs, then rewrite instruction files and the docs they point agents at into short rules within every harness's caps. Rule changes go to the owner as proposals, and `scripts/measure.py` inventories every markdown file with its readers and runs as a PostToolUse hook.
+Challenge every markdown file in a repository on whether it should exist and whether each line is true and worth its cost, then rewrite what stays into short rules within every harness's caps. `scripts/measure.py` inventories every markdown file and runs as a PostToolUse hook.
 
 **Triggers:** "Clean up AGENTS.md", "Go through every md in the repo and question it" ([example](skills/normalize-md/examples/challenge.md))
 
 #### clean-memory
 
-Keep the project memory store that Claude, Codex, and Grok share small and true: write a fact only when nothing else records it and it changes a later decision, and verify every topic against the live tree and GitHub. `scripts/check.py` holds each write to the store's limits, also as a PostToolUse hook.
+Keep the project memory store that Claude, Codex, and Grok share small and true, verifying every topic against the live tree and GitHub. `scripts/check.py` holds each write to the store's limits, also as a PostToolUse hook.
 
 **Triggers:** "Remember this about the repo", "Clean up the project memory" ([example](skills/clean-memory/examples/pass.md))
 
@@ -242,7 +266,7 @@ mkdir -p ~/.agents/skills
 for d in ai-reference/skills/*/; do ln -s "$(cd "$d" && pwd)" ~/.agents/skills/"$(basename "$d")"; done
 ```
 
-Grok scans `~/.grok/skills`, which should link to the same `~/.agents/skills` store. Enable or disable individual skills in `~/.codex/config.toml`. `ship-pr` ships `allow_implicit_invocation: false`, so Codex never loads it on its own; invoke it explicitly (`$ship-pr`). Claude Code runs each skill's `## Context` probes; in Codex and Grok the agent runs them itself before following the skill.
+Grok scans `~/.grok/skills`, which should link to the same `~/.agents/skills` store. Codex loads `ship-pr` only when invoked (`$ship-pr`). Codex and Grok agents run each skill's `## Context` probes themselves.
 
 ## Usage
 
