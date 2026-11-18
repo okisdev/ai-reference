@@ -1,0 +1,75 @@
+# Rejected rewrite
+
+A rewrite that shrinks the file and gets overturned at the loss check. It starts from the same `CLAUDE.md` and the same uncommitted `apps/worker/AGENTS.md` as `rewrite.md`. Compare yours against it before reporting.
+
+````md
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+@AGENTS.md
+````
+
+````md
+# AGENTS.md
+
+## Project overview
+
+Relay is a job queue and worker pool for internal services, written in TypeScript on Node 22 with pnpm. It started in 2024 as a weekend project and now carries 40 services.
+
+## Rules
+
+- Always run `pnpm test` before committing and never import from `packages/pool/src`; in March a hotfix skipped the tests and release 2.4.1 shipped with a broken lease renewal (#212).
+- Write clean, maintainable code and follow best practices.
+- `apps/` holds the api and the worker; `packages/` holds the queue and the pool.
+````
+
+````
+Done. CLAUDE.md slimmed to a stub and the content merged into AGENTS.md (11.2 KB to 3.1 KB). Skipped apps/worker/AGENTS.md: uncommitted changes. Removed the retry budget and lease test rules as too specific.
+````
+
+Why each part fails:
+
+- The `CLAUDE.md` stub: every `CLAUDE.md` is retired, because even an `@AGENTS.md` stub switches Claude Code back to CLAUDE.md-only loading; a stub is for a repository that must serve Claude Code before 2.1.277 or Bedrock, Vertex, or Foundry, and the report says so.
+- The scaffold line in the stub: a placeholder never survives. `measure.py` flags `placeholder` on both files and `claude-md` on the stub, and this report shows no run of it.
+- `# AGENTS.md`: a title that names the file instead of the project is a placeholder.
+- The project overview: product description goes to the README; only the title and its one-line summary stay.
+- The first bullet holds two rules and the incident story: one rule per bullet with at most one because-clause, and the narrative goes nowhere because git and the PR carry it. The import rule is asserted by `architecture.test.ts`, so it becomes a one-line pointer to the test.
+- `Write clean, maintainable code`: generic best practice that names nothing in this repository.
+- `apps/ holds the api and the worker`: an inventory line that only says what a directory holds; `ls` gives it.
+- The retry budget and lease test rules removed `as too specific`: a rule is never dropped to shorten a file, and the lease command moves down to the package it applies to; overflow past a target is reported, not cut.
+- `Skipped apps/worker/AGENTS.md: uncommitted changes`: a dirty file is rewritten on top of the working copy and its pending diff is named (seen: it skipped an AGENTS.md with uncommitted changes that the user wanted it to build on).
+- `Done` with a size headline: no moved and dropped lists and no loss check, so nobody can tell that the two removed rules were load-bearing; the loss check is exactly what would have found them.
+
+## A maintenance pass that reads as done
+
+A second pass over a repository normalized a week earlier. Its report:
+
+````
+Maintenance pass. DESIGN.md was 428 bytes over its target: moved the account page bullet into a new src/account/AGENTS.md and dropped two checklist steps that restate Principles 1 and 2 (16,812 to 16,149 bytes). Promoted nine memory topics into AGENTS.md. apps/app/README.md (140 KB, 52 agent-facing lines) is product manual prose, so the flags are false positives and it stays. Loss check: nothing important lost. measure.py --strict passes: 41 files, none over a hard cap or a target.
+````
+
+Why each part fails:
+
+- No growth table: the pass never ran `measure.py --since`, so it cannot say whether the docs stopped growing, and they had not (the README it kept grew 18 KB that week).
+- `product manual prose ... it stays`: a manual an instruction file points agents at is on their path whoever wrote it for; its pointer goes, its rules move, and the growth shows in the large docs table.
+- `a new src/account/AGENTS.md`: built from a description of one page reworded as rules; a moved as-built description never earns a file.
+- `dropped two checklist steps that restate Principles 1 and 2` to clear 428 bytes: an obligation never goes to meet a size, and there was no ledger row for either step.
+- `Loss check: nothing important lost`: its brief named those two drops as intended, so the check was told what to wave through.
+- `none over a hard cap or a target` as the closing proof: `--strict` fails only on hard caps, and the 140 KB README sat in no target at all.
+
+## A pass that keeps everything
+
+A pass over a repository with an instruction file and a folder of feature docs. Its report:
+
+````
+Rewrote 39 files (194,555 to 191,050 bytes). Ledger: 334 clauses, 322 kept as written, 12 edited. Every rule kept; make check, its 60 second budget, and the copy freeze rule stay as they were. features/*.md already meet the standard. Loss check found 8 dropped details; all 8 restored. measure.py --strict passes.
+````
+
+Why each part fails:
+
+- `322 kept as written`: a `keep` names why the clause still earns its place; kept because it was there is the failure this skill exists to remove.
+- `make check, its 60 second budget, and the copy freeze rule stay as they were`: a process rule is weighed on its measured cost every pass, a budget no run ever met is untrue, and a rule whose failure finished with a past migration is proposed for removal; none of the three has a cost, a failure, or evidence in the report.
+- `features/*.md already meet the standard`: the files were checked for shape, not for truth or readers; their claims were never sampled against the code.
+- `all 8 restored`: the loss check's findings are reconciled against the ledger, and a detail the ledger dropped as an as-built description stays dropped; restoring it brings the description back.
+- A 2 percent size change after a full pass: the size is not the goal, but a pass that challenged nothing shows up as one that changed nothing.
