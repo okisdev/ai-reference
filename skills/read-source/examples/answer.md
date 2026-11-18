@@ -6,7 +6,7 @@ The bar for a source answer: the answer first in one sentence, then the rung tha
 
 **Answer.** `z.coerce.boolean()` turns the string `"false"` into `true`. It passes the input through JavaScript's `Boolean()`, so every non-empty string is `true`, `"0"` included, and only the empty string becomes `false`.
 
-**Proof.** Rung L2, upstream source at the tag of the pinned version: `colinhacks/zod` at `v3.23.8`, the version in `pnpm-lock.yaml`. L0 was not available, since this checkout has no `node_modules`.
+**Proof.** Rung L2, the entry rung for a behavior question: upstream source at the tag of the pinned version, `colinhacks/zod` at `v3.23.8`, the version in `pnpm-lock.yaml`.
 - `src/types.ts:1750-1754`: `ZodBoolean._parse` runs `if (this._def.coerce) { input.data = Boolean(input.data); }` before it checks the type.
 - `src/types.ts:5248-5252`: `coerce.boolean` is `ZodBoolean.create({ ...arg, coerce: true })`, so `z.coerce.boolean()` takes that branch.
 

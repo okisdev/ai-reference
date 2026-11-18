@@ -45,7 +45,7 @@ Repo PR template (if present): !`for p in .github/pull_request_template.md .gith
 
 - Always start with a conventional commit type: `feat`, `fix`, `perf`, `refactor`, `docs`, `chore`, `test`, `build`, `ci`.
 - Add a scope `(name)` only when the change is confined to one package or one app. Use the short slug (e.g. `react-ai-sdk`, `assistant-stream`), not the full `@org/...` namespace. Omit the scope when the change spans multiple packages or is repo-wide.
-- Keep the full title under 72 characters (GitHub PR list truncation point).
+- Keep the full title under 72 characters (GitHub PR list truncation point). A PR that bundles several changes, such as a release, names its headline change and folds the rest into `and fixes`, never a comma list of features (seen: five titles of 73 to 85 characters, each a list of three features).
 - When commits mix types, pick the most user-facing one: `feat` > `fix` > `perf` > `refactor` > `docs` > `chore` > `test` > `build` > `ci`.
 - Cross-check against `Recent merged PRs` above: the new title's prefix and scope shape should match local convention (if recent titles all use a scope and this PR is single-package, use a scope).
 

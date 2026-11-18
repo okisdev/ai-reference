@@ -1,6 +1,6 @@
 ---
 name: diagnose-root
-description: Investigate why a command, test, build, deployment, or feature fails, reproduce it, trace it to its root cause, and fix the cause only when a fix was asked.
+description: Investigate why a command, test, build, deployment, or feature fails, reproduce it, trace it to its root cause, and fix the cause only when a fix was asked; a feature change, a merge conflict, or an audit with no failing symptom is not its job.
 argument-hint: "<symptom-or-error>"
 ---
 
@@ -15,8 +15,8 @@ Recent commits: !`git log --oneline -5 2>/dev/null || echo "(none or not a git r
 
 ### Process
 
-1. Parse `$ARGUMENTS` (an error string, a failing behavior, or a why question; take it from the conversation when absent). Classify the ask: a why question or a problem description ends at the diagnosis report in step 4; only an explicit fix request continues past it.
-2. Reproduce first: run the failing thing (the repro command, the failing test, the dev server route) and capture the actual output, rendered in a browser (`verify-ui` when installed) when the symptom is a rendered UI. The discriminating symptom counts as reproduced when it appears twice from a reset starting state, and it is the diverging final state, not an expected dialog or loading step along the way; state inspection may confirm what was observed, never inject the symptom. A failure that already happened remotely (a CI run, a deployment build, a production error) counts as observed through its recorded log; its repeat is a second failed run with the same symptom, or the failing command rerun at the failing SHA in a disposable worktree when that is cheap and touches no shared system, and any remote rerun or redeploy waits for the user's go-ahead. A diagnosis without an observed reproduction is a guess. When the failure cannot be reproduced, say so and check the log history for a fixing commit before concluding anything.
+1. Parse `$ARGUMENTS` (an error string, a failing behavior, or a why question; take it from the conversation when absent). Classify the ask: a why question or a problem description ends at the diagnosis report in step 4; only an explicit fix request continues past it (seen: a why question was answered with an edit).
+2. Reproduce first: run the failing thing (the repro command, the failing test, the dev server route) and capture the actual output, rendered in a browser (`verify-ui` when installed) when the symptom is a rendered UI. The discriminating symptom counts as reproduced when it appears twice from a reset starting state, and it is the diverging final state, not an expected dialog or loading step along the way; state inspection may confirm what was observed, never inject the symptom. A failure that already happened remotely (a CI run, a deployment build, a production error), or a run the dispatching agent made on the host and quoted in the brief, counts as observed through its recorded log, and a sandbox's own `Operation not permitted` or `PermissionDenied` is an environment finding handed back for a host rerun, never the symptom (seen: seven sandboxed runs could not bind a port or start the emulator); its repeat is a second failed run with the same symptom, or the failing command rerun at the failing SHA in a disposable worktree when that is cheap and touches no shared system, and any remote rerun or redeploy waits for the user's go-ahead. A diagnosis without an observed reproduction is a guess. When the failure cannot be reproduced, say so and check the log history for a fixing commit before concluding anything.
 3. Trace to the origin: follow the wrong value or behavior from the symptom site backward through the call path, configuration, data source, or generation step until the first place it is wrong. For third-party behavior, read the source at the pinned version (`read-source` when installed). Name the origin as file and line.
 4. State the mechanism in one sentence: explain why that origin produces this symptom. A symptom that shows only sometimes needs the condition that separates the failing cases from the passing ones, checked on at least two more affected instances, and a since-which-version question is answered from dated evidence (a commit, a release, a log) or reported as not locatable. Report the symptom, the origin, the mechanism, and the evidence chain. This is the stopping point for a why question.
 5. Reject the surface patch explicitly before fixing: state what the symptom-site workaround would be and why it loses (it hides recurrence, diverges siblings, or contradicts the repo's paradigm). When the root fix is genuinely disproportionate, report the tradeoff and let the owner choose instead of silently patching.
@@ -25,7 +25,5 @@ Recent commits: !`git log --oneline -5 2>/dev/null || echo "(none or not a git r
 
 ### Rules
 
-- No fix before an observed reproduction, and no diagnosis delivered as fact without one; label unreproduced hypotheses as hypotheses.
+- No fix before an observed reproduction.
 - A cause suggested by the user or the issue is one hypothesis among the candidates; verify it independently instead of confirming it.
-- A why question never turns into an edit; deliver the diagnosis and stop (seen: a why question was answered with an edit).
-- A symptom-site workaround ships only with the rejected root fix and the reason recorded in the report.

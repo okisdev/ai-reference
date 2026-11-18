@@ -1,6 +1,6 @@
 ---
 name: mirror-reference
-description: Adapt a design, interaction, or API from a reference the user points at (a URL, repository, or sibling path) into this project's own components, following it without copying it.
+description: Adapt a design, interaction, or API from a reference outside this repository that the user points at (a URL, another repository, or a sibling checkout) into this project's own components, following it without copying it.
 argument-hint: "<url-or-path>... [target-area]"
 ---
 
@@ -27,7 +27,6 @@ Study the reference until the pattern separates from its styling, implement the 
 
 ### Rules
 
-- Never copy class strings, design tokens, colors, or naming verbatim from a reference; every borrowed pattern is re-expressed in this repository's own primitives (seen: asks to follow a reference without copying it went ad hoc).
-- More than one reference means attribution per adopted pattern, not a blend nobody can trace.
+- Never copy class strings, design tokens, colors, or naming verbatim from a reference; every borrowed pattern is re-expressed in this repository's own primitives (seen: asks to follow a reference without copying it went ad hoc). An exemplar inside this repository that a brief says to match (a sibling example, the other platform's build of the same feature) is not a reference: follow the brief and leave this skill unloaded (seen: four of seven loads were briefs that ordered an in-repo example matched as closely as possible).
 - With several references, each contributes one named pattern class (language, density, page skeleton, interaction grammar), stated as take and not-take per reference; a reference's recent direction is read from its dated git history, not its current file state.
 - A reference the task says to study without implementing produces the pattern analysis and deviation notes only, with zero edits.

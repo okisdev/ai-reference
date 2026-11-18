@@ -1,6 +1,6 @@
 ---
 name: verify-ui
-description: Render and verify a web UI in a real browser, loaded before any browser tool is used (Chrome DevTools, Claude in Chrome, Gode, Playwright, or a built-in browser), when asked to look at a result, open the browser, take a screenshot, open localhost, check mobile or dark mode, or act on pasted-image feedback.
+description: Render and verify a web UI in a real browser, loaded before any browser tool is pointed at the app under test (Chrome DevTools, Claude in Chrome, Gode, Playwright, or a built-in browser), when asked to look at a result, open the browser, take a screenshot, open localhost, check mobile or dark mode, or act on pasted-image feedback.
 argument-hint: "[url-or-route] [--port <n>] [--mobile]"
 ---
 
@@ -33,9 +33,7 @@ Verify the claimed visual state in a real rendered browser with a screenshot or 
 ### Rules
 
 - Never `pkill`, `killall`, or kill by process name. Use only the exact PID recorded at startup, and only for a server this skill started.
-- A curl 200 proves liveness, not visual correctness; every visual claim carries a screenshot or DOM assertion as evidence.
-- Never screenshot-loop in a repository whose standing instructions say the user reviews visuals themselves.
 - Never add Playwright or another browser dependency to the project just for this verification; use what is installed or the session's browser tools.
 - Never inject DOM or app state to produce the state under test; drive the UI the way a user would, and use state inspection only to confirm what was observed. A script that dispatches an event (a wheel, drag, or key event) is injection too, so a gesture the browser tool cannot perform is reported as not checked (seen: a failed drag was replaced by a scripted wheel event and the zoom was reported as checked).
 - In a workspace showing personal or customer data, do not save screenshots or snapshots without the user's agreement.
-- Run every browser check through this process, a quick look at localhost and a check another skill composes included; a raw browser tool call, whichever tool provides it, skips the standing-instructions check, the port read, the hydration wait, and the teardown (seen: browser checks in 82 sessions ran through raw browser tools without it).
+- Run every browser check through this process, a quick look at localhost and a check another skill composes included, while reading outside docs or operating a third-party console in a browser is not a check and does not load it (seen: runs loaded it to read an API's documentation and to remove an incident in a monitoring console); a raw browser tool call, whichever tool provides it, skips the standing-instructions check, the port read, the hydration wait, and the teardown (seen: browser checks in 82 sessions ran through raw browser tools without it).
