@@ -6,7 +6,7 @@ A dashboard is drawn in a written contract, and the contract belongs to the repo
 
 Read in order. The first rung that answers a dimension wins; lower rungs fill the gaps, and every value taken from the last rung is written into the repository's own contract in the same pass so the next session finds it on rung 1.
 
-1. The app's own instruction file: a design contract section in `AGENTS.md` or `CLAUDE.md` (search for `design contract`, `type sizes`, `line budget`, `radius`). A test or lint that asserts a rule outranks the prose; a kit precedent that disagrees with the prose is reported as a defect and not followed.
+1. The app's governing design system: its `DESIGN.md`, or the system its `AGENTS.md` names (`Design system: <owner>/<repo>:<path>`), with every system it `extends:`; an older app may still keep a design contract section in `AGENTS.md` or `CLAUDE.md` (search for `design contract`, `type sizes`, `line budget`, `radius`). A test or lint that asserts a rule outranks the prose; a kit precedent that disagrees with the prose is reported as a defect and not followed.
 2. The organization's published law: a machine-readable design document the brand serves (for example a `design.md` in the tree, a `/design.md` route, or a served design skill). When one exists, follow it for register, palette, type roles, motion, and the closed token and component API. It is law to read, not a file to extend while building; a page, component, or token added under it stays in the code.
 3. The organization's own prior blueprints and design artifacts, and a chart or UI library it built but has not wired in, read before any external reference.
 4. A sibling app on the same stack whose contract is proven in production. The same framework, CSS engine, component library, table library, and chart library justify a direct port of tokens and kit; anything less is a rebuild in this app's primitives.
@@ -38,7 +38,7 @@ Read in order. The first rung that answers a dimension wins; lower rungs fill th
 
 ## Writing it
 
-The contract lands under a `## Design contract` heading in the app's AGENTS.md: a precedence line first, then one bullet per row of the table above in table order, each naming the kit file or test that proves it, then the chart grammar bullets `plan-charts` produced. It states rules, never the surfaces built under them: a page, component, or token inventory stays in the code and the kit, because a contract that lists surfaces grows with every page and makes every page change a contract change. Run `python3 <normalize-md's directory>/scripts/measure.py <app-path> --strict` afterwards and cut prose, never a rule, to fit the caps.
+The contract lands in the governing design system in the format of `design-system`'s `references/format.md`: each row of the table above becomes a rule in its register, naming the kit file or test that proves it, the chart grammar `plan-charts` produced joins the Components and Registers sections, and the kit files become the Exemplars. A decision the user's other products share goes to the shared system the app extends; one only this app makes goes to the app's `DESIGN.md`; an older `## Design contract` section in `AGENTS.md` moves there and leaves one `Design system:` line behind. It states rules, never the surfaces built under them: a page, component, or token inventory stays in the code and the kit, because a contract that lists surfaces grows with every page and makes every page change a contract change.
 
 ## Precedence
 
