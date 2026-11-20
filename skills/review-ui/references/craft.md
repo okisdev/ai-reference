@@ -57,7 +57,8 @@ Each rule gives a value or a test, then the failure it prevents.
 - Start entries from a scaled origin near the trigger (scale 0.95 or above, plus opacity), never from scale 0; popovers grow from their anchor, modals from the center. Prevents elements appearing from nowhere.
 - Make motion interruptible: a new input retargets from the current value, with transitions rather than keyframes for state that can reverse. Prevents jumps and queued animations after rapid input.
 - Animate only transform, opacity, and clip or filter properties; never width, height, top, left, or margin on busy pages. Prevents dropped frames and layout thrash.
-- Keep motion from shifting layout: nothing moves siblings, and loaded content swaps into reserved space. Prevents jumping content and mis clicks.
+- Keep motion from shifting layout unasked: loaded content swaps into reserved space, and content opened in place by the person moves its siblings in the same animation while it is revealed inside its own clipped bounds, never fading in over neighbours that have not moved yet. Prevents jumping content, overlap and mis clicks.
+- Judge a transition from frames captured mid change, not from its resting states, because overlap and jumps exist only between them.
 - Honor the reduced motion preference: replace movement with an instant change or a short fade, keep essential progress indication; test by enabling the setting. Prevents nausea and vestibular triggers.
 - Press feedback appears within 100 ms (scale 0.97 to 0.98 or a tonal change) and hover effects apply only where hover exists. Prevents laggy taps and stuck hover states on touch.
 

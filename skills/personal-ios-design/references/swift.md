@@ -18,23 +18,26 @@ What the Swift apps share beyond [taste.md](taste.md): a native row and control 
 ## Registers
 ### Layout
 - A system drawn row is an `HStack` with 12 between its leading mark and its text, `.padding(.vertical, 3)`, and a `VStack` of the name over one meta line spaced 2 or 3; its trailing marks are one value, then at most one control.
-- A macOS window with a sidebar uses the platform split view; a menu bar popover is a window style `MenuBarExtra` 300 to 320 wide on 14 to 16 padding.
-- A row is 44 high on iOS and 36 on macOS.
+- A row with a name over a meta line is at least 44 high; the platform file sets any compact row and the window or screen frame around the rows.
 
 ### Color
 - A state is a filled dot or symbol in a state tone beside its word, never hue alone; a token drawn app uses `Tone`, a system drawn app uses the system green, orange, red and blue for ok, warning, danger and live.
 - Fills and lines in a system drawn pane are `Color.primary` at low opacity (fill 4.5 percent, hairline 7 percent), matching the alpha lines of taste.md; never a gray step.
 
 ### Type
-- A system drawn app sets text in the system styles: body for names, subheadline for secondary words, footnote for meta lines, caption only inside dense marks; numbers that change use `.monospacedDigit()`.
+- A system drawn app sets text in the system styles: body for names, the platform file's meta style for meta lines, subheadline for secondary words, footnote for captions under a group, caption only inside dense marks; numbers that change use `.monospacedDigit()`.
+
+### Mechanics
+- Content that opens in place is driven by an animated binding or `withAnimation` on the state change, never a scoped `.animation(_:value:)`, because a scoped animation leaves the ancestors and siblings to jump; the opening view is clipped with `.clipShape` to its own bounds.
+- A row that is focusable for the keyboard uses `.focusable(interactions: .activate)`, so a mouse click leaves no focus fill behind.
+- Tabs keep their views alive in a `ZStack` of visited views shown by opacity, hit testing and accessibility hiding, never a `switch` that rebuilds them.
+- A card's inset hairlines come from `Group(subviews:)` over its rows, so callers never draw dividers.
 
 ## Components
 - **Row**: the name over one meta line, a trailing detail in the tabular meta style, at most one trailing control; secondary moves in the context menu.
 - **Confirmation**: platform `confirmationDialog` for a system drawn app, `ConfirmSheet` for a token drawn app; the message is one sentence.
 - **Empty state**: `ContentUnavailableView` with one label, one sentence and at most one action in a system drawn app; one meta line where rows would be in a token drawn app.
 - **Status dot**: 6 in a token drawn app; a system drawn app uses a 9 point `circle.fill` symbol hidden from VoiceOver, because the word beside it is what is read.
-- **Menu bar item**: one glyph or figure; the click opens a popover window and the right click or its footer holds Open and Quit.
-
 ## Reject
 - Facts joined by commas or on separate lines → one meta line joined by ` · `.
 - An icon only button without `.help` → add the tag and an accessibility label.
@@ -42,6 +45,8 @@ What the Swift apps share beyond [taste.md](taste.md): a native row and control 
 - A custom font or a rounded or serif design in chrome → the system font; design variants only where the person chooses a typeface for their own text.
 - A fixed `.font(.system(size:))` in a system drawn view → a text style, so Dynamic Type applies.
 - A confirmation that asks "Are you sure?" → one sentence on what is lost.
+- `.animation(_:value:)` on a disclosure → an animated binding on the state change and a clipped reveal.
+- A `switch` over tabs that rebuilds each view → kept views in a `ZStack`.
 
 ## Platforms
 - **SwiftUI**: one Swift package per app; a token drawn app takes its token tables, a system drawn app takes only system styles and its `AccentColor`; localized strings go through `LocalizedStringResource` in a package.
