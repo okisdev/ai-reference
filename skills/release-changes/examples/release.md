@@ -26,6 +26,7 @@ Report:
   web: shipped 2.9.0, live check passed, rollback to deployment 3b90.
   ios: shipped build 215 to TestFlight, previous build 214.
   docs, marketing: skipped, no changes in the diff.
+  Time, 37 min total: review and fixes 9, verification 1 run 11, db 1, api 3, web 3, ios archive and upload 6 (beside web), TestFlight processing 8, merge 2. Longest: verification.
 ````
 
 Why it clears the bar:
@@ -37,3 +38,4 @@ Why it clears the bar:
 - Each target is proven live with its own check (health request, a minute of logs, migration applied) before the next one starts.
 - The version bumps ride inside the PR that merges, and the merge comes after the deploys succeed.
 - No secret value appears anywhere in the log.
+- The report closes with each phase's wall time, so a slow release shows where its time went.

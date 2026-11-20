@@ -1,7 +1,7 @@
 {
   "name": "okisdev",
   "description": "Personal skills collection by okisdev",
-  "version": "0.0.54",
+  "version": "0.0.55",
   "author": {
     "name": "okisdev"
   },
@@ -25,6 +25,7 @@
     "./skills/find-icon",
     "./skills/verify-ui",
     "./skills/optimize-repo",
+    "./skills/prune-tests",
     "./skills/read-source",
     "./skills/inspect-db",
     "./skills/diagnose-root",

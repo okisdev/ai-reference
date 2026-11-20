@@ -15,7 +15,7 @@ Most work follows one of these paths.
 - **Shipping:** `release-changes`, with `upload-testflight` for Apple builds.
 - **UI:** `design-system` once, then `build-ui` (or `design-dashboard`), `plan-charts`, `find-icon`, `verify-ui`, `review-ui`, and `sweep-ui`; `mirror-reference` for an outside reference.
 - **Evidence:** `read-source`, `inspect-db`, `recap-activity`.
-- **Upkeep:** `optimize-repo`, `upgrade-deps`, `normalize-md`, `clean-memory`, `organize-commits`, and `distill-session` to tune the skills from their use.
+- **Upkeep:** `optimize-repo`, `prune-tests`, `upgrade-deps`, `normalize-md`, `clean-memory`, `organize-commits`, and `distill-session` to tune the skills from their use.
 
 ### Skills
 
@@ -134,6 +134,12 @@ Render and verify a web UI change in a real browser through whichever browser to
 Run the standing optimization pass: read the scope's idiom, strip comments and dead surface, replace hand-rolled code with the repository's own primitives, sweep each changed pattern everywhere, sync the docs, verify with the repository's own ladder, and stop at an uncommitted tree.
 
 **Triggers:** "Optimize the codebase", "Clean this up and simplify" ([example](skills/optimize-repo/examples/pass.md))
+
+#### prune-tests
+
+Prune the tests that guard no behavior or guard it at too high a cost, timed before and after, with what still guards each deletion and a check that stops the pattern at write time.
+
+**Triggers:** "The tests take forever, see which ones we don't need", "Our e2e suite is bloated and flaky" ([example](skills/prune-tests/examples/pass.md))
 
 #### read-source
 
