@@ -2,6 +2,17 @@
 
 All notable changes to this collection. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions match `.claude-plugin/plugin.json`. Changes before 0.0.41 live in the merged pull requests.
 
+## [0.0.55] (2026-11-20)
+
+### Added
+
+- prune-tests times the suites, judges every test on value (it guards no behavior, or only a copy of one) and on cost (wrong layer, fixed waits, leftover state, repeated fixtures, multiplied cases), moves logic down a layer behind a planted regression, names what still guards each deletion, and proposes the check and admission rule that stop the pattern at write time.
+
+### Changed
+
+- optimize-repo leaves pruning the test suite to prune-tests.
+- release-changes reports the wall time of each phase of a release.
+
 ## [0.0.54] (2026-11-20)
 
 ### Added
