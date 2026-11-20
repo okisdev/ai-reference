@@ -2,19 +2,19 @@
 
 The bar: every visible choice traces to a rule in the product file, taste.md, swift.md, or macos.md, and the product's exemplars are read instead of asked for.
 
-> Ask: add a menu bar item that shows how many builds are running.
+> Ask: show each container's processes and let people expand a compose project to see its services.
 >
-> Read `DESIGN.md` (extends `skill:personal-macos-design`, token drawn), then `references/taste.md`, `references/swift.md` and `references/macos.md`. The product file names `Sources/AppUI/Popover.swift` as the popover exemplar.
+> Read `DESIGN.md` (extends `skill:personal-macos-design`), then `references/taste.md`, `references/swift.md` and `references/macos.md`. The product file names the containers page and its detail as exemplars and the UI module as the only home of components.
 >
-> - The item is one figure, the running count in tabular digits; it rolls its digits when the count changes (taste, Motion; macOS, Components).
-> - A click opens a 320 wide popover on 16 padding built from the exemplar; a right click opens a menu with Open and Quit; the popover holds no switches (macOS, Registers and Components).
-> - Each build in the popover is one row: name over one meta line joined by ` · `, a live tone dot of 6 beside the word Running, one VoiceOver element (swift.md, Principles 1 and 3; Status dot).
-> - No shadow beyond the popover's own; color only for the live state (taste, Principles 8 and 10).
+> - Processes go in the container's Stats tab as one grouped card under "Processes" with its count; each row is the command over `PID 1 · root · 0:01` in the meta style, one VoiceOver element (macOS, Grouped list; swift.md, Principles 1 and 3).
+> - The project row becomes a disclosure: a leading chevron that turns as it opens, services beneath in the 36 point compact row lined up with the project's title along a hairline guide; the other rows keep the chevron's column (taste, Disclosure row; macOS, Density).
+> - Opening is an animated binding on the expanded state with a 200 ms spring and a clipped reveal, so the rows below move with it; checked in frames captured mid change (taste, Motion; swift.md, Mechanics).
+> - Names in `.body`, meta in `.subheadline`; no new token or inline look, both components added to the UI module first (macOS, Type and Tokens).
 >
-> Deviation found while reading: the existing preferences window uses the system `Picker` menu style, which breaks the macOS rule that menus and selects come from the product's own components; reported, not copied.
+> Deviation found while reading: the volumes page still caps its info tab at a 640 column pinned left; reported against taste Principle 5, not copied.
 
 Why it clears the bar:
 - It names the product file and each reference read.
 - Each choice cites its rule with the exact value.
-- It reuses the product's exemplar instead of asking for a reference.
+- It reuses the product's exemplars instead of asking for a reference.
 - Code that breaks the system is reported, not followed.

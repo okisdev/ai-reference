@@ -235,6 +235,9 @@ for (const skillPath of skillPaths) {
 
 const identicalCopies = [
   ["skills/distill-session/references/stores.md", "skills/recap-activity/references/stores.md"],
+  ["skills/personal-web-design/references/taste.md", "skills/personal-macos-design/references/taste.md"],
+  ["skills/personal-web-design/references/taste.md", "skills/personal-ios-design/references/taste.md"],
+  ["skills/personal-macos-design/references/swift.md", "skills/personal-ios-design/references/swift.md"],
 ];
 
 for (const [first, second] of identicalCopies) {

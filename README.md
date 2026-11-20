@@ -13,7 +13,7 @@ Most work follows one of these paths.
 - **Change to merge:** `verify-issue` or `diagnose-root`, the change, then `ship-pr` (which composes `create-branch`, `commit-changes`, `create-pr`, `verify-pr`, `verify-pr-comments`, `approve-pr`).
 - **Backlog:** `triage-backlog`, then per item `adopt-pr`, `approve-pr`, and `ship-pr`; `draft-reply` writes what gets posted.
 - **Shipping:** `release-changes`, with `upload-testflight` for Apple builds.
-- **UI:** `design-system` once, then `build-ui` (or `design-dashboard`), `plan-charts`, `find-icon`, `verify-ui`, and `review-ui`; `mirror-reference` for an outside reference.
+- **UI:** `design-system` once, then `build-ui` (or `design-dashboard`), `plan-charts`, `find-icon`, `verify-ui`, `review-ui`, and `sweep-ui`; `mirror-reference` for an outside reference.
 - **Evidence:** `read-source`, `inspect-db`, `recap-activity`.
 - **Upkeep:** `optimize-repo`, `upgrade-deps`, `normalize-md`, `clean-memory`, `organize-commits`, and `distill-session` to tune the skills from their use.
 
@@ -149,25 +149,31 @@ Inspect a live database with real SQL before reasoning from ORM schema files: re
 
 #### design-system
 
-Create, extract, merge, or update a design system agents read before UI work: principles, tokens, exact register values, reject rules, and an exemplar per component across the user's projects; products that share a taste extend one system.
+Create, extract, merge, or update the design system agents read before UI work (principles, tokens, exact values, reject rules, exemplars); products that share a taste extend one system.
 
 **Triggers:** "Turn our projects' design rules into one shared design system", "Write down how we design so you stop drifting" ([example](skills/design-system/examples/system.md))
 
 #### build-ui
 
-Build or redesign a surface from the governing design system, reading its exemplars instead of asking for references, comparing variants when the direction is open, and covering every state.
+Build or redesign a surface from the governing design system and its exemplars, comparing variants when the direction is open and covering every state.
 
 **Triggers:** "Redo the settings page in our design", "Build a filter dropdown like our others" ([example](skills/build-ui/examples/build.md))
 
 #### review-ui
 
-Review UI against its design system and the craft of layout, color, type, motion, copy, accessibility, and states, with severity, the rule broken, and the exact fix for each finding.
+Review UI against its design system and the craft of each register, with severity, the rule broken, and the exact fix per finding.
 
 **Triggers:** "What's wrong with this page's design?", "Review the UI in this diff" ([example](skills/review-ui/examples/review.md))
 
+#### sweep-ui
+
+Find every sheet, window, and state a redesign missed, inventoried from code, with the component that fixes each.
+
+**Triggers:** "Find every screen we haven't redesigned" ([example](skills/sweep-ui/examples/sweep.md))
+
 #### personal-web-design
 
-The maintainer's personal web design system: taste, exact values, components, and reject rules a web product's `DESIGN.md` extends.
+The maintainer's personal web design system, which a web product's `DESIGN.md` extends.
 
 **Requires:** `design-system`
 
@@ -175,7 +181,7 @@ The maintainer's personal web design system: taste, exact values, components, an
 
 #### personal-macos-design
 
-The same taste for Mac apps in SwiftUI or a desktop web stack.
+The same taste for Mac apps: a translucent sidebar beside a page sheet.
 
 **Requires:** `design-system`
 
@@ -191,7 +197,7 @@ The same taste for iPhone and iPad, where native bars, Dynamic Type, and 44 poin
 
 #### design-dashboard
 
-Design or redesign an admin, ops, or customer dashboard in the repository's own design law: frame each screen's job, diagnose in measurements, publish a blueprint, build the core and then the pages in waves, verify in a browser, and write its decisions into the governing design system.
+Design or redesign an admin, ops, or customer dashboard in the repository's own design law: frame each screen's job, diagnose in measurements, build in waves from a blueprint, verify in a browser, and record its decisions.
 
 **Requires:** `plan-charts`, `mirror-reference`, `verify-ui`, `design-system`
 

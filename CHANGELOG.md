@@ -2,6 +2,20 @@
 
 All notable changes to this collection. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions match `.claude-plugin/plugin.json`. Changes before 0.0.41 live in the merged pull requests.
 
+## [0.0.54] (2026-11-20)
+
+### Added
+
+- sweep-ui finds every screen, sheet, dialog, window, and state a redesign has not reached by inventorying presenters and branches from the code instead of the navigation, reports each with how to reach it and the component that fixes it, and migrates them with `--fix`.
+
+### Changed
+
+- personal-macos-design rewrites the Mac system around a translucent sidebar beside an opaque page sheet: headers drawn on the page with each tab's controls at the end of its tab row, rows that drill in, grouped soft cards, round controls, system text sizes with the sidebar following the system's icon size, and a product-agnostic UI module for components.
+- The shared design taste adds disclosure rows, status dots, capacity bars, the file browser, motion that carries its neighbours with a clipped reveal, tabs that never reload, rows that ask for one thing, and safe removals kept apart from those that delete data.
+- The Swift layer shared by iOS and macOS adds the SwiftUI mechanics behind those rules, while the Mac only ones (tab row controls, traffic light placement, sidebar sizing) live in the macOS file with their desktop shell equivalents; iOS keeps footnote meta lines.
+- The validator asserts that the copies of the shared taste and Swift layers stay identical.
+- build-ui and review-ui judge transitions from frames captured mid change.
+
 ## [0.0.53] (2026-11-18)
 
 ### Added

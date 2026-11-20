@@ -4,7 +4,7 @@ What an iPhone or iPad app adds to [taste.md](taste.md) and [swift.md](swift.md)
 
 ## Registers
 - Native navigation bars, tab bars, and system controls replace taste principles 4 (chrome is bands) and 13 (product drawn controls), because people expect the platform's bars and controls on a phone.
-- Type is the platform's Dynamic Type text styles (body 17, callout 16, subheadline 15, footnote 13, caption 12, titles 20 to 28), never fixed sizes, so text follows the person's setting; a fixed length beside text scales with it.
+- Type is the platform's Dynamic Type text styles (body 17, callout 16, subheadline 15, footnote 13, caption 12, titles 20 to 28), never fixed sizes, so text follows the person's setting; meta lines are footnote; a fixed length beside text scales with it.
 - Touch targets at least 44; a primary call to action 52 tall.
 - Spacing scale 2 to 24; a screen gutter of 16 on small phones and 20 from 414 wide and on iPad.
 - Glass and materials only on floating controls (a floating composer, a toolbar over content), never on content.
