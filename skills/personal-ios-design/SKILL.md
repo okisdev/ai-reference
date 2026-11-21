@@ -10,7 +10,7 @@ metadata:
 
 Product design file: !`out=$(git ls-files 2>/dev/null | grep -iE '(^|/)DESIGN\.md$' | xargs grep -lE '^extends:.*skill:personal-ios-design' 2>/dev/null | head -4 | tr '\n' ' '); echo "${out:-(no DESIGN.md extends this skill)}"`
 
-Sibling products: !`out=$(find .. -maxdepth 2 -name DESIGN.md -not -path "../$(basename "$PWD")/*" 2>/dev/null | xargs grep -lE '^extends:.*skill:personal-ios-design' 2>/dev/null | xargs ls -t 2>/dev/null | head -4 | tr '\n' ' '); echo "${out:-(none beside this checkout)}"`
+Sibling products: !`root=$(git rev-parse --show-toplevel 2>/dev/null || pwd -P); out=$(find "$(dirname "$root")" -mindepth 2 -maxdepth 2 -name DESIGN.md -not -path "$root/*" 2>/dev/null | xargs grep -lE '^extends:.*skill:personal-ios-design' 2>/dev/null | xargs -r ls -t 2>/dev/null | head -4 | tr '\n' ' '); echo "${out:-(none beside this checkout)}"`
 
 Source files: !`out=$(git ls-files 2>/dev/null | grep -cE '\.(swift|tsx)$'); echo "${out:-0} matching files"`
 

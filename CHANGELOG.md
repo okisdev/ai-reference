@@ -6,7 +6,7 @@ All notable changes to this collection. The format follows [Keep a Changelog](ht
 
 ### Changed
 
-- personal-macos-design has Mac products depend on the SheerUI package instead of a copied UI module, sends page commands to the page header through an appending preference instead of a `NavigationStack` or toolbar, and opens menus as AppKit menus from a plain button because a styled SwiftUI `Menu` stops answering clicks on macOS 27.
+- personal-macos-design has SwiftUI Mac products depend on the SheerUI package instead of a copied UI module, sends page commands to the page header through an appending preference instead of a `NavigationStack` or toolbar, and opens menus as AppKit menus from a plain button because a styled SwiftUI `Menu` stops answering clicks on macOS 27.
 - personal-macos-design and personal-ios-design read the sibling products that extend them when a repository has no `DESIGN.md` yet, and the shared Swift layer draws pages shared by iPhone and Mac through one file of per platform views.
 - build-ui captures a native app by its own window or its simulator's UDID, never the whole screen or `booted`.
 - prune-tests redispatches a ledger slice whose subagent read fewer files in full than it was given, keeps assertions a caller would see (round trips, identity, golden snapshots, absent secrets) out of the implementation verdict, reports a wait on unpublished state as needing a seam, times before and after in two alternating checkouts, and lowers the repository's own test ratchets in the same pass.
