@@ -20,7 +20,7 @@ Routes: !`n=$(find . -name node_modules -prune -o -name 'page.tsx' -print 2>/dev
 
 **The one rule: nothing is drawn that was not measured or read from real data.** A defect is a measurement with a `file:line`, a view is real data through a real endpoint, a fork is decided with its basis, and the repository's contract, never this skill's taste, names the sizes, rules, and hues. The bar is a blueprint the user can approve or amend in one reply: open [examples/blueprint-excerpt.md](examples/blueprint-excerpt.md) before writing it, and check the draft against [examples/rejected.md](examples/rejected.md).
 
-Decide what the dashboard is for, diagnose it in measurements, draw it in the repository's own law with one contribution per reference, write the blueprint, implement the core first and the pages in waves, verify in a browser, and leave the contract in AGENTS.md at an uncommitted tree.
+Decide what the dashboard is for, diagnose it in measurements, draw it in the repository's own law with one contribution per reference, write the blueprint, implement the core first and the pages in waves, verify in a browser, and leave its decisions in the governing design system at an uncommitted tree.
 
 ### Process
 

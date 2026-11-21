@@ -60,7 +60,7 @@ The maintainer's taste on every platform: dense, flat, achromatic chrome with co
 - Under Reduce Motion every duration is zero, or as near zero as the platform allows.
 - Live work is a dot matrix (5 by 5 grid, blink periods 0.9 to 1.4 s); a figure that changes as it is watched rolls its digits; a loading surface draws its frame and placeholders after 400 ms, with no stock spinner, no bouncing dots and no centered "Loading…"; a surface seen before shows its cached result instead of placeholders.
 - Content opening in place (a disclosure, an expanding row) uses the fold duration on a spring with no bounce, driven by the state change itself so every ancestor and sibling moves with it, and is clipped to its own bounds; closing fades without sliding back.
-- A switched tab cross fades in the fast duration and its selection mark slides between tabs; the views behind it are kept, never rebuilt.
+- A switched tab cross fades in the fast duration and its selection mark slides between tabs in 200 ms; the views behind it are kept, never rebuilt.
 - A control that switches what a view shows (a segmented control, a range, a tab inside a section) keeps the last result on screen, dimmed to half opacity, until the next one arrives and then fades it back in the fast duration; its selection mark slides in 200 ms; a placeholder is only for the view's first load, and the view keeps its height across the switch (a legend stays one line), because a blank frame or a jump on every switch is the flash people notice first.
 
 ### Copy

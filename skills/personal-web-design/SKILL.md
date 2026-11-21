@@ -1,6 +1,6 @@
 ---
 name: personal-web-design
-description: "The maintainer's personal web design system (taste, exact values, components, and reject rules for web apps on Tailwind and Base UI), read before building, reviewing, or redesigning a web UI whose DESIGN.md extends skill:personal-web-design or when the user asks for a web UI in the maintainer's style."
+description: "The maintainer's personal web design system (taste, exact values, components, and reject rules for web apps on any styling stack), read before building, reviewing, or redesigning a web UI whose DESIGN.md extends skill:personal-web-design or when the user asks for a web UI in the maintainer's style."
 argument-hint: "[build|review|learn] [surface or path]"
 metadata:
   requires: "design-system"
