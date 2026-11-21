@@ -2,6 +2,14 @@
 
 All notable changes to this collection. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions match `.claude-plugin/plugin.json`. Changes before 0.0.41 live in the merged pull requests.
 
+## [0.0.58] (2026-11-21)
+
+### Changed
+
+- sweep-ui is the polish loop: it inventories every surface from the code, measures each on real data with the detail audit and a fixed set of questions, fixes in batches through shared components without asking about changes that keep every capability, measures again until a fresh pass is clean or a finding is accepted by name, and asks only about removing a capability, once at the end; it also counts the actions each surface's main task takes for one item and for all of them, and reports them before and after. It requires verify-ui, measures native surfaces from their captures, still marks each surface on system, partial, duplicate or off system, `--report` stops after the first pass, and `--fix` is gone because fixing is the default.
+- verify-ui ships the detail audit (layout shifts, wrapped labels, icons off centre, clipped text, content wider than its container, internal ids, a row repeating itself, values that say nothing, items of one kind at different heights, a trailing control that drifts between items, a menu on every item, a prefix every item repeats, a caption on most items, a list opened item by item with nothing that opens them together, a long list with no count, text or controls drawn over each other, a hover or selected fill touching its content, and a wide row with its content centred) and a preview server that serves a new build for loading into the signed in deployed page and serves the audit to any page; every browser check runs the audit and treats each finding as a defect or an accepted exception. review-ui carries an identical copy, and build-ui fixes until it is clean.
+- The shared taste adds the principle that what a run of items shares is said once and items of one kind share one geometry, splits its reject list into what the audit measures (keyed to its findings) and what is judged by eye, keeps the page still as data arrives, shows a stored outcome as its value instead of a banner, adds that each item's state reads without opening it and that a long list states its count, and counts a clean audit among the checks before a surface is done.
+
 ## [0.0.57] (2026-11-21)
 
 ### Changed
