@@ -120,8 +120,23 @@
     for (let i = 0; i < rules.length; i++) {
       const rule = rules[i];
       if (rule.cssRules) rules.push(...rule.cssRules);
-      if (rule.selectorText?.includes(':hover') && (rule.style?.backgroundColor || rule.style?.background))
-        for (const part of rule.selectorText.split(',')) if (part.includes(':hover')) hovers.push(part.replace(/:hover/g, '').replace(/:not\(\s*\)/g, '').trim());
+      const fill = rule.style?.backgroundColor || rule.style?.background || '';
+      if (!rule.selectorText?.includes(':hover') || !fill || /^(transparent|none|initial|inherit|unset)$|rgba\([^)]*,\s*0\)$/.test(fill.trim())) continue;
+      // Split on the commas between selectors only, not those inside :is() or :not().
+      let depth = 0;
+      let start = 0;
+      const parts = [];
+      for (let c = 0; c <= rule.selectorText.length; c++) {
+        const ch = rule.selectorText[c];
+        if (ch === '(') depth++;
+        else if (ch === ')') depth--;
+        else if ((ch === ',' && depth === 0) || ch === undefined) {
+          parts.push(rule.selectorText.slice(start, c));
+          start = c + 1;
+        }
+      }
+      for (const part of parts)
+        if (part.includes(':hover') && !/:not\([^)]*:hover/.test(part)) hovers.push(part.replace(/:hover/g, ':where(*)').trim());
     }
   }
   const hoverFilled = (el) =>
@@ -132,7 +147,7 @@
         return false;
       }
     });
-  const selected = '[aria-selected="true"], [aria-current="true"], [aria-current="page"], [aria-pressed="true"], [data-selected]';
+  const selected = '[aria-selected="true"], [aria-current="true"], [aria-current="page"], [aria-pressed="true"], [data-selected]:not([data-selected="false"])';
   for (const el of all.filter((n) => n.matches(selected) || n.matches('tr, li, a, button, [role="row"], [role="option"]'))) {
     // A table row paints through its cells; anything else paints its own box.
     const fills = (n) => (el.matches(selected) ? painted(n) : hoverFilled(n));
@@ -156,15 +171,15 @@
       for (const box of range.getClientRects()) if (box.width) [left, right] = [Math.min(left, box.left), Math.max(right, box.right)];
     }
     if (left === Infinity) continue;
-    const inset = Math.round(Math.min(left - fill.left, fill.right - right));
-    if (inset < 4) add('flush-fill', el, `content ${inset}px from the edge of its fill`);
+    const inset = Math.min(left - fill.left, fill.right - right);
+    if (inset < 4) add('flush-fill', el, `content ${inset.toFixed(1)}px from the edge of its fill`);
   }
 
   // centered-row: a wide clickable row whose content floats in its middle instead of starting at its leading edge.
   for (const el of all.filter((n) => n.matches('button, a, [role="button"]'))) {
     const box = el.getBoundingClientRect();
     // A short label in a full width button (a sheet's submit) is centred by design.
-    if (box.width < 360 || el.textContent.trim().length <= 12 || el.matches('[type="submit"]')) continue;
+    if (box.width < 360 || (el.innerText ?? '').trim().length <= 12 || (el.form && el.type === 'submit')) continue;
     const range = document.createRange();
     range.selectNodeContents(el);
     const rects = [...range.getClientRects()].filter((r) => r.width);
@@ -205,7 +220,7 @@
     let scope = parent;
     for (let depth = 0; depth < 6 && scope.parentElement && scope !== document.body; depth++) {
       scope = scope.parentElement;
-      if (depth >= 2 && scope.querySelector('h1, h2, h3, h4, [role="heading"]')) break;
+      if (depth >= 2 && scope.querySelector('h1, h2, h3, h4, h5, h6, [role="heading"]')) break;
     }
     return scope;
   };
@@ -244,7 +259,7 @@
     const byCount = new Map();
     items.forEach((el, i) => {
       // A control stretched over most of the item (its title as a button) is the item itself, not a trailing control.
-      const controls = [...el.querySelectorAll('button, [role="button"], a[href]')].filter((c) => (c.tagName !== 'A' || (c.innerText ?? '').trim().length <= 2) && c.getBoundingClientRect().width < boxes[i].width / 2);
+      const controls = [...el.querySelectorAll('button, [role="button"], a[href]')].filter((c) => (c.tagName !== 'A' || (c.innerText ?? '').trim().length <= 2) && c.getBoundingClientRect().width > 0 && c.getBoundingClientRect().width < boxes[i].width / 2);
       if (!small || controls.length === 0 || controls.length > 3) return;
       const c = controls[controls.length - 1].getBoundingClientRect();
       if (!byCount.has(controls.length)) byCount.set(controls.length, []);
@@ -276,7 +291,7 @@
     const toggle = 'details:not([open]), [aria-expanded="false"]:not([aria-haspopup])';
     const closed = items.filter((el, i) => boxes[i].height <= 120 && (el.matches(toggle) || el.querySelector(toggle))).length;
     const scope = around(parent);
-    const bulk = closed >= 6 && [...scope.querySelectorAll('button, [role="button"], a')].some((el) => bulkLabel.test(label(el)));
+    const bulk = closed >= 6 && [...scope.querySelectorAll('button, [role="button"], a')].some((el) => !items.some((item) => item.contains(el)) && bulkLabel.test(label(el)));
     if (closed >= 6 && closed >= items.length / 2 && !bulk) add('disclosure-wall', parent, `${closed} of ${items.length} items open one at a time`);
     // uncounted-list: a run too long to see whole, or opened item by item, with no number near it as large as its count.
     const span = boxes[boxes.length - 1].bottom - boxes[0].top;
