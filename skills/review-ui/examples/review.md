@@ -18,7 +18,11 @@ States
 Layout
 - POLISH `src/routes/orders.tsx:94`, craft layout "figures in columns align": the total column is left aligned. Fix: `text-align: right; font-variant-numeric: tabular-nums`.
 
-Copy, accessibility: no findings. The drawer close button has `aria-label="Close order details"` and 44 by 44 hit area (`drawer.tsx:63`).
+Copy (6 strings that are not labels or values; 2 kept)
+- SHOULD-FIX `src/routes/orders.tsx:102`, craft copy "delete explanatory text before shortening it": every unpaid row carries "Payment syncs from Stripe every hour". Nobody acts on it per row. Fix: delete it; the one row whose payment failed shows the verb "Retry payment".
+- SHOULD-FIX `src/routes/orders.tsx:96`, craft copy "show the exception, not the norm": each meta line reads "Created 3 May · v2 checkout · EUR". Fix: date only; "v1 checkout" appears on the rows still on it.
+
+Accessibility: no findings. The drawer close button has `aria-label="Close order details"` and 44 by 44 hit area (`drawer.tsx:63`).
 
 Checked in the browser (verify-ui, `localhost:3000/orders`, light, 1440 wide): layout, color, motion (recorded the drawer enter, measured 300ms), the populated state.
 Checked in code only: dark theme, the 360 wide layout, the error state, keyboard focus order. Not reviewed: type, because the diff touches no text styles beyond the lines above and I did not render at a second size.
@@ -35,4 +39,5 @@ Why it clears the bar:
 - It says what was checked in the browser and what only in code, and reports the unreviewed register as not reviewed instead of passing it.
 - It does not approve while a blocking finding remains.
 - The raw color repeated at four sites is reported once with every site and proposed as a check, not as four findings.
+- It inventories the explanatory strings before judging wording, and a removable one is reported as delete with the design change that replaces it, never reworded or moved.
 - It invents no taste: where the system is silent the finding cites the craft reference, and the review is read only.

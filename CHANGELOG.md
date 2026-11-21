@@ -2,6 +2,23 @@
 
 All notable changes to this collection. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions match `.claude-plugin/plugin.json`. Changes before 0.0.41 live in the merged pull requests.
 
+## [0.0.57] (2026-11-21)
+
+### Changed
+
+- The personal design skills' shared taste adds that what cannot apply is not drawn, that nothing appears by pushing content, that a state never wears a control's shape, symmetric block insets and matched facing bars, one line section headers instead of boxed cards, reserved leading and trailing row columns, a hover fill lighter than the selected one, and measured alignment reported as numbers.
+- personal-web-design states its web values for any styling stack instead of Tailwind and Base UI alone, adds the 48 top bar with a sidebar header that continues its hairline, grid gutters that narrow in a container query, thin ink scrollbars, and input clear and reveal controls, and moves design rules found in an `AGENTS.md` into a `DESIGN.md` that extends it.
+- build-ui follows an exemplar's composition only where the content has the same shape and measures alignment from bounding boxes in the loading and loaded states; review-ui judges alignment the same way; sweep-ui inventories every client of the product that renders the pattern.
+- The shared taste adds the optical edge for trailing glyph and ghost buttons, ranked lists that show ten rows and a toggle instead of a nested scroll, and rejects a one tab bar, sections of empty states for data a source cannot provide, and a control split from the section it acts on.
+- personal-web-design stops the window rubber banding past its edges and keeps a stable scrollbar gutter, so nothing moves on its own while scrolling.
+- Side by side sections in a grid become panels (a shared edge so a trailing status reads with its title) while single column pages stay unboxed; a control that switches a view keeps the last result dimmed until the next arrives, slides its selection mark, and holds the view's height; verify-ui samples every animation frame around such a switch, and build-ui and review-ui check it.
+- The shared taste hides columns and rows that are the same or empty for every item, caps part-of-whole charts at eight slices, sizes mirrored chart halves by their peaks, floats chart tooltips beside the pointer with non-zero rows in order, and rejects the same moment shown twice, paired on and off buttons, and stretched form fields; verify-ui runs the new build against the deployed service in the signed in browser when local data cannot reach a surface, and sweep-ui reaches the pages only some data sources unlock.
+- Every row is the one row component (leading mark, title, one meta line, trailing value, trailing command): the shared taste rejects four line rows and lists mixing row kinds, build-ui extends the component instead of composing rows in pages, and review-ui flags hand built rows.
+- Structure before polish: the shared taste adds a principle that every page, section and command is challenged for the question it answers before it is refined; optimize-repo redraws the module map from what the code does and diffs it against the folders; normalize-md redraws the doc set from its readers' questions before challenging files one by one; build-ui and design-dashboard present the merges and deletions for approval before styling; review-ui reviews structure as a register; sweep-ui marks duplicate surfaces.
+- build-ui starts a redesign at the shared token and component layer before any page; sweep-ui extends a wording rule to server strings and stored rows, migrated in the same change.
+- The shared taste adds that explanation is the last fix, row meta that shows only what tells rows apart with the exception said as a word, footers deleted rather than shortened, and rejects a caveat on every row, uniform versions and units, and a status line counting the list below; review-ui inventories every explanatory string and judges it by deletion before wording, build-ui removes the need for a note before writing it, and sweep-ui flags a note attached to every row of a kind.
+- verify-ui gives the page real data before judging layout (fixtures or a time shifted scratch copy), sets the viewport emulation with each measurement and reads its width in the same call, and reloads after a hot update before re-asserting.
+
 ## [0.0.56] (2026-11-21)
 
 ### Changed
