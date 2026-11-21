@@ -24,7 +24,7 @@ My login: !`gh api user --jq .login 2>/dev/null || echo "unknown"`
    - The channel's format: GitHub markdown with links to code and pull requests; Slack mrkdwn (`*bold*`, bullets, no headings); plain short text for a phone message.
    - No trace of tooling and nothing from other private threads.
 5. Show the draft unsent, saying plainly that nothing has been sent and that it waits for the user's approval, with the target, the action that follows sending, and the exact command or tool call that will send it. Revise on feedback until the user approves.
-6. On approval, send and act: `gh issue comment` or `gh pr comment --body-file -`; `gh pr review --request-changes --body-file -` when the action is request changes; a follow-up issue is created first and its link put in the reply; then `gh issue close --reason <completed|not planned>` or `gh pr close` when the action is close. A chat reply goes through the messaging tool's send call. Read the posted comment or sent message back and report its link.
+6. On approval, send and act with the commands shown unsent, each carrying the drafted body in a heredoc (`gh issue comment <n> --body-file - <<'EOF'` … `EOF`, or `gh pr comment`) so the command the user approved is the one that runs; `gh pr review --request-changes --body-file -` when the action is request changes; a follow-up issue is created first and its link put in the reply; then `gh issue close --reason <completed|not planned>` or `gh pr close` when the action is close. A chat reply goes through the messaging tool's send call. Read the posted comment or sent message back and report its link.
 
 ### Takeover review
 

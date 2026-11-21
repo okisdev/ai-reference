@@ -2,6 +2,17 @@
 
 All notable changes to this collection. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions match `.claude-plugin/plugin.json`. Changes before 0.0.41 live in the merged pull requests.
 
+## [0.0.59] (2026-11-21)
+
+### Changed
+
+- design-dashboard writes its chart grammar into the design system as rules and names a component only as the file that proves one, never with what it draws.
+- draft-reply shows each posting command with the drafted body in a heredoc, so the command the user approves is the one that runs.
+- normalize-md keeps the README sections a person follows (install, usage, build, release) whole and moves only the lines that bind an agent, and proposes a check that costs minutes on every change as the part mapped to the change plus the full run at merge or release.
+- sweep-ui states the loop's exit even when it could only read code, and turns a fact the code in hand does not show into a stated assumption with its fallback instead of a question.
+- optimize-repo merges two modules that run the same steps in the same order into one pipeline, not only the block that was pasted.
+- review-ui never brings a dropped prefix back shortened, keeps the fact that marks the one item of another kind, and drops a unit repeated on every row before fixing its plural.
+
 ## [0.0.58] (2026-11-21)
 
 ### Changed
