@@ -10,6 +10,8 @@ metadata:
 
 Product design file: !`out=$(git ls-files 2>/dev/null | grep -iE '(^|/)DESIGN\.md$' | xargs grep -lE '^extends:.*skill:personal-macos-design' 2>/dev/null | head -4 | tr '\n' ' '); echo "${out:-(no DESIGN.md extends this skill)}"`
 
+Sibling products: !`root=$(git rev-parse --show-toplevel 2>/dev/null || pwd -P); out=$(find "$(dirname "$root")" -mindepth 2 -maxdepth 2 -name DESIGN.md -not -path "$root/*" 2>/dev/null | xargs grep -lE '^extends:.*skill:personal-macos-design' 2>/dev/null | xargs -r ls -t 2>/dev/null | head -4 | tr '\n' ' '); echo "${out:-(none beside this checkout)}"`
+
 Source files: !`out=$(git ls-files 2>/dev/null | grep -cE '\.(swift|module\.css)$'); echo "${out:-0} matching files"`
 
 ## Instructions
@@ -19,7 +21,7 @@ Source files: !`out=$(git ls-files 2>/dev/null | grep -cE '\.(swift|module\.css)
 ### Process
 
 1. Parse `$ARGUMENTS`: `build` a surface, `review` one, or `learn` from a correction; with no mode, take it from the conversation.
-2. Read the product's `DESIGN.md` from the Context (the nearest one to the touched files when several exist): its scope, its token source, its overrides, its exemplars, and its checks. A repository with no such file is a new product: say so, read the sibling product the user names if any, and apply this system alone.
+2. Read the product's `DESIGN.md` from the Context (the nearest one to the touched files when several exist): its scope, its token source, its overrides, its exemplars, and its checks. A repository with no such file is a new product: say so, read the sibling products from the Context (most recently changed first) or the one the user names, depend on the SheerUI package (`okisdev/SheerUI`) for a SwiftUI app instead of writing or copying a UI module, and apply this system (seen: a Mac redesign nearly rebuilt a sheet, sidebar and page header that a shared module already held).
 3. Read [references/taste.md](references/taste.md), [references/swift.md](references/swift.md) for a SwiftUI app, then [references/macos.md](references/macos.md) whole. The product file overrides them rule by rule; everything it does not state comes from them, with their exact values.
 4. Build or review with the system resolved: `build-ui` when installed builds from it, `review-ui` when installed reviews against it, and [references/checks.md](references/checks.md) gives the patterns a review runs over the diff when the product has not built them as checks yet. Without those skills, apply the registers and every "Before calling a surface done" list directly.
 5. `learn`: a correction that holds for every product changes this skill's references (an edit to the maintainer's ai-reference checkout, shipped as a release; a change to taste.md is made in every personal design skill that carries it), one that holds for one product changes that product's `DESIGN.md`, through `design-system`'s learn mode; never write a correction into memory or a conversation note.
