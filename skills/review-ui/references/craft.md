@@ -31,7 +31,7 @@ Each rule gives a value or a test, then the failure it prevents.
 - Build dark theme as its own palette: lower surface lightness for depth (raised surfaces lighter), desaturate accents, never invert or reuse light shadows; test every screen in both. Prevents glaring accents, muddy elevation, and white boxes inside dark pages.
 - Pass both themes for contrast and for images, charts, and logos with baked in backgrounds. Prevents unreadable assets after a theme switch.
 - Tint neutrals toward the brand hue lightly rather than using pure black on pure white. Prevents harsh contrast and a flat, sterile look.
-- Disabled controls still pass 3 to 1 against their surface when the label matters, and say why they are disabled nearby. Prevents invisible controls and silent dead ends.
+- Remove a control that can never apply here; one disabled only for now still passes 3 to 1 against its surface when the label matters and says why nearby. Prevents invisible controls, silent dead ends, and explanations for affordances that should not exist.
 
 ## Type
 
@@ -71,6 +71,8 @@ Each rule gives a value or a test, then the failure it prevents.
 - Use sentence case, active voice, and present tense; no exclamation marks except real celebration. Prevents a tone that feels pushy or noisy.
 - Put destructive confirmations in the object's name and consequence (Delete Q3 report? This cannot be undone), with a button that repeats the verb. Prevents accidental data loss.
 - Format dates, numbers, plurals, and lists through the locale API and plural rules; never concatenate strings (3 item, 1 items). Prevents broken grammar and wrong formats abroad.
+- Delete explanatory text before shortening it: a hint, footer, or row note survives only when the user would decide or act differently without it; test by removing each one and asking what the user loses. Prevents interfaces that explain themselves on every visit to users who stopped reading after the first.
+- Show the exception, not the norm: a fact that is the same or normal on most rows (a current version, an active state, a unit after each number, a label prefix) is left out and appears as a word only on the row where it differs. Prevents rows that wrap into three lines of facts nobody compares.
 - Make empty states state what belongs here and offer the next step; make success messages short and place them where the user looked. Prevents blank screens and missed confirmations.
 
 ## Accessibility
