@@ -32,7 +32,11 @@ The commands, shown unsent:
 
 ````
 gh pr comment 212 --repo acme/tally --body-file - <<'EOF'
-<the draft above, verbatim>
+closing this one: we are not adding an xml export, so `--xml` will not land in this repo.
+
+the reason is the same as on #148. every extra format is another serializer we have to keep in step with the schema, and csv and json already cover what the tool is for. the column order part of the pr is already in main since #190 (`export.ts:44` writes columns in schema order), so there is nothing left to merge there either.
+
+thanks for the work on this, and #171 is covered by the same answer.
 EOF
 gh pr close 212 --repo acme/tally
 ````

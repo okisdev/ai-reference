@@ -28,7 +28,8 @@ A rule's benefit is the failure it prevents and whether that failure can still h
 
 - A rule the code or a measurement contradicts (a budget never met, an enforcer that asserts something else, a path that is gone) is proposed for rewrite to the truth or for removal.
 - A rule whose failure can no longer happen (the module is gone, a check now asserts it) is proposed for removal, or becomes a pointer to the check.
-- A rule whose recurring cost plainly exceeds the failure it prevents is proposed for a cheaper form (a narrower trigger, a later gate, a sampled run) with both numbers; a check that costs minutes on every change is proposed as the part mapped to the change on every change and the full run at merge or release, since narrowing one trigger inside it still leaves the full price on every change.
+- A rule whose recurring cost plainly exceeds the failure it prevents is proposed for a cheaper form (a narrower trigger, a later gate, a sampled run) with both numbers.
+- A check that costs minutes on every change usually takes the form of the part mapped to the change on every change and the full run at merge or release, because narrowing one trigger inside it still leaves the full price on every change.
 - A process or verification rule (what to run, when, how often, before what) is weighed every pass, never kept on the strength of an earlier pass.
 
 A proposal leaves the rule's text as found and goes to the owner with the failure, the cost, the evidence, and the replacement text; the owner decides. A rule kept carries its failure and cost in its ledger row, so the next pass can weigh it again.
