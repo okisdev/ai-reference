@@ -37,7 +37,7 @@ The bar: every surface the code can present was measured on real data, fixed thr
 >
 > Counts, first pass to last: layout-shift 6 to 0, wrapped-label 4 to 0, icon-off-centre 73 to 0, uneven-siblings 3 to 0, control-drift 27 to 0, majority-caption 31 to 1 (accepted: each group lists the same policy member by design), says-nothing 44 to 0, internal-id 5 to 0, disclosure-wall 1 to 0, uncounted-list 1 to 0.
 >
-> Opened in 1440 and 390 wide, light and dark: 98 of 106 surfaces. Judged from code: 8 error branches that need a failing upstream.
+> Opened in 1440 and 390 wide, light and dark: 98 of 106 surfaces. Judged from code: 8 error branches that need a failing upstream; each is measured again once it can be opened, and the loop ends when every audit is clean or a finding is accepted by name.
 >
 > Question for you: the per member speed test now lives only in the hover hint, and the group test runs every member. May I drop the per member test, or keep it?
 

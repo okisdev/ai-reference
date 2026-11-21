@@ -31,14 +31,16 @@ thanks for the work on this, and #171 is covered by the same answer.
 The commands, shown unsent:
 
 ````
-gh pr comment 212 --repo acme/tally --body-file -
+gh pr comment 212 --repo acme/tally --body-file - <<'EOF'
+<the draft above, verbatim>
+EOF
 gh pr close 212 --repo acme/tally
 ````
 
 After the user says "send it":
 
 ````
-$ gh pr comment 212 --repo acme/tally --body-file - < draft.md
+$ gh pr comment 212 --repo acme/tally --body-file - <<'EOF' ... EOF
 https://github.com/acme/tally/pull/212#issuecomment-1900001
 $ gh pr close 212 --repo acme/tally
 Closed pull request acme/tally#212

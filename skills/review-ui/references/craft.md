@@ -72,7 +72,7 @@ Each rule gives a value or a test, then the failure it prevents.
 - Put destructive confirmations in the object's name and consequence (Delete Q3 report? This cannot be undone), with a button that repeats the verb. Prevents accidental data loss.
 - Format dates, numbers, plurals, and lists through the locale API and plural rules; never concatenate strings (3 item, 1 items). Prevents broken grammar and wrong formats abroad.
 - Delete explanatory text before shortening it: a hint, footer, or row note survives only when the user would decide or act differently without it; test by removing each one and asking what the user loses. Prevents interfaces that explain themselves on every visit to users who stopped reading after the first.
-- Show the exception, not the norm: a fact that is the same or normal on most rows (a current version, an active state, a unit after each number, a label prefix) is left out and appears as a word only on the row where it differs. Prevents rows that wrap into three lines of facts nobody compares.
+- Show the exception, not the norm: a fact that is the same or normal on most rows (a current version, an active state, a unit after each number, a label prefix) is left out and appears as a word only on the row where it differs; a dropped prefix never comes back shortened ("Last active:" as "Active"), and the one item of another kind keeps the fact that marks it; a unit repeated after every row's number is dropped before its plural is fixed. Prevents rows that wrap into three lines of facts nobody compares.
 - Make empty states state what belongs here and offer the next step; make success messages short and place them where the user looked. Prevents blank screens and missed confirmations.
 
 ## Accessibility
