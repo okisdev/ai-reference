@@ -32,6 +32,7 @@ What the Swift apps share beyond [taste.md](taste.md): a native row and control 
 - A row that is focusable for the keyboard uses `.focusable(interactions: .activate)`, so a mouse click leaves no focus fill behind.
 - Tabs keep their views alive in a `ZStack` of visited views shown by opacity, hit testing and accessibility hiding, never a `switch` that rebuilds them.
 - A card's inset hairlines come from `Group(subviews:)` over its rows, so callers never draw dividers.
+- An app on both iPhone and Mac draws its shared pages through one file of small views that each pick the platform's way (a page stack, a link to a route, page commands, a choice picker, a working indicator, the finishing and soft button styles), so a shared page names one view and never branches per control.
 
 ## Components
 - **Row**: the name over one meta line, a trailing detail in the tabular meta style, at most one trailing control; secondary moves in the context menu.

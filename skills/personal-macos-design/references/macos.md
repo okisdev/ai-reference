@@ -10,7 +10,7 @@ What a Mac app adds to or replaces in [taste.md](taste.md) and [swift.md](swift.
 5. **Round controls.** Glyph commands are circles, text commands, tabs and search are capsules, and cards are soft rounded fills, because round controls on a quiet ground read as touchable without borders.
 
 ## Tokens
-- SwiftUI: one product-agnostic UI module (its own package target, no product names) holds the metrics, grounds, type roles and every component; pages compose it and never define a look inline.
+- SwiftUI: the SheerUI package (`okisdev/SheerUI`) holds the metrics, grounds, type roles and every component; pages compose it and never define a look inline, and a component a product lacks is added to SheerUI, never to a copy in the product.
 - Desktop CSS: CSS custom properties (`--ink-*`, `--tone-*`, `--kind-1` to `--kind-8`, `--radius-*`, `--height-*`, `--motion-*`) read by CSS modules, no Tailwind; text only through the design package's components.
 
 ## Registers
@@ -46,6 +46,9 @@ What a Mac app adds to or replaces in [taste.md](taste.md) and [swift.md](swift.
 - A tab's controls travel to its tab row through a preference the row reads with `overlayPreferenceValue`, with a fallback that draws them above the view when no tab row hosts it.
 - The traffic lights are placed by hand and placed again on the views' frame change notifications, because the system resets them on every title bar layout.
 - The sidebar reads `NSTableViewDefaultSizeMode` from the global defaults to size its rows like the system's.
+- A page drills in on its sheet and a view inside it sends its commands to the page header through a preference, never a `NavigationStack` or `.toolbar`, because under a hidden title bar those draw into the title bar beside the traffic lights (seen: a detail's More menu appeared next to the window controls).
+- That preference appends with `transformPreference`, because `.preference` on an ancestor replaces what its children sent and a page then loses a nested view's commands.
+- A control that opens a menu pops up an AppKit menu built from its SwiftUI content (`NSHostingMenu`) from a plain button, never a SwiftUI `Menu` with `.menuStyle(.button)` and a drawn label, because that combination stops answering clicks on macOS 27.
 
 ## Components
 - **Sidebar**: navigation rows parted by space, no headers; arrow keys move the selection; its foot holds the app level places such as Settings, and an app that runs a background service shows its state as a dot at the end of one of those rows.
