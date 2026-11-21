@@ -238,6 +238,7 @@ const identicalCopies = [
   ["skills/personal-web-design/references/taste.md", "skills/personal-macos-design/references/taste.md"],
   ["skills/personal-web-design/references/taste.md", "skills/personal-ios-design/references/taste.md"],
   ["skills/personal-macos-design/references/swift.md", "skills/personal-ios-design/references/swift.md"],
+  ["skills/verify-ui/scripts/detail-audit.js", "skills/review-ui/scripts/detail-audit.js"],
 ];
 
 for (const [first, second] of identicalCopies) {

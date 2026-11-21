@@ -26,6 +26,9 @@ The maintainer's taste on every platform: dense, flat, achromatic chrome with co
 21. **A state never wears a control's shape.** A state is a word or a dot, never a bordered capsule, and anything that looks clickable is clickable; a reference the product can show (an id, a commit, a host) opens it there, because a state shaped like a button invites a click that does nothing.
 22. **Structure before polish.** Before a surface is refined, its place in the product is challenged: every page, section and command is listed with the question it answers, and two that answer the same question merge, one that answers none goes, and a command shown on surfaces it does not own moves to the one that does, because polish on a redundant structure makes the redundancy permanent.
 23. **Explanation is the last fix.** Before a footer, subtitle, row note, hint or popover explains something, the surface changes so it needs none: a clearer label, a better default, the state shown as data, or the limitation removed; a sentence stays only when the person would decide or act differently without it, sits where that decision is made and appears once, because text that explains the interface is read on the first visit and skipped on every one after.
+24. **Said once, shaped alike.** A value a run of items shares (a region, a type, a name prefix, a status most of them carry) is said once by the group that holds them, and items of one kind share one geometry, so a list of ninety reads as one pattern with its exceptions marked, because a fact repeated on every item hides the one item that differs.
+25. **One look, not one click per item.** The state each item is judged by (its current choice, its result, its health) reads without opening it, because a person who must open every row to judge it cannot see which one differs.
+26. **A long list states its count.** A list too long to see whole, or opened item by item, says how many it holds once beside it, because without the count nobody can tell how much is left.
 
 ## Registers
 ### Layout
@@ -77,7 +80,7 @@ The maintainer's taste on every platform: dense, flat, achromatic chrome with co
 - **Destructive command**: anything that deletes, kills, resets or discards sits in the last group of its menu after a separator, in the danger tone with an ellipsis, through one shared component, and always opens a confirmation that names what is lost; it has one home, never a row glyph beside a menu item that does the same.
 - **Table and rows**: every row in the product is the one row component: a mark in the leading column, a title, at most one meta line with further facts joined by a middle dot, a trailing value or state, and its command at the row's end; a row is the click target for its primary move, secondary moves in its menu and at most one trailing text button; no bordered or filled button in a row, no third line, no command on a line of its own, because rows built per feature disagree on where their text starts and stack into tall, half empty blocks.
 - **Dialog and sheet**: confirmations through the shared confirm component, never `window.confirm`; the destructive button is never ink and focus starts on Cancel.
-- **Toast**: for a success whose result does not show where the person is; a failure is an alert, not a toast. Every action answers: either its result appears where the person looks or a toast says it happened, and every copy toasts. One at a time, a capsule at the bottom centre of the focused window or viewport with a glyph and at most four words, gone after 1.8 s, announced to the screen reader.
+- **Toast**: for a success whose result does not show where the person is, at the moment it happens; a stored outcome of an earlier action (a finished update, a past sync) is history, shown as the resulting value and never as a banner on the next visit; a failure is an alert, not a toast. Every action answers: either its result appears where the person looks or a toast says it happened, and every copy toasts. One at a time, a capsule at the bottom centre of the focused window or viewport with a glyph and at most four words, gone after 1.8 s, announced to the screen reader.
 - **Ranked list**: a ranking on a dashboard shows its first ten rows and a toggle for the rest that appears only when rows are hidden; a scroll area nested in the page is for streams such as logs, never for a ranking, because a clipped half row reads as broken.
 - **Log view**: monospace lines with the time muted, the source in its categorical color only when several sources share the view, and the message; a line is red or orange only when it states error or warning itself, never for the stream it came on; search marks matches in place; wrapped by default; it follows the newest line until the person scrolls up, then a capsule offers the way back with the count of new lines.
 - **Empty state**: one meta line where content would be, or a title, a sentence and one next step.
@@ -85,24 +88,45 @@ The maintainer's taste on every platform: dense, flat, achromatic chrome with co
 - **Chart**: framed by one shared chart frame with shared theme, tooltip and legend; entrance animation off. A part of a whole shows at most eight slices, the rest as one neutral "other"; a mirrored chart sizes its two halves by their peaks, so a small side never leaves a blank half.
 - **Chart tooltip**: floats above every surface beside the pointer (right of it, flipping left at the edge, never clipped by a sidebar or pane and never over the section header); it names the shared qualifier once in its title, lists only non-zero series in descending order, and shows at most eight rows with a count of the rest.
 - **Badge**: 5 radius, never a pill.
-- **Loading**: frame drawn at once, placeholders matched to the final footprint, dot matrix for live work.
+- **Loading**: frame drawn at once, placeholders matched to the final footprint, dot matrix for live work; nothing on the page moves when data arrives: a value fetched after the first paint (a status, a count, a version) replaces its placeholder in place and never inserts a block above content, because a page that jumps as it settles reads as broken however good it looks once still.
 - **Disclosure row**: a chevron at the leading edge that turns a quarter as it opens; children beneath in the compact row, indented so their marks line up with the parent's title, along a hairline guide that ends at the last child; siblings keep the chevron's column so every mark stays on one line; the open parent and its children share one faint fill.
 - **Status**: the state of a subject (a service, a sync, a job) is one dot in a state tone at the end of a row that already exists, its details in the hover tag; the commands that change it live on the page that owns the subject, never in a capsule or banner of their own.
 - **Capacity**: storage or quota is one bar parted by category in the categorical palette over its limit, then one row per category with its size; removals follow, grouped as principle 18 says.
 - **File browser**: the path as a breadcrumb that is always shown, every folder but the last going back, beside a button to the enclosing folder; entries in the product's grouped rows, folders first, icon, name over size, kind and date, a chevron on folders that open in place; search and sort in the bar above, never a column table.
 
 ## Reject
-- A divider or box around every row or section → the 28 section gap and 12 inner gap, one hairline per band at most.
-- A section header whose description wraps to a second line beside a one line header → the description inline after the title, so neighbouring headers align.
-- A hover fill equal to the selected fill → hover 3.5 percent, selected 6.
+
+### Measured
+Each line names the finding of the web detail audit (`verify-ui`, `review-ui`) that catches it; a web surface is not done while the audit reports one, and a native surface is judged against the same lines from its captures.
+- `layout-shift`: content that moves when data arrives, a banner or status line inserted above content after the first paint → late values replace their placeholders in place.
+- `wrapped-label`: a short label or value broken onto two lines in a narrow column → it never wraps; only the one growing column wraps or truncates.
+- `icon-off-centre`: an icon beside text riding above or below the text's centre → centred on the line box, within 1 px.
+- `clipped-text`, `overflow`: text cut without an ellipsis, a row wider than its panel → truncate with an ellipsis and the full text in the hover tag, or give the column the room.
+- `internal-id`: a UUID or hash in a row's visible text → the name people chose, or nothing.
+- `says-nothing`: "No timezone set", "Not configured", a dash for data the source cannot provide → the line, column or section is gone; settings live in their form, and a summary shows only what the person acts on.
+- `repeated-in-row`: a title repeated in its meta line ("Source error · Mac" over "Source error · ...") → said once.
+- `uneven-siblings`, `control-drift`: cards or cells of one kind at different heights, their menu in the middle of one and the corner of the next → one geometry for the kind: the same height, the same columns, the trailing control in one place, optional content in reserved space or the hover tag.
+- `menu-per-item`: an overflow menu on each of dozens of items → the item itself is the primary action, the rest move to the group's header or the hover tag.
+- `shared-prefix`: every item opening with the same flag, region, type or name prefix ("Fusion 1", "Fusion 2") → the group says it once and the item keeps what tells it apart.
+- `disclosure-wall`: most rows of a list opening one at a time with nothing that opens them together → the collapsed row carries the state people open it for, and an open all beside the list; an open all over rows that still say nothing is not the fix.
+- `uncounted-list`: a list too long to see whole, or opened item by item, with no count near it → its count once in its toolbar, with how it splits when one value covers most of it.
+- `overlap`: two pieces of text or controls drawn over each other, usually actions spilling over a title on a narrow pane → the overflowing group wraps or scrolls from its start edge, never over its neighbour.
+- `flush-fill`: a hover, selected or current fill whose edge touches the row's icon tile or text → the fill bleeds past the content by the row inset (8) while the content stays on the margin line.
+- `centered-row`: a wide clickable row whose content floats in its middle → the row's content starts at its leading edge, like every other row.
+- `majority-caption`: a caveat, version, "active" state or unit on most rows of one kind → the group's line or nothing, the exception word on the row it applies to, the number alone in the trailing column.
+
+### Judged
+- A view that blanks, shows a placeholder or changes height when its control switches → the last result stays dimmed until the next arrives, the height is reserved.
+- A section description wrapping to a second line beside a one line header → the description inline after the title, so neighbouring headers align.
+- A tab bar with one tab → no tab bar.
 - A row showing the same moment twice ("21 days ago" and "15:44") → one of them, the other in the hover tag.
-- An on and an off button for one state → a switch when the state is known, else both commands in the row's menu.
-- A form field or its submit stretched across a wide pane → the form keeps a 560 column, so the label, the input and the button stay together.
+- A divider or box around every row or section → the 28 section gap and 12 inner gap, one hairline per band at most.
 - Unboxed sections side by side in a grid, with a status floating far from its title → a panel per section, 16 apart.
-- A row that stacks a title, a detail, an evidence line and a link on four lines → one row: the title, one meta line, the link at its end.
-- Two kinds of rows in one list with different leading marks (a dot beside an icon box) → the same row component, each mark centred in the same leading column.
-- A view that blanks, shows a placeholder or changes height when its segmented control switches → the last result stays, dimmed, until the next arrives; the height is reserved.
-- A tab bar with one tab, or a section of empty states and dashes for data the source cannot provide → no tab bar, no section, no row.
+- A state stated in the header and again in the body (offline in the header, an "offline" incident and a last seen time below) → said once, where the eye lands first.
+- A row that stacks a title, a detail, an evidence line and a link on four lines, or a list mixing row kinds with different leading marks → the one row component: title, one meta line, the command at its end, every mark centred in one leading column.
+- A hover fill equal to the selected fill → hover 3.5 percent, selected 6.
+- An on and an off button for one state → a switch when the state is known, else both commands in the row's menu.
+- A form field or its submit stretched across a wide pane → the form keeps its column (720 on a page, 560 inside a panel or sheet), so the label, the input and the button stay together.
 - A control split from what it acts on (a group by switch on its own row above a table, an export beside the filters) → on the header row of the section it acts on.
 - A large row or oversized control → controls 28, table rows 36, card padding 16.
 - Blue or tinted chrome, "gray gray" cards → white ground, fills at 4.5 percent, borders at 6 to 7.5 percent.
@@ -110,17 +134,15 @@ The maintainer's taste on every platform: dense, flat, achromatic chrome with co
 - A shadow under a resting card → none; shadows only under popovers, menus and floating bars.
 - A large radius → 8 on controls and rows, 12 on groups and floating surfaces, 5 on badges; pills only for dots, avatars and tracks.
 - A hardcoded hex or palette step in a chart → the categorical slots, via the shared chart theme.
-- A stock spinner or three bouncing gray dots → the dot matrix; layout that jumps while loading → a skeleton with the final footprint.
+- A stock spinner or three bouncing gray dots → the dot matrix.
 - A button that repeats a command already on screen → delete it; the command has one home.
 - "Not allowed" beside "Open Settings" → one verb that does it, "Allow".
 - One "Danger zone" holding cleanups and resets alike → a safe group and a group that names what each row deletes.
 - Content that fades in over rows that have not moved yet → animate the state change for the whole layout and clip the reveal.
 - A details or settings column capped and pinned left in a wide tool pane → fill the pane from the margin line.
 - A wordy, formal or "AI" sounding sentence → one short plain sentence on what the person gets.
-- A footer or hint rewritten shorter when deleting it loses nothing → delete it.
-- A caveat repeated on every row of one kind, or moved into the footer instead → the verb that fixes it on the one row the person can act on, or nothing.
-- Versions, build numbers, "active" or a unit on every row → the exception word on the row it applies to, the number alone in the trailing column.
-- A status line that counts what the list below shows, or a requirement that can never read as met → delete it.
+- A footer or hint rewritten shorter when deleting it loses nothing, or a caveat moved into the footer → delete it, or the verb that fixes it on the one row the person can act on.
+- A status line that counts a short list shown whole below it, or a requirement that can never read as met → delete it.
 - A redesign that keeps every existing page and only restyles it → the structure pass first: the pages merged, deleted or moved, then the polish.
 
 ## Before calling a surface done
@@ -132,4 +154,5 @@ The maintainer's taste on every platform: dense, flat, achromatic chrome with co
 - Every command appears once and no ink button sits in a bar, row or header.
 - Every footer, subtitle, meta fact, hint, popover and unit was deleted in turn and kept only where the person would decide or act differently without it, with the count before and after reported, and a test asserting deleted copy goes with it.
 - Every transition was checked in frames captured mid change, not from the resting state, and alignment that matters was measured rather than judged by eye: the edges of section headers in one row, controls in one bar, and the insets on every side of a block, reported as numbers.
+- On the web, the detail audit ran after load and after each switch in every supported viewport and reports nothing, or each remaining finding is accepted by name with its reason; a native surface was checked against the Measured lines from its captures.
 - A redesigned pattern lives in one shared component and every place a search finds the old pattern uses it, because fixing only the screen that was pointed at leaves its siblings in the old look.

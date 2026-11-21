@@ -173,9 +173,11 @@ Review UI against its design system and the craft of each register, with severit
 
 #### sweep-ui
 
-Find every sheet, window, and state a redesign missed, inventoried from code, with the component that fixes each.
+Polish a whole app until nothing is left to point out: every surface inventoried from code, measured on real data, and fixed in batches until a fresh pass comes back clean.
 
-**Triggers:** "Find every screen we haven't redesigned" ([example](skills/sweep-ui/examples/sweep.md))
+**Requires:** `verify-ui`
+
+**Triggers:** "Find every screen we haven't redesigned", "Go through every page and fix the details yourself" ([example](skills/sweep-ui/examples/sweep.md))
 
 #### personal-web-design
 
